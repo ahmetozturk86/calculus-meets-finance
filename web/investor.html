@@ -50,10 +50,11 @@
   .block { margin-top: 26px; }
   .markets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   @media (max-width: 600px) { .markets { grid-template-columns: repeat(2, 1fr); } }
-  .market { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 8px; border: 1.5px solid var(--line); border-radius: 12px;
+  .risks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .market, .opt { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 8px; border: 1.5px solid var(--line); border-radius: 12px;
             background: var(--card); color: var(--text); cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 650; transition: border-color .15s, background .15s; }
-  .market:hover { border-color: var(--blue); }
-  .market.sel { border-color: var(--blue); background: var(--blue-soft); }
+  .market:hover, .opt:hover { border-color: var(--blue); }
+  .market.sel, .opt.sel { border-color: var(--blue); background: var(--blue-soft); }
   .market .ic { font-size: 18px; line-height: 1; }
   .guess { display: grid; gap: 8px; }
   .grow { display: grid; grid-template-columns: 96px 1fr 128px; gap: 12px; align-items: center; }
@@ -75,12 +76,7 @@
   .split { display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin: 10px 0 4px; background: var(--soft2); }
   .split span { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; }
   .verdict { margin: 10px 0 0; }
-  .risk-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .presets { display: flex; gap: 8px; flex-wrap: wrap; }
-  .pill { border: 1.5px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .pill.sel { border-color: var(--blue); background: var(--blue-soft); }
   input[type=range] { width: 100%; accent-color: var(--blue); margin: 12px 0 2px; }
-  .riskval { font-size: 22px; font-weight: 800; color: var(--blue); }
   details.more { border: 1px solid var(--line); border-radius: 14px; margin-top: 14px; background: var(--card); }
   details.more > summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
   details.more > summary::-webkit-details-marker { display: none; }
@@ -174,12 +170,11 @@
   </div>
 
   <div class="block">
-    <div class="risk-row"><div class="label" style="margin:0">How much can you lose in a bad year?</div><span class="riskval" id="Lv"></span></div>
-    <input id="L" type="range" min="1" max="50" step="1" value="15" aria-label="most you accept to lose in a bad year (%)">
-    <div class="presets" id="riskPresets">
-      <button class="pill" data-l="5">Careful · 5%</button>
-      <button class="pill" data-l="15">Balanced · 15%</button>
-      <button class="pill" data-l="30">Bold · 30%</button>
+    <div class="label">How much risk can you take?</div>
+    <div class="risks" id="riskPick">
+      <button class="opt" type="button" data-risk="careful">Careful</button>
+      <button class="opt" type="button" data-risk="balanced">Balanced</button>
+      <button class="opt" type="button" data-risk="bold">Bold</button>
     </div>
     <small id="riskText"></small>
     <small id="riskCap"></small>
@@ -789,14 +784,16 @@ const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true 
 // =====================================================================
 // Inputs
 // =====================================================================
-const ui = { mood: "normal", L: 15 };
-const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, L: 15, mu: 10, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
+const ui = { mood: "normal", risk: "balanced" };
+const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
-  return { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: clamp(num("r", 3), 0, 30) / 100,
-           infl: clamp(num("infl", 3), -5, 50) / 100, mood: ui.mood, L: +$("L").value / 100, alpha: +$("alpha").value,
-           mu: clamp(num("mu", 10), -50, 80) / 100, sig: clamp(num("sig", 20), 1, 80) / 100,
-           years: +$("years").value, fMax: 1, T: 1 };
+  const p = { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: clamp(num("r", 3), 0, 30) / 100,
+              infl: clamp(num("infl", 3), -5, 50) / 100, mood: ui.mood, alpha: +$("alpha").value,
+              mu: clamp(num("mu", 10), -50, 80) / 100, sig: clamp(num("sig", 20), 1, 80) / 100,
+              years: +$("years").value, fMax: 1, T: 1 };
+  p.L = riskLevels(riskTop(p).maxPct)[ui.risk] / 100;              // the bad-year loss limit behind the choice
+  return p;
 }
 for (const [key, m] of Object.entries(MOODS)) {
   const b = document.createElement("button");
@@ -816,16 +813,12 @@ function pickMood(key) {
   ui.mood = key;
   onInputChange();
 }
-for (const b of document.querySelectorAll("#riskPresets .pill")) {
-  b.type = "button";
-  b.addEventListener("click", () => { ui.L = +b.dataset.l; $("L").value = ui.L; onInputChange(); });
-}
-$("L").addEventListener("input", () => { ui.L = +$("L").value; });
-for (const id of ["S", "save", "r", "infl", "L", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
+for (const b of document.querySelectorAll("#riskPick .opt")) b.addEventListener("click", () => { ui.risk = b.dataset.risk; onInputChange(); });
+for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
   $(id).addEventListener("input", onInputChange);
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
-  ui.mood = "normal"; ui.L = DEFAULTS.L; $("moodNote").textContent = "";
+  ui.mood = "normal"; ui.risk = "balanced"; $("moodNote").textContent = "";
   onInputChange();
 });
 // Your guess: stocks, gold and bonds in whole percent; the savings account gets the rest. A slider first takes from the
@@ -1078,29 +1071,25 @@ const mixText = w => {
 };
 
 // The plan with no limit at all is the fastest-growing mix without borrowing. Its bad-year loss is the most risk that
-// still pays: past it more risk makes money grow slower (the Kelly point of Module 4), so the risk slider stops there.
+// still pays: past it more risk makes money grow slower (the Kelly point of Module 4), so "Bold" stops there.
 function riskTop(p) {
   const c = crashSettings(), m = mathState(marketStates(p, c.lam, c.J)[p.mood]);
   const top = cached(mixCache, "top" + [m.mu, m.sig, m.rc, p.alpha].join("|"), () => bestMix(m, 1, p.alpha));
   return { top, maxPct: Math.max(2, Math.ceil(Math.round(1000 * top.var) / 10)) };
 }
+// The loss limit (in %) behind each choice: a normal market gives 5 / 15 / 22, calmer or harder markets scale it.
+const riskLevels = top => ({ careful: Math.min(5, Math.round(top / 3)), balanced: Math.min(15, Math.round(2 * top / 3)), bold: top });
 function renderInputs() {
-  const cap = riskTop(params());
-  $("L").max = cap.maxPct;
-  $("L").value = Math.min(ui.L, cap.maxPct);
-  const presets = [Math.min(5, Math.round(cap.maxPct / 3)), Math.min(15, Math.round(2 * cap.maxPct / 3)), cap.maxPct];
-  document.querySelectorAll("#riskPresets .pill").forEach((b, i) => { b.dataset.l = presets[i]; b.textContent = `${["Careful", "Balanced", "Bold"][i]} · ${presets[i]}%`; });
-  const p = params(), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
-  $("riskCap").innerHTML = cap.top.d
-    ? `The slider stops at ${cap.maxPct}%, the most risk that still pays in a ${MOODS[p.mood].name.toLowerCase()} market (${mixText(cap.top.w)}). ` +
-      `Past it, more risk would make your money grow slower, not faster.`
-    : `In this market nothing grows faster than the savings account, so the plan keeps everything there whatever you pick.`;
+  const p = params(), cap = riskTop(p), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
+  $("riskCap").innerHTML = ui.risk !== "bold" ? ""
+    : cap.top.d ? `Bold is the most risk that still pays in a ${MOODS[p.mood].name.toLowerCase()} market (${mixText(cap.top.w)}): ` +
+                  `more risk would make your money grow slower, not faster.`
+    : `In this market nothing grows faster than the savings account, so the plan keeps everything there.`;
   for (const b of document.querySelectorAll(".market")) {
     b.classList.toggle("sel", b.dataset.mood === p.mood); b.setAttribute("aria-pressed", b.dataset.mood === p.mood);
   }
-  for (const b of document.querySelectorAll("#riskPresets .pill")) {
-    const on = +b.dataset.l === Math.round(p.L * 100);
-    b.classList.toggle("sel", on); b.setAttribute("aria-pressed", on);
+  for (const b of document.querySelectorAll("#riskPick .opt")) {
+    b.classList.toggle("sel", b.dataset.risk === ui.risk); b.setAttribute("aria-pressed", b.dataset.risk === ui.risk);
   }
   $("moodText").textContent = MOODS[p.mood].text;
   $("saveSym").textContent = sym();
@@ -1108,8 +1097,7 @@ function renderInputs() {
   $("guessBox").classList.toggle("hidden", !$("useGuess").checked);
   ["gStock", "gGold", "gBond", "gDep"].forEach((id, i) => { $(id + "_v").innerHTML = `${pct(gw[i], 0)}<small>${money(p.S * gw[i])}</small>`; });
   $("guessBar").innerHTML = gw.map((x, i) => `<i style="width:${100 * x}%;background:${ASSETS[i].color}"></i>`).join("");
-  $("Lv").textContent = pct(p.L, 0);
-  $("riskText").innerHTML = `In a bad year (the worst 1 year in ${every}) you lose at most <b>${pct(p.L, 0)}</b>, which is <b>${money(p.S * p.L)}</b> of your ${money(p.S)}.`;
+  $("riskText").innerHTML = `In a bad year (the worst 1 year in ${every}) you lose at most <b>${money(p.S * p.L)}</b> of your ${money(p.S)}.`;
   $("crashEvery_v").textContent = c.every ? `${c.every} years` : "never";
   $("crashSize_v").textContent = pct(-c.J, 0);
   const st = REGIME_KEYS.map(k => states[k]);

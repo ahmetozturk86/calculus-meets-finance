@@ -132,9 +132,11 @@ Open these files in a browser:
 - `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page.
   1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
      year, the bank interest rate, inflation, how the market is right now (calm, normal, crisis or high
-     inflation) and how much you can lose in a bad year. The risk slider stops at the most risk that still pays
-     in the picked market (22% in a normal market): past it, more risk would make money grow slower, not faster.
-     Everything else is in a closed **More settings** section: years, **your own guess** of how to split the money (optional), the stock numbers, surprises, and
+     inflation) and how much risk you can take: **Careful**, **Balanced** or **Bold**. Behind each choice is a
+     bad-year loss limit (5%, 15% and 22% in a normal market). Bold is the most risk that still pays in the
+     picked market: past it, more risk would make money grow slower, not faster.
+     Everything else is in a closed **More settings** section: years, **your own guess** of how to split the money
+     (optional), the stock numbers, surprises, and
      an optional CSV of real prices (`web/sample_prices.csv` is a simulated example). Nothing is calculated until
      you press **Calculate my plan**.
   2. **Your plan:** one plain sentence in money (how much to put where, a typical year's gain and the bad-year
