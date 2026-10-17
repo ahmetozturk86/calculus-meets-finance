@@ -109,24 +109,31 @@ generators are different.
 ### Web pages (no install, work offline)
 Open these files in a browser:
 - `web/index.html`: interactive explainer. Move a slider and watch each discrete model turn into its continuous limit.
-- `web/investor.html`: **The Investor**, the real-life version of Module 4. You enter your savings, loss limit and
-  market numbers by hand, or upload a CSV of prices (`web/sample_prices.csv` is a simulated example).
-  It then:
-  - estimates μ and σ from the prices;
-  - computes how much to put in stocks with the same IVT + bisection method;
-  - shows how the answer changes if rare crashes can happen (you choose how often and how big);
-  - checks the answer against historical one-year returns (historical VaR and a backtest);
-  - includes a game where you split your savings each year between stocks, gold, bonds and a savings account.
-    - Each year plays out month by month, with life events (emergencies, bonuses, raises).
-    - You choose a starting market: calm, normal, crisis or high inflation. Like real life, the market then changes
-      from year to year through a Markov chain, and crises tend to last a while. You only learn what kind of year it
-      was after it happens. The settings are illustrative and simulated (roughly like long-run history in developed
-      markets: a normal stock year is between about −20% and +40%), not forecasts. If you uploaded prices, the
-      stock years come from your real data.
-    - What counts is your money in today's money. Three years that lose more than your limit get you fired.
-    - A risk meter uses the same VaR idea. It includes the uncertain next market state and market-crash years, and its
-      quantile is found by bisection.
-    - At the end you are compared with fixed strategies on exactly the same years.
+- `web/investor.html`: **The Investor**, the real-life version of Module 4. It has four tabs.
+  1. **Your situation: every input in one place.**
+     - Your savings, loss limit and market numbers, typed by hand or estimated from an uploaded CSV of prices
+       (`web/sample_prices.csv` is a simulated example).
+     - Your plan: yearly saving, a goal and the number of years.
+     - The real-life surprises you want: markets that change over time, rare crashes and life events.
+  2. **Your answer: how much to put in stocks,** found with the same IVT + bisection method. Then the answer is
+     **played year by year in a simulated future** and compared, on exactly the same years, with bank only, all
+     stocks, an equal 25% mix and all gold. A table over 500 possible futures shows whether the answer keeps its
+     promise ("a year over your limit at most 1 in 20").
+     - With no surprises, the futures follow exactly your market numbers, and the promise holds.
+     - With crashes and crises switched on, you see what the bell-curve math leaves out.
+     - It also shows the crash-aware answer (Module 4b).
+  3. **Check with history:** the answer against real one-year returns from your data (historical VaR and a backtest).
+  4. **Play:** you split your savings each year yourself, between stocks, gold, bonds and a savings account, using
+     the settings from tab 1.
+     - Each year plays out month by month, with life events (emergencies, bonuses, raises).
+     - What counts is your money in today's money. Three years that lose more than your limit get you fired.
+     - A risk meter uses the same VaR idea. It includes the uncertain next market state and crash years, and its
+       quantile is found by bisection.
+
+  **The simulated market.** "Normal" years are exactly your market numbers. Calm, crisis and high-inflation years
+  are better or worse versions of it, and they follow each other through a Markov chain, so crises tend to last a
+  while. Gold, bonds and inflation use illustrative values, roughly like long-run history in developed markets.
+  None of this is a forecast. If you uploaded prices, the stock years come from your real data.
 
   The uploaded file is read only inside the page and is never sent anywhere. `investor.html` uses no external libraries.
 
