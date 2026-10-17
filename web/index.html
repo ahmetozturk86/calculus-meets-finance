@@ -4,84 +4,204 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Limits in Finance</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; background: #fafafa; color: #222; line-height: 1.45; }
-  section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-  h2 { margin-top: 0; }
-  .main { display: block; margin: 10px 0; padding: 10px; background: #eff6ff; border-radius: 6px; font-weight: 600; }
-  .main input { width: 60%; vertical-align: middle; }
-  .small label { display: inline-block; margin: 2px 14px 2px 0; font-size: 14px; color: #555; }
-  input[type=range] { vertical-align: middle; }
-  .result { font-size: 15px; margin: 8px 0; padding: 8px 10px; background: #f1f5f9; border-radius: 4px; }
-  .note { background: #fffbe6; border-left: 4px solid #f59e0b; padding: 8px 12px; margin-top: 12px; }
-  .ok { color: #15803d; font-weight: 700; } .bad { color: #b91c1c; font-weight: 700; }
-  button { font-size: 15px; padding: 6px 12px; cursor: pointer; }
-  table { border-collapse: collapse; font-family: monospace; font-size: 13px; margin-top: 8px; }
-  td, th { border: 1px solid #ddd; padding: 2px 8px; text-align: right; }
-  tr.now { background: #fde68a; }
+  :root {
+    --bg: #f4f6fb; --card: #ffffff; --text: #0f172a; --muted: #5b6576; --line: #e2e8f0; --soft: #f1f5f9; --soft2: #e8eef7;
+    --blue: #2563eb; --blue-soft: rgba(37,99,235,0.16); --red: #dc2626; --red-soft: rgba(220,38,38,0.28);
+    --green: #15803d; --green-soft: rgba(21,128,61,0.16); --amber: #d97706; --amber-soft: rgba(217,119,6,0.18);
+    --ink: #111827; --gray: #94a3b8; --purple: #7c3aed;
+    --bar: rgba(37,99,235,0.30); --path: rgba(37,99,235,0.45);
+    --shadow: 0 1px 2px rgba(15,23,42,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b0f15; --card: #141a22; --text: #e6e9ee; --muted: #9aa4b2; --line: #263040; --soft: #1a212b; --soft2: #222b37;
+      --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.2); --red: #f87171; --red-soft: rgba(248,113,113,0.3);
+      --green: #4ade80; --green-soft: rgba(74,222,128,0.16); --amber: #fbbf24; --amber-soft: rgba(251,191,36,0.2);
+      --ink: #e6e9ee; --gray: #6b7686; --purple: #a78bfa;
+      --bar: rgba(96,165,250,0.32); --path: rgba(96,165,250,0.5);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  a { color: var(--blue); }
+  body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.5;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+  .top { padding: 36px 16px 20px; }
+  .top .brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
+  .top h1 { margin: 4px 0 6px; font-size: clamp(26px, 4.5vw, 34px); line-height: 1.15; }
+  .top p { margin: 0; font-size: 16px; color: var(--muted); }
+  main.wrap { padding-bottom: 40px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .card > h2 { margin: 0 0 10px; font-size: 21px; line-height: 1.3; }
+  .card h3 { margin: 22px 0 8px; font-size: 16px; }
+  .num { color: var(--blue); margin-right: 4px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .c-blue { color: var(--blue); } .c-red { color: var(--red); } .c-green { color: var(--green); }
+  .go { display: flex; align-items: center; gap: 16px; text-decoration: none; color: var(--text); padding: 16px 20px; }
+  .go:hover { border-color: var(--blue); }
+  .go small { display: block; color: var(--muted); font-size: 14px; }
+  .go .arrow { margin-left: auto; font-size: 22px; color: var(--blue); }
+  .ctl-main { margin: 16px 0 4px; }
+  .ctl-main label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-weight: 650; }
+  .val { color: var(--blue); font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--blue); margin: 8px 0 2px; }
+  input[type=range]:disabled { opacity: .5; }
+  .ctl-small { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 2px 20px; font-size: 14px; color: var(--muted); }
+  .ctl-small label { display: block; }
+  .ctl-small b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .ctl-small input { margin: 4px 0 6px; }
+  .fixed { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; }
+  .result { background: var(--soft); border-radius: 12px; padding: 10px 14px; margin: 12px 0; font-variant-numeric: tabular-nums; }
+  .note { border-left: 4px solid var(--amber); background: var(--soft); padding: 10px 14px; border-radius: 8px; margin-top: 14px; font-size: 14.5px; }
+  .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--blue); background: var(--blue); color: #fff;
+         font: inherit; font-weight: 700; cursor: pointer; margin: 4px 0 10px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 8px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+  th { font-size: 12.5px; color: var(--muted); font-weight: 650; }
+  th:first-child, td:first-child { text-align: left; }
+  tr.now td { background: var(--amber-soft); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 30px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-<h1>Limits in Finance</h1>
-<p><b>Use it for your own savings:</b> <a href="investor.html">The Investor</a>: type your situation and get the best mix of stocks, gold, bonds and savings, tested in hundreds of possible futures.</p>
-<p>Each section has one <b>big slider</b>. Move it and watch a step-by-step model turn into a smooth formula (the limit).
-The small sliders change the problem itself.</p>
+<header class="top wrap">
+  <div class="brand">Limits in Finance</div>
+  <h1>Watch steps turn into smooth formulas</h1>
+  <p>Each section has one big slider. Move it and watch a step-by-step model turn into a smooth formula: the limit.
+  The small sliders change the problem itself.</p>
+</header>
 
-<section>
-  <h2>1. Compounding interest: stairs become a smooth curve</h2>
-  <p>The bank adds interest n times a year, so your money grows in <b>steps</b> (blue stairs).
-  If interest is added every instant, money grows on the smooth <b style="color:#dc2626">red curve</b> P·e<sup>rt</sup>.</p>
-  <label class="main">Interest added: <input id="n1" type="range" min="0" max="5" step="1" value="0"> <span></span></label>
-  <div class="small">
-    <label>Money P <input id="P" type="range" min="1000" max="50000" step="1000" value="10000"> <span></span></label>
-    <label>Rate r <input id="r1" type="range" min="0.01" max="0.30" step="0.01" value="0.10"> <span></span></label>
-    <label>Years t <input id="t1" type="range" min="1" max="30" step="1" value="10"> <span></span></label>
+<main class="wrap">
+<a class="card go" href="investor.html"><span><b>Use it for your own savings: The Investor</b>
+  <small>Type your situation and get the best mix of stocks, gold, bonds and savings, tested in hundreds of possible futures.</small></span>
+  <span class="arrow" aria-hidden="true">→</span></a>
+
+<!-- ============ Module 1 ============ -->
+<section class="card">
+  <h2><span class="num">1.</span> Compounding interest: stairs become a smooth curve</h2>
+  <p>The bank adds interest n times a year, so your money grows in <b class="c-blue">steps</b>.
+  If interest is added every instant, money grows on the smooth <b class="c-red">curve</b> P·e<sup>rt</sup>.</p>
+  <div class="ctl-main"><label for="n1">Interest added <span class="val" data-for="n1"></span></label>
+    <input id="n1" type="range" min="0" max="5" step="1" value="0"></div>
+  <div class="ctl-small">
+    <label>Money P <b data-for="P"></b><input id="P" type="range" min="1000" max="50000" step="1000" value="10000"></label>
+    <label>Rate r <b data-for="r1"></b><input id="r1" type="range" min="0.01" max="0.30" step="0.01" value="0.10"></label>
+    <label>Years t <b data-for="t1"></b><input id="t1" type="range" min="1" max="30" step="1" value="10"></label>
   </div>
   <div class="result" id="out1"></div>
-  <canvas id="c1"></canvas>
-  <div class="note">Look at: with yearly interest the stairs are big and end well below the red curve.
-  Move to monthly, then daily: the steps get tiny and the stairs lie on the curve. That is the limit (1 + r/n)<sup>nt</sup> → e<sup>rt</sup>.</div>
+  <div class="chart" id="c1"></div>
+  <div class="note">Look at: with yearly interest the stairs are big and end well below the curve. Move to monthly, then daily:
+  the steps get tiny and the stairs lie on the curve. That is the limit (1 + r/n)<sup>nt</sup> → e<sup>rt</sup>.</div>
 </section>
 
-<section>
-  <h2>2. Option price: tree bars become a bell curve</h2>
-  <p>The binomial tree lets the stock go only up or down, N times. The <b>blue bars</b> show where the stock can end
-  and how likely each place is. The option pays S<sub>T</sub> − K only to the right of K (green).
-  Its price is that payoff averaged over the bars. Black–Scholes uses the smooth <b style="color:#dc2626">red curve</b> instead.</p>
-  <label class="main">Tree steps N: <input id="N2" type="range" min="1" max="200" step="1" value="2"> <span></span></label>
-  <div class="small">
-    <label>Strike K <input id="K" type="range" min="60" max="140" step="1" value="100"> <span></span></label>
-    <label>Volatility σ <input id="s2" type="range" min="0.05" max="0.6" step="0.01" value="0.20"> <span></span></label>
-    <span style="font-size:14px;color:#555">(stock S = 100, rate r = 0.05, T = 1 year)</span>
+<!-- ============ Module 2 ============ -->
+<section class="card">
+  <h2><span class="num">2.</span> Option price: tree bars become a bell curve</h2>
+  <p>The binomial tree lets the stock go only up or down, N times. The <b class="c-blue">bars</b> show where the stock can end
+  and how likely each place is. The option pays S<sub>T</sub> − K only to the right of K (<b class="c-green">green</b>).
+  Its price is that payoff averaged over the bars. Black–Scholes uses the smooth <b class="c-red">curve</b> instead.</p>
+  <div class="ctl-main"><label for="N2">Tree steps N <span class="val" data-for="N2"></span></label>
+    <input id="N2" type="range" min="1" max="200" step="1" value="2"></div>
+  <div class="ctl-small">
+    <label>Strike K <b data-for="K"></b><input id="K" type="range" min="60" max="140" step="1" value="100"></label>
+    <label>Volatility σ <b data-for="s2"></b><input id="s2" type="range" min="0.05" max="0.6" step="0.01" value="0.20"></label>
   </div>
+  <p class="fixed">Stock S = 100, rate r = 5%, T = 1 year.</p>
   <div class="result" id="out2"></div>
-  <canvas id="c2"></canvas>
-  <div class="note">Look at: with N = 1 or 2 there are only a few fat bars. Slide N up: the bars get thinner and fill the red curve exactly,
-  so the tree price becomes the Black–Scholes price. (This is also Module 3: a random walk of up/down steps becomes the smooth GBM.)</div>
+  <div class="chart" id="c2"></div>
+  <div class="note">Look at: with N = 1 or 2 there are only a few fat bars. Slide N up: the bars get thinner and fill the curve,
+  so the tree price becomes the Black–Scholes price.</div>
 </section>
 
-<section>
-  <h2>4. How much to put in the stock?</h2>
-  <p>You put a fraction f of your money in a stock (return μ = 10%, risk σ = 20%) and the rest in the bank (3%).
-  The bell shows where your money can be after one year. The <b style="color:#dc2626">red tail</b> is the worst 5% of years;
-  where it starts is the <b>Value-at-Risk</b>. Rule: VaR must not go past the loss limit L (black dashed line).</p>
-  <label class="main">Fraction in stock f: <input id="f4" type="range" min="0.05" max="2" step="any" value="0.3"> <span></span></label>
-  <div class="small">
-    <label>Loss limit L <input id="L" type="range" min="0.05" max="0.40" step="0.01" value="0.15"> <span></span></label>
+<!-- ============ Module 3 ============ -->
+<section class="card">
+  <h2><span class="num">3.</span> Random walk: zigzags become a stock chart</h2>
+  <p>A coin-flip model of a stock: every step the price goes up or down by the same small amount (μ = 10%, σ = 20% a year).
+  The top chart shows 20 possible years. The bottom chart shows, for every price, the <b>chance the stock ends the year below it</b>:
+  <b class="c-blue">stairs</b> for the walk, a smooth <b class="c-red">S-curve</b> for its limit, geometric Brownian motion (GBM).</p>
+  <div class="ctl-main"><label for="n3">Price steps <span class="val" data-for="n3"></span></label>
+    <input id="n3" type="range" min="0" max="5" step="1" value="0"></div>
+  <div class="result" id="out3"></div>
+  <div class="chart" id="c3a"></div>
+  <div class="chart" id="c3b"></div>
+  <div class="note">Look at: with one step a year every path is a single straight line, up or down, so the year can end at only two prices.
+  With daily steps the paths look like real stock charts and the stairs lie on the S-curve. The biggest gap
+  (<b class="c-amber" style="color:var(--amber)">orange</b>, the Kolmogorov–Smirnov distance) shrinks like 1/√n.</div>
+</section>
+
+<!-- ============ Module 4 ============ -->
+<section class="card">
+  <h2><span class="num">4.</span> How much to put in the stock?</h2>
+  <p>You put a share f of your money in a stock (return μ = 10%, risk σ = 20%) and the rest in the bank (3%); f above 1 means borrowing.
+  The bell shows where your money can be after one year. The <b class="c-red">red tail</b> is the worst 5% of years;
+  where it starts is the <b>Value-at-Risk</b>. Rule: VaR must not go past the loss limit L (dashed line).</p>
+  <div class="ctl-main"><label for="f4">Share in the stock f <span class="val" data-for="f4"></span></label>
+    <input id="f4" type="range" min="0.05" max="2" step="any" value="0.3"></div>
+  <div class="ctl-small">
+    <label>Loss limit L <b data-for="L"></b><input id="L" type="range" min="0.05" max="0.40" step="0.01" value="0.15"></label>
   </div>
   <div class="result" id="out4"></div>
-  <canvas id="c4"></canvas>
+  <div class="chart" id="c4"></div>
   <h3>Finding the largest safe f</h3>
   <p>Below, every f is one point: its VaR. At small f the VaR is under L, at f = 2 it is over L, and the line has no jumps,
   so it <b>must</b> cross L (Intermediate Value Theorem). Bisection finds the crossing by halving [0, 2] again and again.</p>
-  <button id="run">▶ Find it with bisection</button>
-  <canvas id="c5"></canvas>
-  <table id="hist"></table>
+  <button class="btn" id="run" type="button">▶ Find it with bisection</button>
+  <div class="chart" id="c5"></div>
+  <div class="scroll"><table id="hist"></table></div>
 </section>
 
+<!-- ============ Module 4b ============ -->
+<section class="card">
+  <h2><span class="num">4b.</span> What if rare crashes happen?</h2>
+  <p>The bell curve says a really bad year is almost impossible, but real markets sometimes crash. Here the stock now and then
+  falls suddenly, while its <b>average return stays the same</b>. The chart shows a year at f = <b id="fBell"></b>, the answer of
+  section 4: the <b class="c-blue">curve with crashes</b> next to the plain bell (gray).</p>
+  <div class="ctl-main"><label for="lam5">A crash happens <span class="val" data-for="lam5"></span></label>
+    <input id="lam5" type="range" min="0" max="4" step="1" value="3"></div>
+  <div class="ctl-small">
+    <label>Crash size: stocks fall <b data-for="J5"></b><input id="J5" type="range" min="0.10" max="0.45" step="0.05" value="0.25"></label>
+  </div>
+  <p class="fixed">Loss limit L = 15%, the worst 5% of years.</p>
+  <div class="result" id="out45"></div>
+  <div class="chart" id="c45"></div>
+  <div class="note">Look at: with crashes the left side of the curve gets fatter (a “fat tail”), and the red tail reaches further, past the limit.
+  The crash-aware VaR still grows with f without jumps, so the Intermediate Value Theorem and bisection still find the largest safe f,
+  and every VaR on the way has no formula and is itself found by bisection.</div>
+</section>
+
+<!-- ============ Module 5 ============ -->
+<section class="card">
+  <h2><span class="num">5.</span> The best mix of stocks, gold and bonds</h2>
+  <p>Any fixed mix of stocks, gold and bonds behaves like <b>one fund</b>. For each mix, bisection (section 4) finds how much of
+  your money it may hold under the 15% loss limit, which gives its growth. The <b class="c-blue">hill</b> shows that growth
+  for every share of bonds; the rest of the mix is stocks.</p>
+  <div class="ctl-main"><label for="b6">Bonds in the mix <span class="val" data-for="b6"></span></label>
+    <input id="b6" type="range" min="0" max="100" step="1" value="0"></div>
+  <div class="ctl-small">
+    <label>Gold in the mix <b data-for="gold6"></b><input id="gold6" type="range" min="0" max="40" step="1" value="0"></label>
+  </div>
+  <p class="fixed">No borrowing: at most all of your money goes into the mix, the rest stays in the bank (3%).</p>
+  <div class="result" id="out6"></div>
+  <div class="chart" id="c6"></div>
+  <div class="note" id="note6"></div>
+</section>
+</main>
+<footer>Same math as the Python and MATLAB code of this project. An illustrative model for learning, not financial advice.</footer>
+
 <script>
-// ---- shared math (mirrors src/normal.py and src/bisection.py) ----
+// =====================================================================
+// Shared math: mirrors src/normal.py, src/bisection.py, src/gbm.py, src/risk.py and src/portfolio.py
+// =====================================================================
 function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
   const s = Math.sign(x); x = Math.abs(x);
   const t = 1 / (1 + 0.3275911 * x);
@@ -91,8 +211,11 @@ function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
 const normCdf = x => 0.5 * (1 + erf(x / Math.SQRT2));
 const normPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
 function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
-  let fa = fun(a); const fb = fun(b), history = [];
-  if (fa * fb > 0) throw new Error("IVT condition fails");
+  let fa = fun(a); const fb = fun(b);
+  if (fa === 0) return [a, []];
+  if (fb === 0) return [b, []];
+  if (fa * fb > 0) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
+  const history = [];
   let mid = 0.5 * (a + b);
   for (let i = 0; i < maxIter; i++) {
     mid = 0.5 * (a + b);
@@ -103,49 +226,189 @@ function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
   }
   return [mid, history];
 }
-const normPpf = p => bisection(x => normCdf(x) - p, -10, 10)[0];
+const normPpf = q => bisection(x => normCdf(x) - q, -10, 10, 1e-13)[0];
 
-// ---- chart helpers ----
-const v = id => parseFloat(document.getElementById(id).value);
-const money = x => x.toLocaleString("en-US", { maximumFractionDigits: 2 });
-const pct = x => (100 * x).toFixed(2) + "%";
-const BLUE = "#2563eb", RED = "#dc2626", GREEN = "#16a34a";
-const charts = {};
-function draw(id, datasets, scales) {
-  if (charts[id]) {
-    charts[id].data.datasets = datasets;
-    charts[id].options.scales = scales;
-    charts[id].update("none");
-    return;
+// Module 3 (src/gbm.py): the walk's log-price moves +/- sigma sqrt(dt) each step, with P(up) matching the GBM drift.
+const upProbability = (mu, sig, dt) => 0.5 + 0.5 * (mu - 0.5 * sig * sig) / sig * Math.sqrt(dt);
+function walkLogReturnDistribution(mu, sig, T, n) {   // exact: support points x and probabilities pmf
+  const dt = T / n, p = upProbability(mu, sig, dt), x = [], pmf = [];
+  let logComb = 0;
+  for (let k = 0; k <= n; k++) {
+    if (k > 0) logComb += Math.log((n - k + 1) / k);
+    pmf.push(Math.exp(logComb + k * Math.log(p) + (n - k) * Math.log1p(-p)));
+    x.push(sig * Math.sqrt(dt) * (2 * k - n));
   }
-  charts[id] = new Chart(document.getElementById(id), {
-    type: "line", data: { datasets },
-    options: { animation: false, parsing: false, scales,
-      plugins: { legend: { labels: { filter: item => !item.text.startsWith("_") } } } }
-  });
+  return { x, pmf };
 }
-const line = (label, data, color, extra = {}) =>
-  ({ label, data, borderColor: color, backgroundColor: color, pointRadius: 0, borderWidth: 2, ...extra });
-const vline = (label, x, y0, y1, color, dash = []) => line(label, [{ x, y: y0 }, { x, y: y1 }], color, { borderDash: dash });
-const axis = (text, extra = {}) => ({ type: "linear", title: { display: true, text }, ...extra });
+const gbmLogReturnCdf = (x, mu, sig, T) => normCdf((x - (mu - 0.5 * sig * sig) * T) / (sig * Math.sqrt(T)));
+// The biggest gap between the walk's step CDF and the GBM CDF, reached just before or at a jump; also where it is.
+function walkGap(mu, sig, T, n) {
+  const { x, pmf } = walkLogReturnDistribution(mu, sig, T, n);
+  let cdf = 0, best = { ks: 0, x: x[0], walk: 0, gbm: 0 };
+  for (let k = 0; k <= n; k++) {
+    const F = gbmLogReturnCdf(x[k], mu, sig, T), before = cdf;
+    cdf += pmf[k];
+    for (const c of [before, cdf]) if (Math.abs(c - F) > best.ks) best = { ks: Math.abs(c - F), x: x[k], walk: c, gbm: F };
+  }
+  return best;
+}
+const ksDistanceToGbm = (mu, sig, T, n) => walkGap(mu, sig, T, n).ks;
 
-// ---- Module 1: compounding ----
+// Module 4 (src/risk.py)
+const growthRate = (f, mu, sig, r) => r + f * (mu - r) - 0.5 * f * f * sig * sig;
+const kellyFraction = (mu, sig, r) => (mu - r) / (sig * sig);
+function valueAtRisk(f, mu, sig, r, T, alpha) {
+  const z = normPpf(alpha);
+  return 1 - Math.exp(growthRate(f, mu, sig, r) * T - z * Math.abs(f) * sig * Math.sqrt(T));
+}
+// Largest f in [0, fMax] with VaR(f) <= L. Returns {f, history, status}.
+function maxFractionUnderVar(varFun, L, fMax) {
+  const h = f => varFun(f) - L;
+  if (h(0) > 0) return { f: NaN, history: [], status: "impossible" };
+  if (h(fMax) <= 0) return { f: fMax, history: [], status: "notBinding" };
+  const [f, history] = bisection(h, 0, fMax);
+  return { f, history, status: "binding" };
+}
+// Module 4b: a crash multiplies the stock by (1 + J), on average lam times a year; the drift is compensated so the
+// average return stays mu. Log-wealth is a mixture of bell curves (Poisson weights); its quantile is found by bisection.
+function poissonPmf(k, m) {
+  if (m === 0) return k === 0 ? 1 : 0;
+  let logFact = 0; for (let i = 2; i <= k; i++) logFact += Math.log(i);
+  return Math.exp(-m + k * Math.log(m) - logFact);
+}
+function jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax = 30) {
+  const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T), jump = Math.log(1 + f * J);
+  let s = 0;
+  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * normCdf((x - m - k * jump) / sd);
+  return s;
+}
+function valueAtRiskJump(f, mu, sig, r, T, lam, J, alpha, kMax = 30) {
+  if (f === 0) return 1 - Math.exp(r * T);
+  if (1 + f * J <= 0) throw new Error("a crash would wipe out the portfolio: need 1 + f J > 0");
+  const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T);
+  const lo = m + kMax * Math.min(0, Math.log(1 + f * J)) - 12 * sd, hi = m + Math.max(0, kMax * Math.log(1 + f * J)) + 12 * sd;
+  const [x] = bisection(x => jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax) - (1 - alpha), lo, hi, 1e-12);
+  return 1 - Math.exp(x);
+}
+// Module 5 (src/portfolio.py): a mix d of stocks, gold, bonds is one fund with mu_d = r + d.(mu - r) and
+// sigma_d = sqrt(d'Cd); its share is f = min(f*, f_VaR, 1). `m` = {mu: [3], sig: [3], rc}.
+const RHO = [[1, 0, -0.2], [0, 1, 0.3], [-0.2, 0.3, 1]];
+const STEPS = 100, MIX_GRID = [];                                 // same order as portfolio.mix_grid(3)
+for (let i = 0; i <= STEPS; i++) for (let j = 0; j <= STEPS - i; j++) MIX_GRID.push([i / STEPS, j / STEPS, (STEPS - i - j) / STEPS]);
+function fundOf(d, m) {
+  let mu = m.rc, v = 0;
+  for (let i = 0; i < 3; i++) {
+    mu += d[i] * (m.mu[i] - m.rc);
+    for (let j = 0; j < 3; j++) v += d[i] * d[j] * RHO[i][j] * m.sig[i] * m.sig[j];
+  }
+  return { mu, sig: Math.sqrt(v), r: m.rc };
+}
+function fundFraction(d, L, m, alpha, z = normPpf(alpha)) {
+  const fd = fundOf(d, m), r = m.rc;
+  if (fd.mu <= r || fd.sig === 0) return { f: 0, g: r, status: "noPremium" };
+  const varFun = f => 1 - Math.exp(growthRate(f, fd.mu, fd.sig, r) - z * f * fd.sig);
+  const v = maxFractionUnderVar(varFun, L, 1), fStar = kellyFraction(fd.mu, fd.sig, r);
+  if (v.status === "impossible") return { f: 0, g: r, status: "impossible" };
+  const f = Math.min(fStar, v.f, 1);
+  return { f, g: growthRate(f, fd.mu, fd.sig, r), status: v.status };
+}
+function bestMix(m, L, alpha) {
+  const z = normPpf(alpha);
+  let best = { f: 0, g: m.rc, d: null };
+  for (const d of MIX_GRID) {
+    const res = fundFraction(d, L, m, alpha, z);
+    if (res.g > best.g + 1e-15) best = { ...res, d };
+  }
+  return { ...best, w: best.d ? best.d.map(x => x * best.f) : [0, 0, 0] };
+}
+
+// =====================================================================
+// Helpers and SVG charts (no libraries, the same drawing code as investor.html)
+// =====================================================================
+const $ = id => document.getElementById(id);
+const v = id => parseFloat($(id).value);
+const num0 = x => Math.round(x).toLocaleString("en-US");
+const money2 = x => x.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct = (x, d = 2) => (100 * x).toFixed(d) + "%";
+const reduceMotion = () => !!window.EXPLAINER_NO_ANIM || matchMedia("(prefers-reduced-motion: reduce)").matches;
+function mulberry32(a) {
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function niceTicks(min, max, count = 5) {
+  const span = max - min;
+  if (!(span > 0)) return [min];
+  const raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw))), e = raw / mag;
+  const step = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag, out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-9 * step; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+let clipId = 0;
+function drawChart(el, o) {
+  const W = window.innerWidth < 560 ? 420 : 640, H = (o.height || 280) * (W < 640 ? 0.85 : 1), ml = o.hideY ? 16 : 62, mr = 14, mt = 12, mb = 44;
+  const [x0, x1] = o.x, [y0, y1] = o.y, pw = W - ml - mr, ph = H - mt - mb;
+  const sx = x => ml + (x - x0) / (x1 - x0) * pw, sy = y => mt + (1 - (y - y0) / (y1 - y0)) * ph;
+  const cid = "clip" + (++clipId), parts = [];
+  parts.push(`<defs><clipPath id="${cid}"><rect x="${ml}" y="${mt}" width="${pw}" height="${ph}"/></clipPath></defs>`);
+  for (const t of niceTicks(x0, x1, o.xTicks || 6)) {
+    parts.push(`<line x1="${sx(t)}" x2="${sx(t)}" y1="${mt}" y2="${mt + ph}" stroke="var(--line)"/>`,
+      `<text x="${sx(t)}" y="${mt + ph + 16}" font-size="12" text-anchor="middle" fill="var(--muted)">${(o.xFmt || String)(t)}</text>`);
+  }
+  if (!o.hideY) for (const t of niceTicks(y0, y1, 5)) {
+    parts.push(`<line x1="${ml}" x2="${ml + pw}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--line)"/>`,
+      `<text x="${ml - 6}" y="${sy(t) + 4}" font-size="12" text-anchor="end" fill="var(--muted)">${(o.yFmt || String)(t)}</text>`);
+  }
+  parts.push(`<line x1="${ml}" x2="${ml + pw}" y1="${mt + ph}" y2="${mt + ph}" stroke="var(--muted)"/>`);
+  const g = [];
+  for (const b of o.bars || [])
+    g.push(`<rect x="${sx(b.x0)}" y="${sy(b.y)}" width="${Math.max(0, sx(b.x1) - sx(b.x0))}" height="${Math.max(0, sy(y0) - sy(b.y))}" fill="${b.color}" stroke="var(--card)" stroke-width="0.5"/>`);
+  for (const s of o.series || []) {
+    if (!s.pts.length) continue;
+    const d = s.pts.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join("");
+    if (s.fill) g.push(`<path d="${d}L${sx(s.pts[s.pts.length - 1].x).toFixed(1)},${sy(y0)}L${sx(s.pts[0].x).toFixed(1)},${sy(y0)}Z" fill="${s.fill}" stroke="none"/>`);
+    if (s.color) g.push(`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2.2}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`);
+  }
+  for (const v of o.vlines || [])
+    g.push(`<line x1="${sx(v.x)}" x2="${sx(v.x)}" y1="${mt}" y2="${mt + ph}" stroke="${v.color}" stroke-width="2" ${v.dash ? `stroke-dasharray="${v.dash}"` : ""}/>`);
+  for (const h of o.hlines || [])
+    g.push(`<line x1="${ml}" x2="${ml + pw}" y1="${sy(h.y)}" y2="${sy(h.y)}" stroke="${h.color}" stroke-width="2" ${h.dash ? `stroke-dasharray="${h.dash}"` : ""}/>`);
+  for (const d of o.dots || [])
+    g.push(`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="${d.r || 6}" fill="${d.color}" stroke="var(--card)" stroke-width="2"/>`);
+  parts.push(`<g clip-path="url(#${cid})">${g.join("")}</g>`);
+  if (o.xLabel) parts.push(`<text x="${ml + pw / 2}" y="${H - 6}" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.xLabel}</text>`);
+  if (o.yLabel && !o.hideY) parts.push(`<text transform="translate(13,${mt + ph / 2}) rotate(-90)" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.yLabel}</text>`);
+  const legend = (o.legend || []).map(l =>
+    `<span><i style="background:${l.color};${l.dash ? `background:repeating-linear-gradient(90deg,${l.color} 0 5px,transparent 5px 8px)` : ""}${l.box ? "width:12px;height:12px;border:1px solid var(--muted);border-radius:2px" : ""}"></i>${l.label}</span>`).join("");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria || "chart"}">${parts.join("")}</svg><div class="legend">${legend}</div>`;
+}
+
+// =====================================================================
+// 1. Compounding: (1 + r/n)^(nt) -> e^(rt)
+// =====================================================================
 const N_CHOICES = [[1, "once a year"], [2, "twice a year"], [4, "every quarter"], [12, "every month"], [52, "every week"], [365, "every day"]];
 function module1() {
   const P = v("P"), r = v("r1"), t = v("t1"), [n, name] = N_CHOICES[v("n1")];
-  const stairs = [], smooth = [];
-  for (let k = 0; k <= n * t; k++) stairs.push({ x: k / n, y: P * Math.pow(1 + r / n, k) });
+  // Stairs: flat between interest days. With more steps than pixels only the corners are drawn.
+  const steps = n * t, every = Math.ceil(steps / 1200), stairs = [];
+  for (let k = 0; k < steps; k += every) {
+    const y = P * Math.pow(1 + r / n, k);
+    stairs.push({ x: k / n, y });
+    if (every === 1) stairs.push({ x: (k + 1) / n, y });
+  }
+  const An = P * Math.pow(1 + r / n, steps), A = P * Math.exp(r * t), smooth = [];
+  stairs.push({ x: t, y: An });
   for (let i = 0; i <= 300; i++) { const x = t * i / 300; smooth.push({ x, y: P * Math.exp(r * x) }); }
-  const An = P * Math.pow(1 + r / n, n * t), A = P * Math.exp(r * t);
-  document.getElementById("out1").innerHTML =
-    `Interest ${name} (n = ${n}): after ${t} years you have <b>${money(An)}</b>. ` +
-    `Continuous: <b>${money(A)}</b>. Missing: <b>${money(A - An)}</b>`;
-  draw("c1", [line(`stairs: interest ${name}`, stairs, BLUE, { stepped: true }),
-              line("smooth limit P·e^(rt)", smooth, RED, { borderDash: [6, 4] })],
-    { x: axis("years", { min: 0, max: t }), y: axis("money") });
+  $("out1").innerHTML = `Interest ${name} (n = ${n}): after ${t} years you have <b>${money2(An)}</b>. ` +
+    `Continuous: <b>${money2(A)}</b>. Missing: <b>${money2(A - An)}</b>.`;
+  const pad = 0.04 * (A - P);
+  drawChart($("c1"), { x: [0, t], y: [P - pad, A + pad], xFmt: x => x, yFmt: num0, xLabel: "years", yLabel: "money", aria: "money growing in steps and continuously",
+    series: [{ pts: stairs, color: "var(--blue)" }, { pts: smooth, color: "var(--red)", dash: "6 4" }],
+    legend: [{ color: "var(--blue)", label: `stairs: interest ${name}` }, { color: "var(--red)", label: "smooth limit P·e^(rt)", dash: true }] });
 }
 
-// ---- Module 2: binomial tree vs Black-Scholes ----
+// =====================================================================
+// 2. Binomial tree -> Black-Scholes
+// =====================================================================
 const S0 = 100, R2 = 0.05, T2 = 1;
 const logFact = [0];
 for (let i = 1; i <= 200; i++) logFact.push(logFact[i - 1] + Math.log(i));
@@ -174,114 +437,226 @@ function module2() {
   for (let j = 0; j <= N; j++) {
     // Math.pow, not logs: p can be exactly 1 (e.g. N = 1, sigma = r), and 0 * log(0) would give NaN.
     const prob = Math.exp(logFact[N] - logFact[j] - logFact[N - j]) * Math.pow(p, j) * Math.pow(1 - p, N - j);
-    const ST = S0 * Math.exp(h * (2 * j - N)), lo = ST / u, hi = ST * u, y = prob / (hi - lo);
+    const ST = S0 * Math.exp(h * (2 * j - N)), lo = ST / u, hi = ST * u;
     price += prob * Math.max(ST - K, 0);
-    bars.push({ x: lo, y: 0 }, { x: lo, y }, { x: hi, y }, { x: hi, y: 0 });
+    bars.push({ x0: lo, x1: hi, y: prob / (hi - lo), color: "var(--bar)" });
   }
   price *= Math.exp(-R2 * T2);
-  const bs = blackScholes(S0, K, R2, s, T2), yMax = 1.5 * peak;
-  document.getElementById("out2").innerHTML =
-    `Tree price with N = ${N}: <b>${price.toFixed(4)}</b> &nbsp;|&nbsp; Black–Scholes: <b>${bs.toFixed(4)}</b> &nbsp;|&nbsp; difference: <b>${(price - bs).toFixed(4)}</b>`;
+  const bs = blackScholes(S0, K, R2, s, T2);
+  $("out2").innerHTML = `Tree price with N = ${N}: <b>${price.toFixed(4)}</b> · Black–Scholes: <b>${bs.toFixed(4)}</b> · difference: <b>${(price - bs).toFixed(4)}</b>`;
   if (paid.length) paid.unshift({ x: K, y: 0 });
-  draw("c2", [
-    line(`tree: where the stock ends (N = ${N})`, bars, BLUE, { borderWidth: 1, fill: "origin", backgroundColor: "rgba(37,99,235,0.25)" }),
-    line("smooth limit (Black–Scholes)", curve, RED, { borderDash: [6, 4] }),
-    line("option pays here (S_T > K)", paid, "rgba(0,0,0,0)", { fill: "origin", backgroundColor: "rgba(22,163,74,0.18)" }),
-    vline("_K", K, 0, yMax, GREEN)
-  ], { x: axis("stock price after 1 year, S_T", { min: xMin, max: xMax }),
-       y: axis("likelihood", { min: 0, max: yMax, ticks: { display: false } }) });
+  drawChart($("c2"), { x: [xMin, xMax], y: [0, 1.5 * peak], hideY: true, bars, xFmt: num0, xLabel: "stock price after 1 year, S_T", aria: "tree bars and the Black–Scholes curve",
+    series: [{ pts: paid, fill: "var(--green-soft)" }, { pts: curve, color: "var(--red)", dash: "6 4" }],
+    vlines: [{ x: K, color: "var(--green)" }],
+    legend: [{ color: "var(--bar)", label: `tree: where the stock ends (N = ${N})`, box: true },
+             { color: "var(--red)", label: "smooth limit (Black–Scholes)", dash: true }, { color: "var(--green-soft)", label: "option pays here (S_T > K)", box: true }] });
 }
 
-// ---- Module 4: VaR-constrained allocation ----
-const MU = 0.10, SIG = 0.20, R4 = 0.03, ALPHA = 0.95, F_MAX = 2;
-const Z = normPpf(ALPHA);
-const growth = f => R4 + f * (MU - R4) - 0.5 * f * f * SIG * SIG;
-const VaR = f => 1 - Math.exp(growth(f) - Z * Math.abs(f) * SIG);
-let bisect = null;  // {a, b} while the bisection animation runs
+// =====================================================================
+// 3. Random walk -> geometric Brownian motion
+// =====================================================================
+const WALK_CHOICES = [[1, "once a year"], [2, "twice a year"], [4, "every quarter"], [12, "every month"], [52, "every week"], [252, "every trading day"]];
+const MU3 = 0.10, SIG3 = 0.20, T3 = 1, PATHS = 20, PRICE_RANGE = [50, 200];
+function module3() {
+  const [n, name] = WALK_CHOICES[v("n3")], dt = T3 / n, p = upProbability(MU3, SIG3, dt), h = SIG3 * Math.sqrt(dt);
+  const rng = mulberry32(7), paths = [];
+  for (let i = 0; i < PATHS; i++) {
+    let x = 0; const pts = [{ x: 0, y: S0 }];
+    for (let k = 1; k <= n; k++) { x += rng() < p ? h : -h; pts.push({ x: 12 * k * dt, y: S0 * Math.exp(x) }); }
+    paths.push({ pts, color: "var(--path)", width: 1.4 });
+  }
+  drawChart($("c3a"), { x: [0, 12 * T3], y: PRICE_RANGE, height: 240, xFmt: t => t, yFmt: num0,
+    xLabel: "months", yLabel: "stock price", series: paths, aria: "random-walk price paths" });
+  // The walk's chance to end below each price (stairs) vs the GBM's smooth S-curve.
+  const { x, pmf } = walkLogReturnDistribution(MU3, SIG3, T3, n), gap = walkGap(MU3, SIG3, T3, n);
+  const [lo, hi] = PRICE_RANGE, stairs = [{ x: Math.min(lo, S0 * Math.exp(x[0])), y: 0 }], smooth = [];
+  let cdf = 0;
+  for (let k = 0; k <= n; k++) { const S = S0 * Math.exp(x[k]); stairs.push({ x: S, y: cdf }); cdf += pmf[k]; stairs.push({ x: S, y: cdf }); }
+  stairs.push({ x: Math.max(hi, S0 * Math.exp(x[n])), y: 1 });
+  for (let i = 0; i <= 300; i++) { const S = lo + (hi - lo) * i / 300; smooth.push({ x: S, y: gbmLogReturnCdf(Math.log(S / S0), MU3, SIG3, T3) }); }
+  const gx = S0 * Math.exp(gap.x);
+  drawChart($("c3b"), { x: PRICE_RANGE, y: [0, 1], height: 240, xFmt: num0, yFmt: q => pct(q, 0), xLabel: "stock price after 1 year",
+    yLabel: "chance to end below", aria: "step CDF of the walk and the smooth GBM CDF",
+    series: [{ pts: stairs, color: "var(--blue)" }, { pts: smooth, color: "var(--red)", dash: "6 4" },
+             { pts: [{ x: gx, y: gap.gbm }, { x: gx, y: gap.walk }], color: "var(--amber)", width: 5 }],
+    legend: [{ color: "var(--blue)", label: "random walk" }, { color: "var(--red)", label: "smooth limit (GBM)", dash: true },
+             { color: "var(--amber)", label: "biggest gap" }] });
+  $("out3").innerHTML = `Steps ${name} (n = ${n}): the year can end at only <b>${n + 1}</b> different prices. ` +
+    `Biggest gap to the smooth GBM law (KS distance): <b>${gap.ks.toFixed(4)}</b>.`;
+}
 
+// =====================================================================
+// 4. How much in the stock: VaR limit, Intermediate Value Theorem, bisection
+// =====================================================================
+const MU = 0.10, SIG = 0.20, R = 0.03, ALPHA = 0.95, F_MAX = 2, Z = normPpf(ALPHA);
+const VaR = f => valueAtRisk(f, MU, SIG, R, 1, ALPHA);
+let bisect = null;  // {a, b} while the bisection animation runs
 function module4() {
   const f = v("f4"), L = v("L");
-  // Wealth after 1 year (in % of start) is lognormal: 100 exp(g(f) + f sigma Z).
-  const m = growth(f), sd = f * SIG, q = 100 * Math.exp(m - Z * sd);
+  // Money after 1 year (in % of the start) is lognormal: 100 exp(g(f) + f sigma Z).
+  const m = growthRate(f, MU, SIG, R), sd = f * SIG, q = 100 * Math.exp(m - Z * sd);
   const dens = x => normPdf((Math.log(x / 100) - m) / sd) / (x * sd);
-  // Fixed x-range (wide enough for f = 2); the bell itself is sampled densely within ±5 sd so a narrow bell stays smooth.
-  const xMin = 100 * Math.exp(growth(F_MAX) - 3 * F_MAX * SIG), xMax = Math.min(300, 100 * Math.exp(growth(F_MAX) + 3 * F_MAX * SIG));
+  // Fixed x-range (wide enough for f = 2); the bell is sampled densely within +/- 5 sd so a narrow bell stays smooth.
+  const gM = growthRate(F_MAX, MU, SIG, R), xMin = 100 * Math.exp(gM - 3 * F_MAX * SIG), xMax = Math.min(300, 100 * Math.exp(gM + 3 * F_MAX * SIG));
   const lo = Math.max(xMin, 100 * Math.exp(m - 5 * sd)), hi = Math.min(xMax, 100 * Math.exp(m + 5 * sd));
-  const curve = [{ x: xMin, y: 0 }], tail = [{ x: xMin, y: 0 }];
+  const curve = [{ x: xMin, y: 0 }, { x: lo, y: 0 }], tail = [];
   let peak = 0;
   for (let i = 0; i <= 500; i++) {
     const x = lo + (hi - lo) * i / 500, y = dens(x);
     curve.push({ x, y }); peak = Math.max(peak, y);
     if (x <= q) tail.push({ x, y });
   }
-  curve.push({ x: xMax, y: 0 });
-  tail.push({ x: q, y: dens(q) }, { x: q, y: 0 });
+  curve.push({ x: hi, y: 0 }, { x: xMax, y: 0 });
+  if (tail.length) tail.push({ x: q, y: dens(q) });
   const varF = VaR(f), ok = varF <= L;
-  document.getElementById("out4").innerHTML =
-    `With f = ${f.toFixed(3)}: ` + (varF >= 0
+  $("out4").innerHTML = `With f = ${f.toFixed(3)}: ` + (varF >= 0
       ? `in the worst 5% of years you lose more than <b>${pct(varF)}</b> (VaR). `
       : `even in the worst 5% of years you still gain <b>${pct(-varF)}</b> (VaR = ${pct(varF)}). `) +
-    `Limit L = ${pct(L)} → ` + (ok ? `<span class="ok">✓ allowed</span>` : `<span class="bad">✗ too risky</span>`);
-  const top = 1.1 * peak;
-  draw("c4", [
-    line("where your money can be after 1 year", curve, BLUE),
-    line("worst 5% of years", tail, RED, { fill: "origin", backgroundColor: "rgba(220,38,38,0.35)", borderWidth: 0 }),
-    vline(`VaR: lose ${pct(varF)}`, q, 0, top, RED),
-    vline(`loss limit L: lose ${pct(L)}`, 100 * (1 - L), 0, top, "#111", [6, 4])
-  ], { x: axis("money after 1 year (% of what you started with)", { min: xMin, max: xMax }),
-       y: axis("likelihood", { min: 0, max: top, ticks: { display: false } }) });
-
-  // Second chart: VaR as a function of f, with the IVT crossing.
+    `Limit L = ${pct(L, 0)} → ` + (ok ? `<span class="ok">✓ allowed</span>` : `<span class="bad">✗ too risky</span>`);
+  drawChart($("c4"), { x: [xMin, xMax], y: [0, 1.1 * peak], hideY: true, xFmt: x => num0(x) + "%", aria: "where your money can be after one year",
+    xLabel: "money after 1 year (% of what you started with)",
+    series: [{ pts: tail, fill: "var(--red-soft)" }, { pts: curve, color: "var(--blue)" }],
+    vlines: [{ x: q, color: "var(--red)" }, { x: 100 * (1 - L), color: "var(--ink)", dash: "6 4" }],
+    legend: [{ color: "var(--blue)", label: "where your money can be after 1 year" }, { color: "var(--red)", label: `worst 5% of years (VaR ${pct(varF)})` },
+             { color: "var(--ink)", label: `loss limit L: lose ${pct(L, 0)}`, dash: true }] });
+  // VaR as a function of f, with the IVT crossing and the bisection interval while it runs.
   const pts = [];
   for (let i = 0; i <= 200; i++) { const x = F_MAX * i / 200; pts.push({ x, y: VaR(x) }); }
-  const yLo = Math.min(...pts.map(p => p.y)), yHi = Math.max(...pts.map(p => p.y));
-  const ds = [line("VaR(f)", pts, BLUE), line("loss limit L", [{ x: 0, y: L }, { x: F_MAX, y: L }], "#111", { borderDash: [6, 4] }),
-    { label: "your f", data: [{ x: f, y: varF }], borderColor: ok ? GREEN : RED, backgroundColor: ok ? GREEN : RED, pointRadius: 7, showLine: false }];
-  if (bisect) ds.push(line("bisection interval [a, b]", [{ x: bisect.a, y: yLo }, { x: bisect.b, y: yLo }], "#f59e0b", { borderWidth: 8 }));
-  draw("c5", ds, { x: axis("fraction in stock f", { min: 0, max: F_MAX }), y: axis("VaR (share of money lost)", { min: yLo - 0.02, max: yHi + 0.02 }) });
+  const yLo = Math.min(...pts.map(p => p.y)) - 0.02, yHi = Math.max(...pts.map(p => p.y)) + 0.02;
+  drawChart($("c5"), { x: [0, F_MAX], y: [yLo, yHi], xFmt: x => x, yFmt: y => pct(y, 0), xLabel: "share in the stock f", yLabel: "VaR (share of money lost)",
+    aria: "VaR versus share", series: [{ pts, color: "var(--blue)" },
+      ...(bisect ? [{ pts: [{ x: bisect.a, y: yLo + 0.012 }, { x: bisect.b, y: yLo + 0.012 }], color: "var(--amber)", width: 8 }] : [])],
+    hlines: [{ y: L, color: "var(--ink)", dash: "6 4" }], dots: [{ x: f, y: varF, color: ok ? "var(--green)" : "var(--red)" }],
+    legend: [{ color: "var(--blue)", label: "VaR(f)" }, { color: "var(--ink)", label: "loss limit L", dash: true },
+             { color: ok ? "var(--green)" : "var(--red)", label: "your f" }, ...(bisect ? [{ color: "var(--amber)", label: "bisection interval [a, b]" }] : [])] });
 }
-
-document.getElementById("run").addEventListener("click", () => {
+$("run").addEventListener("click", () => {
+  const L = v("L"), [, hist] = bisection(f => VaR(f) - L, 0, F_MAX), steps = hist.slice(0, 12), fEnd = hist[hist.length - 1][2];
+  $("hist").innerHTML = "<tr><th>step</th><th>a</th><th>b</th><th>middle f</th><th>VaR − L</th></tr>" +
+    steps.map((row, k) => `<tr id="h${k}"><td>${k + 1}</td>${row.map(x => `<td>${x.toFixed(6)}</td>`).join("")}</tr>` ).join("") +
+    `<tr><td colspan="5" class="muted">… ${hist.length} steps in total → f = ${fEnd.toFixed(6)}</td></tr>`;
+  if (reduceMotion()) { setSlider("f4", fEnd); return; }
   // Lock the button and sliders while the animation runs, so nothing fights over the f slider.
-  const locked = ["run", "f4", "L"].map(id => document.getElementById(id));
+  const locked = ["run", "f4", "L"].map($);
   locked.forEach(el => el.disabled = true);
-  const L = v("L"), [, hist] = bisection(f => VaR(f) - L, 0, F_MAX);
-  const steps = hist.slice(0, 12), table = document.getElementById("hist");
-  table.innerHTML = "<tr><th>step</th><th>a</th><th>b</th><th>middle f</th><th>VaR − L</th></tr>" +
-    steps.map((row, k) => `<tr id="h${k}"><td>${k + 1}</td>${row.map(x => `<td>${x.toFixed(6)}</td>`).join("")}</tr>`).join("");
   let k = 0;
   const timer = setInterval(() => {
-    if (k > 0) document.getElementById("h" + (k - 1)).classList.remove("now");
+    if (k > 0) $("h" + (k - 1)).classList.remove("now");
     if (k === steps.length) {
       clearInterval(timer); bisect = null;
-      setSlider("f4", hist[hist.length - 1][2]);
+      setSlider("f4", fEnd);
       locked.forEach(el => el.disabled = false);
       return;
     }
     const [a, b, mid] = steps[k];
     bisect = { a, b };
-    document.getElementById("h" + k).classList.add("now");
+    $("h" + k).classList.add("now");
     setSlider("f4", mid);
     k++;
   }, 700);
 });
 
-// ---- sliders ----
-const modules = { n1: module1, P: module1, r1: module1, t1: module1, N2: module2, K: module2, s2: module2, f4: module4, L: module4 };
+// =====================================================================
+// 4b. Rare crashes (fat tails)
+// =====================================================================
+const CRASH_EVERY = [0, 50, 20, 10, 5], L4B = 0.15;
+const F_BELL = maxFractionUnderVar(VaR, L4B, F_MAX).f;          // the answer of section 4 with L = 15%
+function module4b() {
+  const every = CRASH_EVERY[v("lam5")], lam = every ? 1 / every : 0, J = -v("J5"), f = F_BELL;
+  const varJ = x => valueAtRiskJump(x, MU, SIG, R, 1, lam, J, ALPHA), vj = varJ(f);
+  const c = maxFractionUnderVar(varJ, L4B, F_MAX), fCrash = c.status === "impossible" ? 0 : c.f;
+  // Money after 1 year: a mixture of bells, one per number of crashes k (Poisson weights).
+  const sd = f * SIG, jump = Math.log(1 + f * J), mOf = l => growthRate(f, MU, SIG, R) - l * J * f;
+  const dens = (x, l) => { const y = Math.log(x / 100), m = mOf(l); let s = 0;
+    for (let k = 0; k <= 8; k++) s += poissonPmf(k, l) * normPdf((y - m - k * jump) / sd); return s / (sd * x); };
+  const xMin = 40, xMax = 190, q = 100 * (1 - vj), curve = [], bell = [], tail = [];
+  let peak = 0;
+  for (let i = 0; i <= 500; i++) {
+    const x = xMin + (xMax - xMin) * i / 500, y = dens(x, lam);
+    curve.push({ x, y }); bell.push({ x, y: dens(x, 0) }); peak = Math.max(peak, y, bell[i].y);
+    if (x <= q) tail.push({ x, y });
+  }
+  if (tail.length) tail.push({ x: q, y: dens(q, lam) });
+  drawChart($("c45"), { x: [xMin, xMax], y: [0, 1.1 * peak], hideY: true, xFmt: x => num0(x) + "%", aria: "a year with and without crashes",
+    xLabel: "money after 1 year (% of what you started with)",
+    series: [{ pts: tail, fill: "var(--red-soft)" }, { pts: bell, color: "var(--gray)", dash: "5 4", width: 1.8 }, { pts: curve, color: "var(--blue)" }],
+    vlines: [{ x: q, color: "var(--red)" }, { x: 100 * (1 - L4B), color: "var(--ink)", dash: "6 4" }],
+    legend: [{ color: "var(--blue)", label: "with crashes" }, { color: "var(--gray)", label: "bell curve only", dash: true },
+             { color: "var(--red)", label: `worst 5% of years (VaR ${pct(vj)})` }, { color: "var(--ink)", label: "loss limit 15%", dash: true }] });
+  $("out45").innerHTML = !lam
+    ? `No crashes: this is the bell of section 4. At f = ${f.toFixed(3)} a bad year loses exactly the 15% limit.`
+    : `Stocks fall ${pct(-J, 0)} about once every ${every} years (a ${pct(1 - Math.exp(-lam), 1)} chance each year). ` +
+      `At f = ${f.toFixed(3)} a bad year now loses <b>${pct(vj)}</b> → ` +
+      (vj <= L4B + 1e-9 ? `<span class="ok">✓ still within 15%</span>` : `<span class="bad">✗ more than 15%</span>`) +
+      `. With crashes the largest safe f is <b>${fCrash.toFixed(3)}</b> (bell curve: ${f.toFixed(3)}).`;
+}
+
+// =====================================================================
+// 5. The best mix of stocks, gold and bonds
+// =====================================================================
+const M5 = { mu: [MU, Math.log(1.05), Math.log(1.045)], sig: [SIG, 0.15, 0.06], rc: R }, L5 = 0.15;
+const BEST = bestMix(M5, L5, ALPHA), STOCKS_ONLY = fundFraction([1, 0, 0], L5, M5, ALPHA, Z);
+function module5() {
+  const gold = v("gold6");
+  if (v("b6") > 100 - gold) { $("b6").value = 100 - gold; label("b6"); }
+  const bonds = v("b6"), mix = b => [(100 - gold - b) / 100, gold / 100, b / 100];
+  const curve = [];
+  let top = null;
+  for (let b = 0; b <= 100 - gold; b++) {
+    const res = fundFraction(mix(b), L5, M5, ALPHA, Z);
+    curve.push({ x: b, y: res.g });
+    if (!top || res.g > top.y + 1e-15) top = { x: b, y: res.g };
+  }
+  const here = fundFraction(mix(bonds), L5, M5, ALPHA, Z), d = mix(bonds);
+  drawChart($("c6"), { x: [0, 100], y: [0.025, 0.08], xFmt: x => x + "%", yFmt: y => pct(y, 1), xLabel: "bonds in the mix (the rest is stocks and gold)",
+    yLabel: "growth rate g a year", aria: "growth of each mix under the loss limit",
+    series: [{ pts: curve, color: "var(--blue)" }], hlines: [{ y: R, color: "var(--gray)", dash: "4 4" }],
+    dots: [{ x: top.x, y: top.y, color: "var(--green)", r: 5 }, { x: bonds, y: here.g, color: "var(--purple)" }],
+    legend: [{ color: "var(--blue)", label: "growth of each mix" }, { color: "var(--purple)", label: "your mix" },
+             { color: "var(--green)", label: "top of this hill" }, { color: "var(--gray)", label: "bank only", dash: true }] });
+  const share = here.f === 0 ? "never grows faster than the bank, so everything stays in the bank"
+    : here.f >= 1 - 1e-9 ? "can hold <b>all of your money</b> (no borrowing)"
+    : `can hold <b>${pct(here.f, 1)}</b> of your money; the loss limit stops you there`;
+  $("out6").innerHTML = `Mix: <b>${pct(d[0], 0)} stocks · ${pct(d[1], 0)} gold · ${pct(d[2], 0)} bonds</b>. It ${share} → growth rate ` +
+    `<b>${pct(here.g)}</b> a year. Stocks only: ${pct(STOCKS_ONLY.g)}.`;
+  $("note6").innerHTML = (top.x > 0
+    ? `Look at: some bonds make the hill rise, because bonds don't fall together with stocks, so the limit lets you invest more.
+       Too many bonds and it falls again. Top of this hill: <b>${top.x}% bonds</b> → ${pct(top.y)}.`
+    : `Look at: with this much gold, adding bonds only lowers the growth, so the top of this hill is at 0% bonds (${pct(top.y)}).`) +
+    ` Trying every mix of all three in 1% steps
+    (${MIX_GRID.length.toLocaleString("en-US")} mixes, one bisection each) gives the best:
+    <b>${pct(BEST.w[0], 0)} stocks, ${pct(BEST.w[1], 0)} gold, ${pct(BEST.w[2], 0)} bonds</b>, growth rate <b>${pct(BEST.g)}</b> a year.`;
+}
+
+// =====================================================================
+// Sliders
+// =====================================================================
+const modules = { n1: module1, P: module1, r1: module1, t1: module1, N2: module2, K: module2, s2: module2, n3: module3,
+                  f4: module4, L: module4, lam5: module4b, J5: module4b, b6: module5, gold6: module5 };
+const SHOW = { n1: x => N_CHOICES[x][1], P: num0, r1: x => pct(x, 0), t1: x => `${x} years`, s2: x => pct(x, 0),
+               n3: x => WALK_CHOICES[x][1], f4: x => x.toFixed(3), L: x => pct(x, 0),
+               lam5: x => CRASH_EVERY[x] ? `once every ${CRASH_EVERY[x]} years` : "never", J5: x => pct(x, 0), b6: x => x + "%", gold6: x => x + "%" };
 function label(id) {
-  const el = document.getElementById(id);
-  el.nextElementSibling.textContent = id === "n1" ? N_CHOICES[el.value][1] : id === "f4" ? (+el.value).toFixed(3) : el.value;
+  const el = document.querySelector(`[data-for="${id}"]`), x = v(id);
+  el.textContent = SHOW[id] ? SHOW[id](x) : x;
 }
 function setSlider(id, value) {
-  document.getElementById(id).value = value;
+  $(id).value = value;
   label(id);
   modules[id]();
 }
 for (const [id, fn] of Object.entries(modules)) {
-  document.getElementById(id).addEventListener("input", () => { label(id); fn(); });
+  $(id).addEventListener("input", () => { label(id); fn(); });
   label(id);
 }
-module1(); module2(); module4();
+$("fBell").textContent = F_BELL.toFixed(3);
+const drawAll = () => { module1(); module2(); module3(); module4(); module4b(); module5(); };
+drawAll();
+// Charts are drawn for a narrow or a wide screen (drawChart), so they are redrawn only when that changes.
+let resizeTimer, narrow = window.innerWidth < 560;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
+  if ((window.innerWidth < 560) !== narrow) { narrow = !narrow; drawAll(); }
+}, 150); });
 </script>
 </body>
 </html>

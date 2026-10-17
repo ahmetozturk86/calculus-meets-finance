@@ -182,6 +182,7 @@
       <button class="pill" data-l="30">Bold · 30%</button>
     </div>
     <small id="riskText"></small>
+    <small id="riskCap"></small>
   </div>
 
   <details class="more" id="moreSettings">
@@ -788,7 +789,7 @@ const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true 
 // =====================================================================
 // Inputs
 // =====================================================================
-const ui = { mood: "normal" };
+const ui = { mood: "normal", L: 15 };
 const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, L: 15, mu: 10, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
@@ -817,13 +818,14 @@ function pickMood(key) {
 }
 for (const b of document.querySelectorAll("#riskPresets .pill")) {
   b.type = "button";
-  b.addEventListener("click", () => { $("L").value = b.dataset.l; onInputChange(); });
+  b.addEventListener("click", () => { ui.L = +b.dataset.l; $("L").value = ui.L; onInputChange(); });
 }
+$("L").addEventListener("input", () => { ui.L = +$("L").value; });
 for (const id of ["S", "save", "r", "infl", "L", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
   $(id).addEventListener("input", onInputChange);
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
-  ui.mood = "normal"; $("moodNote").textContent = "";
+  ui.mood = "normal"; ui.L = DEFAULTS.L; $("moodNote").textContent = "";
   onInputChange();
 });
 // Your guess: stocks, gold and bonds in whole percent; the savings account gets the rest. A slider first takes from the
@@ -1046,7 +1048,7 @@ function compute() {
   const plan = cached(mixCache, "p" + key, () => bestMix(m, p.L, p.alpha));
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
   const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
-  return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J),
+  return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J), top: riskTop(p).top,
            guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, normPpf(p.alpha)) } : null, data,
            changing: $("changing").checked, events: $("events").checked };
 }
@@ -1075,8 +1077,24 @@ const mixText = w => {
   return t.join(" · ");
 };
 
+// The plan with no limit at all is the fastest-growing mix without borrowing. Its bad-year loss is the most risk that
+// still pays: past it more risk makes money grow slower (the Kelly point of Module 4), so the risk slider stops there.
+function riskTop(p) {
+  const c = crashSettings(), m = mathState(marketStates(p, c.lam, c.J)[p.mood]);
+  const top = cached(mixCache, "top" + [m.mu, m.sig, m.rc, p.alpha].join("|"), () => bestMix(m, 1, p.alpha));
+  return { top, maxPct: Math.max(2, Math.ceil(Math.round(1000 * top.var) / 10)) };
+}
 function renderInputs() {
+  const cap = riskTop(params());
+  $("L").max = cap.maxPct;
+  $("L").value = Math.min(ui.L, cap.maxPct);
+  const presets = [Math.min(5, Math.round(cap.maxPct / 3)), Math.min(15, Math.round(2 * cap.maxPct / 3)), cap.maxPct];
+  document.querySelectorAll("#riskPresets .pill").forEach((b, i) => { b.dataset.l = presets[i]; b.textContent = `${["Careful", "Balanced", "Bold"][i]} · ${presets[i]}%`; });
   const p = params(), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
+  $("riskCap").innerHTML = cap.top.d
+    ? `The slider stops at ${cap.maxPct}%, the most risk that still pays in a ${MOODS[p.mood].name.toLowerCase()} market (${mixText(cap.top.w)}). ` +
+      `Past it, more risk would make your money grow slower, not faster.`
+    : `In this market nothing grows faster than the savings account, so the plan keeps everything there whatever you pick.`;
   for (const b of document.querySelectorAll(".market")) {
     b.classList.toggle("sel", b.dataset.mood === p.mood); b.setAttribute("aria-pressed", b.dataset.mood === p.mood);
   }
@@ -1160,11 +1178,12 @@ function renderPlan() {
   let why;
   if (!plan.d) why = `In this market no mix of stocks, gold and bonds is expected to grow faster than the savings account (${pct(st.r, 1)} a year), so taking risk does not pay.`;
   else {
-    why = plan.var > p.L - 0.005
-      ? `This is the fastest-growing mix whose bad year stays within your ${pct(p.L, 0)} limit. A riskier mix would lose more than ${money(p.S * p.L)} in a bad year.`
-      : plan.f < 1 - 1e-9 && Math.abs(plan.f - plan.fStar) < 1e-9
-        ? `Your limit would allow more risk, but more risk would not make your money grow faster, so the math stops here.`
-        : `All of your money is invested and nothing is left in the savings account, which is the most the plan allows without borrowing.`;
+    why = plan.g >= cur.top.g - 0.0002                            // within 0.02% a year of the fastest-growing mix
+      ? `This is the fastest-growing mix in this market without borrowing. More risk would make your money grow slower, not faster` +
+        (plan.var > p.L - 0.005 ? `.` : `, so your ${pct(p.L, 0)} limit is not reached.`)
+      : plan.var > p.L - 0.005
+        ? `This is the fastest-growing mix whose bad year stays within your ${pct(p.L, 0)} limit. A riskier mix would lose more than ${money(p.S * p.L)} in a bad year.`
+        : `This is the fastest-growing mix in this market without borrowing. More risk would make your money grow slower, so your limit is not reached.`;
     const g4 = growthRate(sol.fOpt, cur.stockP.mu, cur.stockP.sig, cur.stockP.r), gain = plan.g - g4;
     if (gain > 0.0005) why += ` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), for the same bad-year risk.`;
   }
