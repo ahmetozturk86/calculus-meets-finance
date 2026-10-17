@@ -144,7 +144,7 @@
 <header class="top wrap">
   <div class="brand">The Investor</div>
   <h1>How should I split my money?</h1>
-  <p>Tell us your situation, make your own guess, then let the math find the best mix.</p>
+  <p>Tell us your situation and let the math find the best mix of stocks, gold, bonds and savings.</p>
 </header>
 
 <main class="wrap">
@@ -180,37 +180,33 @@
     <small id="riskText"></small>
   </div>
 
-  <div class="block">
-    <div class="label">Your guess: how would you split your money?</div>
-    <div class="guess">
-      <div class="grow"><span><i class="dot" style="background:var(--blue)"></i>Stocks</span>
-        <input id="gStock" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: stocks (%)" style="accent-color:var(--blue)"><b id="gStock_v"></b></div>
-      <div class="grow"><span><i class="dot" style="background:var(--goldc)"></i>Gold</span>
-        <input id="gGold" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: gold (%)" style="accent-color:var(--gold-ui)"><b id="gGold_v"></b></div>
-      <div class="grow"><span><i class="dot" style="background:var(--bond)"></i>Bonds</span>
-        <input id="gBond" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: bonds (%)" style="accent-color:var(--bond)"><b id="gBond_v"></b></div>
-      <div class="grow"><span><i class="dot" style="background:var(--dep)"></i>Savings</span>
-        <span class="muted">the rest</span><b id="gDep_v"></b></div>
-    </div>
-    <div class="stackbar" id="guessBar" aria-hidden="true"></div>
-    <small>Guess first, then see if you can beat the math.</small>
-  </div>
-
   <details class="more" id="moreSettings">
-    <summary>More settings <span class="sub">years, goal, stock numbers, surprises, real data</span></summary>
+    <summary>More settings <span class="sub">years, your own split, stock numbers, surprises, real data</span></summary>
     <div class="more-body">
       <h3>Your plan</h3>
       <div class="grid">
         <label><span class="label">For how many years?</span>
           <select id="years"><option value="5">5 years</option><option value="10" selected>10 years</option><option value="20">20 years</option><option value="30">30 years</option></select></label>
-        <label><span class="label">Goal</span>
-          <select id="goal"><option value="0">No goal, just grow</option><option value="2" selected>Double my money (2×)</option>
-            <option value="3">Triple my money (3×)</option><option value="5">5× my money</option></select>
-          <small>In today's money, so inflation does not count.</small></label>
         <label><span class="label">How sure must the math be?</span>
           <select id="alpha"><option value="0.90">90%: a bad year is the worst 1 in 10</option>
             <option value="0.95" selected>95%: a bad year is the worst 1 in 20</option>
             <option value="0.99">99%: a bad year is the worst 1 in 100</option></select></label>
+      </div>
+
+      <h3>How would you split your money?</h3>
+      <label class="check"><input id="useGuess" type="checkbox"><span>Make my own guess<small>Pick your own split before the math. After you press the button you see if you can beat the math.</small></span></label>
+      <div id="guessBox" class="hidden">
+        <div class="guess" style="margin-top:12px">
+          <div class="grow"><span><i class="dot" style="background:var(--blue)"></i>Stocks</span>
+            <input id="gStock" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: stocks (%)" style="accent-color:var(--blue)"><b id="gStock_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--goldc)"></i>Gold</span>
+            <input id="gGold" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: gold (%)" style="accent-color:var(--gold-ui)"><b id="gGold_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--bond)"></i>Bonds</span>
+            <input id="gBond" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: bonds (%)" style="accent-color:var(--bond)"><b id="gBond_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--dep)"></i>Savings</span>
+            <span class="muted">the rest</span><b id="gDep_v"></b></div>
+        </div>
+        <div class="stackbar" id="guessBar" aria-hidden="true"></div>
       </div>
 
       <h3>Stocks in a normal market</h3>
@@ -273,9 +269,11 @@
   </div>
   <div class="tiles" id="planTiles"></div>
   <p id="planWhy"></p>
-  <h3>Your guess vs the math</h3>
-  <div class="scroll"><table id="vsMath"></table></div>
-  <p class="verdict" id="vsVerdict"></p>
+  <div id="vsBlock">
+    <h3>Your guess vs the math</h3>
+    <div class="scroll"><table id="vsMath"></table></div>
+    <p class="verdict" id="vsVerdict"></p>
+  </div>
   <div class="callout hidden" id="planCrash"></div>
   <div class="callout amber hidden" id="planHistory"></div>
 </section>
@@ -789,7 +787,7 @@ function params() {
   return { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: clamp(num("r", 3), 0, 30) / 100,
            infl: clamp(num("infl", 3), -5, 50) / 100, mood: ui.mood, L: +$("L").value / 100, alpha: +$("alpha").value,
            mu: clamp(num("mu", 10), -50, 80) / 100, sig: clamp(num("sig", 20), 1, 80) / 100,
-           years: +$("years").value, goal: +$("goal").value, fMax: 1, T: 1 };
+           years: +$("years").value, fMax: 1, T: 1 };
 }
 for (const [key, m] of Object.entries(MOODS)) {
   const b = document.createElement("button");
@@ -813,7 +811,7 @@ for (const b of document.querySelectorAll("#riskPresets .pill")) {
   b.type = "button";
   b.addEventListener("click", () => { $("L").value = b.dataset.l; onInputChange(); });
 }
-for (const id of ["S", "save", "r", "infl", "L", "alpha", "mu", "sig", "years", "goal", "changing", "events", "crashEvery", "crashSize"])
+for (const id of ["S", "save", "r", "infl", "L", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
   $(id).addEventListener("input", onInputChange);
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
@@ -1034,7 +1032,7 @@ function compute() {
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
   const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
   return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J),
-           guess: { w: gw, ...mixStats(gw, m, normPpf(p.alpha)) }, data,
+           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, normPpf(p.alpha)) } : null, data,
            changing: $("changing").checked, events: $("events").checked };
 }
 
@@ -1073,6 +1071,7 @@ function renderInputs() {
   }
   $("moodText").textContent = MOODS[p.mood].text;
   const gw = guessW();
+  $("guessBox").classList.toggle("hidden", !$("useGuess").checked);
   ["gStock", "gGold", "gBond", "gDep"].forEach((id, i) => { $(id + "_v").innerHTML = `${pct(gw[i], 0)}<small>${money(p.S * gw[i])}</small>`; });
   $("guessBar").innerHTML = gw.map((x, i) => `<i style="width:${100 * x}%;background:${ASSETS[i].color}"></i>`).join("");
   $("Lv").textContent = pct(p.L, 0);
@@ -1161,6 +1160,8 @@ function renderPlan() {
 // Your guess next to the math's plan, with the same bell-curve numbers.
 function renderVsMath() {
   const { p, plan, guess } = cur, n = p.years, every = Math.round(1 / (1 - p.alpha)), within = x => x.var <= p.L + 1e-9;
+  $("vsBlock").classList.toggle("hidden", !guess);
+  if (!guess) return;
   const loss = x => `${x.var > 0 ? "−" + pct(x.var) : signed(-x.var)} ${within(x) ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`}`;
   $("vsMath").innerHTML = `<tr><th></th><th>Split</th><th>Typical growth a year</th><th>Bad year (worst 1 in ${every})</th><th>After ${n} years</th></tr>` +
     [["Your guess", "var(--amber)", guess], ["The math", "var(--blue)", plan]].map(([name, color, x]) =>
@@ -1345,7 +1346,7 @@ const life = { seed: 1, token: 0, manyToken: 0, upto: null, sc: null, scFor: nul
 const LIFE_FUTURES = 500, LIFE_CHUNK = 25;
 function lifeSettings() {
   const { p, c, states, data: d } = cur, useData = !!(d && d.years.length >= 5);
-  return { S: p.S, L: p.L, alpha: p.alpha, save: p.save, goal: p.goal, length: p.years, mood: p.mood,
+  return { S: p.S, L: p.L, alpha: p.alpha, save: p.save, length: p.years, mood: p.mood,
            changing: cur.changing, events: cur.events, useData, dataYears: useData ? d.years : null, crash: c, states };
 }
 function settingsText(set) {
@@ -1353,14 +1354,14 @@ function settingsText(set) {
   return `${set.length} years · starts in a ${set.states[set.mood].name.toLowerCase()} market · ` +
     `${set.changing ? "markets change over time" : "the market never changes"} · ` +
     `${c.every ? `a ${pct(-c.J, 0)} crash about every ${c.every} years` : "no crashes"} · life events ${set.events ? "on" : "off"} · ` +
-    `you add ${money(set.save)} a year${set.goal ? ` · goal ${set.goal}× your money` : ""}`;
+    `you add ${money(set.save)} a year`;
 }
-// The main comparison (your plan, your guess, the savings account) and a few simple extras for "Compare more strategies".
+// The main comparison (your plan, your guess if you made one, the savings account) and a few simple extras for "Compare more strategies".
 function lifeStrategies() {
   const { plan, crashPlan, sol, c, guess } = cur, f = sol.fOpt;
   const rows = [
     { key: "plan", name: "Your plan", desc: plan.d ? mixText(plan.w) : "all savings", w: plan.w, color: "var(--blue)", width: 3.4, main: true },
-    { key: "guess", name: "Your guess", desc: mixText(guess.w), w: guess.w, color: "var(--amber)", width: 2.4, main: true },
+    ...(guess ? [{ key: "guess", name: "Your guess", desc: mixText(guess.w), w: guess.w, color: "var(--amber)", width: 2.4, main: true }] : []),
     { key: "bank", name: "Savings account only", desc: "no risk", w: [0, 0, 0, 1], color: "var(--dep)", main: true }];
   if (crashPlan && c.every && crashPlan.w.some((x, i) => Math.abs(x - plan.w[i]) > 0.005))
     rows.push({ key: "crash", name: "Crash-safe plan", desc: crashPlan.d ? mixText(crashPlan.w) : "all savings", w: crashPlan.w, color: "var(--purple)" });
@@ -1387,21 +1388,20 @@ const nameCell = r => `<i class="dot" style="background:${r.color}"></i>${r.name
 function drawLife() {
   const sc = scenarioNow(), n = sc.years.length, main = sc.rows.filter(r => r.main);
   const upto = life.upto === null ? n : life.upto, real = st => st.money / st.price;
-  $("lifeSettings").innerHTML = `One possible future: your plan, your guess and the savings account, on exactly the same years. ` +
+  $("lifeSettings").innerHTML = `One possible future: your plan${cur.guess ? ", your guess" : ""} and the savings account, on exactly the same years. ` +
     `<b>Settings:</b> ${settingsText(sc.set)} (change them in More settings). Future #${life.seed}.`;
   const cut = path => {                                            // the part of a path up to time `upto`, smoothly
     const pts = path.filter(q => q.x <= upto), next = path.find(q => q.x > upto), last = pts[pts.length - 1];
     return next && last ? pts.concat({ x: upto, y: last.y + (next.y - last.y) * (upto - last.x) / (next.x - last.x) }) : pts;
   };
   const all = main.concat([{ st: sc.keep }]).flatMap(r => r.st.path.map(q => q.y));
-  const top = Math.max(...all, sc.set.S * (sc.set.goal || 1)) * 1.08;
+  const top = Math.max(...all, sc.set.S) * 1.08;
   drawChart($("lifeChart"), { x: [0, n], y: [0, top], xFmt: v => v, yFmt: v => money(v), xLabel: "year", yLabel: "in today's money",
     bars: regimeBands(sc.years, Math.ceil(upto), top), aria: "your plan in one possible future",
     series: [{ pts: cut(sc.keep.path), color: "var(--gray)", dash: "5 4", width: 1.6 },
              ...main.slice().reverse().map(r => ({ pts: cut(r.st.path), color: r.color, width: r.width || 2 }))],
-    hlines: [{ y: sc.set.S, color: "var(--gray)", dash: "4 4" }, ...(sc.set.goal ? [{ y: sc.set.goal * sc.set.S, color: "var(--green)", dash: "6 4" }] : [])],
-    legend: main.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }],
-            sc.set.goal ? [{ color: "var(--green)", label: "goal", dash: true }] : [], BAND_LEGEND) });
+    hlines: [{ y: sc.set.S, color: "var(--gray)", dash: "4 4" }],
+    legend: main.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }], BAND_LEGEND) });
   // what happened in the last finished year
   const k = Math.min(n, Math.floor(upto + 1e-9));
   if (k === 0) $("lifeLog").innerHTML = `Press <b>▶ Play the years</b> to watch your plan year by year. The market starts <b>${sc.set.states[sc.set.mood].name.toLowerCase()}</b>.`;
@@ -1413,16 +1413,15 @@ function drawLife() {
     const over = ch(sc.rows[0].w) < -sc.set.L ? ` <span class="bad">Your plan lost more than your ${pct(sc.set.L, 0)} limit this year.</span>` : "";
     $("lifeLog").innerHTML = `<b>Year ${k}${y.label ? ` (${y.label})` : ""}:</b> a <b>${sc.set.states[y.regime].name.toLowerCase()}</b> year` +
       (prev && prev !== y.regime ? ` (the market turned)` : "") + (y.shock ? `, <span class="bad">market crash!</span>` : "") +
-      `. Your plan ${fmt(ch(sc.rows[0].w))}, your guess ${fmt(ch(cur.guess.w))}, savings ${fmt(ch([0, 0, 0, 1]))}. ` +
+      `. Your plan ${fmt(ch(sc.rows[0].w))}${cur.guess ? `, your guess ${fmt(ch(cur.guess.w))}` : ""}, savings ${fmt(ch([0, 0, 0, 1]))}. ` +
       `Prices rose ${pct(y.infl, 1)}.${ev}${over}`;
   }
   // the result table, once all years are shown
-  const done = upto >= n - 1e-9, goal = sc.set.goal * sc.set.S;
-  $("lifeTable").innerHTML = done ? "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Years over your limit</th>" +
-    (sc.set.goal ? "<th>Goal</th>" : "") + "</tr>" +
+  const done = upto >= n - 1e-9;
+  $("lifeTable").innerHTML = done ? "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Years over your limit</th></tr>" +
     main.map(r => `<tr><td>${nameCell(r)}</td><td>${money(r.st.money)}</td><td><b>${money(real(r.st))}</b></td>
-      <td>${r.st.strikes} of ${n}</td>${sc.set.goal ? `<td>${real(r.st) >= goal ? `<span class="ok">✓ reached</span>` : pct(real(r.st) / goal, 0)}</td>` : ""}</tr>`).join("") +
-    `<tr><td><i class="dot" style="background:var(--gray)"></i>Just keeping up with inflation <span class="muted">(reference)</span></td><td>${money(sc.keep.money)}</td><td>${money(real(sc.keep))}</td><td>–</td>${sc.set.goal ? "<td></td>" : ""}</tr>` : "";
+      <td>${r.st.strikes} of ${n}</td></tr>`).join("") +
+    `<tr><td><i class="dot" style="background:var(--gray)"></i>Just keeping up with inflation <span class="muted">(reference)</span></td><td>${money(sc.keep.money)}</td><td>${money(real(sc.keep))}</td><td>–</td></tr>` : "";
 }
 function animateLife() {
   const n = scenarioNow().years.length, token = ++life.token;
@@ -1443,41 +1442,42 @@ function renderLifeMany() {
       if (token !== life.manyToken) { done(false); return; }
       for (const end = Math.min(LIFE_FUTURES, seed + LIFE_CHUNK - 1); seed <= end; seed++) {
         const sc = lifeScenario(seed, set, strategies), bankReal = real(sc.rows.find(x => x.key === "bank").st);
-        const vPlan = real(sc.rows[0].st), vGuess = real(sc.rows.find(x => x.key === "guess").st);
-        if (Math.abs(vGuess - vPlan) < 0.5) ties++; else if (vGuess > vPlan) guessAhead++;
+        const gRow = sc.rows.find(x => x.key === "guess");
+        if (gRow) {                                                // who ended with more money: the plan or your guess
+          const vPlan = real(sc.rows[0].st), vGuess = real(gRow.st);
+          if (Math.abs(vGuess - vPlan) < 0.5) ties++; else if (vGuess > vPlan) guessAhead++;
+        }
         n = sc.years.length;
-        sc.rows.forEach((r, i) => { (per[i] = per[i] || { ...r, real: [], strikes: 0, beat: 0, goal: 0 });
+        sc.rows.forEach((r, i) => { (per[i] = per[i] || { ...r, real: [], strikes: 0, beat: 0 });
           const v = real(r.st);
-          per[i].real.push(v); per[i].strikes += r.st.strikes; per[i].beat += v > bankReal ? 1 : 0;
-          per[i].goal += set.goal && v >= set.goal * set.S ? 1 : 0; });
+          per[i].real.push(v); per[i].strikes += r.st.strikes; per[i].beat += v > bankReal ? 1 : 0; });
       }
       if (seed <= LIFE_FUTURES) {
         $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures… ${pct((seed - 1) / LIFE_FUTURES, 0)}`;
         setTimeout(step);
         return;
       }
-      showLifeMany(per, n, guessAhead, ties, set);
+      showLifeMany(per, n, guessAhead, ties);
       done(true);
     };
     $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures…`;
     setTimeout(step);
   });
 }
-function showLifeMany(per, n, guessAhead, ties, set) {
+function showLifeMany(per, n, guessAhead, ties) {
   const p = cur.p, N = LIFE_FUTURES;
   const q = (a, x) => quantileLinear(a.slice().sort((u, v) => u - v), x), share = x => pct(x / N, 0);
   const oneIn = x => x >= 100 ? `almost never (1 in ${Math.round(x)})` : `1 year in ${x < 20 ? x.toFixed(1) : Math.round(x)}`;
   const every = r => r.strikes ? oneIn(N * n / r.strikes) : "never";
-  const head = "<tr><th>Strategy</th><th>Typical result (median)</th><th>Bad luck (worst 5%)</th><th>Ends above savings only</th><th>A year over your limit</th>" +
-    (set.goal ? "<th>Reaches the goal</th>" : "") + "</tr>";
+  const head = "<tr><th>Strategy</th><th>Typical result (median)</th><th>Bad luck (worst 5%)</th><th>Ends above savings only</th><th>A year over your limit</th></tr>";
   const row = r => `<tr><td>${nameCell(r)}</td><td><b>${money(q(r.real, 0.5))}</b></td><td>${money(q(r.real, 0.05))}</td>
-      <td>${r.key === "bank" ? "–" : share(r.beat)}</td><td>${every(r)}</td>${set.goal ? `<td>${share(r.goal)}</td>` : ""}</tr>`;
+      <td>${r.key === "bank" ? "–" : share(r.beat)}</td><td>${every(r)}</td></tr>`;
   $("lifeMany").innerHTML = head + per.filter(r => r.main).map(row).join("");
   $("lifeExtra").innerHTML = head + per.filter(r => !r.main).map(row).join("");
   // Who ended with more money in each future: the math's plan or your guess.
   const you = per[0], guess = per.find(r => r.key === "guess"), mathAhead = N - guessAhead - ties;
   const seg = (k, color, label) => k ? `<span style="width:${100 * k / N}%;background:${color}">${k / N >= 0.15 ? label : ""}</span>` : "";
-  $("lifeWins").innerHTML = ties === N
+  $("lifeWins").innerHTML = !guess ? "" : ties === N
     ? `<p class="muted">Your guess is the same split as the math's plan, so both end with the same money in every future.</p>`
     : `<div class="split" role="img" aria-label="the math ahead in ${share(mathAhead)}, your guess ahead in ${share(guessAhead)} of futures">` +
       `${seg(mathAhead, "var(--blue)", `Math ${share(mathAhead)}`)}${seg(ties, "var(--gray)", `same ${share(ties)}`)}${seg(guessAhead, "var(--amber)", `You ${share(guessAhead)}`)}</div>` +
