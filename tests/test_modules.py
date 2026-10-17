@@ -6,14 +6,17 @@ import pytest
 
 from src.bisection import bisection
 from src.compounding import compound, compounding_error, continuous, error_estimate
-from src.gbm import ks_distance_to_gbm, walk_log_return_distribution
+from src.gbm import ks_distance_to_gbm, up_probability, walk_log_return_distribution
 from src.normal import norm_cdf, norm_ppf
 from src.option_pricing import binomial_price, black_scholes
-from src.portfolio import (best_mix_under_var, fund_fraction, mix_grid, portfolio_growth, portfolio_var,
+from src.portfolio import (best_mix_on_grid, best_mix_under_var, fund_fraction, fund_fractions, mix_grid,
+                           near_optimal_ranges, portfolio_es, portfolio_growth, portfolio_var, refine_best_mix,
                            simulate_wealth_mix)
-from src.risk import (binomial_pmf, empirical_var, growth_rate, kelly_fraction, max_fraction_under_var,
-                      max_fraction_under_var_jump, numerical_kelly_fraction, optimal_fraction, poisson_pmf,
-                      simulate_wealth, simulate_wealth_jump, value_at_risk, value_at_risk_jump)
+from src.risk import (binomial_pmf, empirical_es, empirical_var, expected_shortfall, expected_shortfall_jump,
+                      growth_rate, growth_rate_jump, jump_log_wealth_cdf, kelly_fraction, kelly_fraction_jump,
+                      max_fraction_under_es, max_fraction_under_var, max_fraction_under_var_jump,
+                      numerical_kelly_fraction, optimal_fraction, optimal_fraction_jump, poisson_pmf,
+                      simulate_wealth, simulate_wealth_jump, value_at_risk, value_at_risk_jump, var_root_formula)
 
 MU, SIGMA, R, T, ALPHA, L = 0.10, 0.20, 0.03, 1.0, 0.95, 0.15
 LAM, J = 0.10, -0.25
@@ -34,6 +37,12 @@ def test_bisection_finds_sqrt2():
 def test_bisection_needs_sign_change():
     with pytest.raises(ValueError):
         bisection(lambda x: x**2 + 1, -1.0, 1.0)
+
+
+def test_bisection_sees_the_signs_of_tiny_values():
+    # fun(a) * fun(mid) would round to 0 here and hide the sign change
+    root, _ = bisection(lambda x: 1e-200 * (x - 0.3), 0.0, 1.0)
+    assert root == pytest.approx(0.3, abs=1e-11)
 
 
 def test_normal_helpers():
@@ -90,6 +99,11 @@ def test_ks_distance_goes_to_zero():
     assert ks[2] < 0.01
 
 
+def test_walk_step_must_give_a_probability():
+    with pytest.raises(ValueError):
+        up_probability(0.30, 0.10, 1.0)         # one step a year is too long here: P(up) would be above 1
+
+
 # --- module 4 -----------------------------------------------------------------
 
 def test_kelly_fraction_analytic_and_numerical():
@@ -113,6 +127,37 @@ def test_var_root_hits_the_limit():
 def test_var_limit_not_binding_returns_f_max():
     f_var, _ = max_fraction_under_var(0.99, MU, SIGMA, R, T, ALPHA, f_max=2.0)
     assert f_var == 2.0
+
+
+def test_var_root_is_unique_for_any_horizon():
+    for horizon in [1.0, 10.0, 30.0]:           # past 22 years VaR(f) first falls, but it still crosses L once
+        f_var, _ = max_fraction_under_var(L, MU, SIGMA, R, horizon, ALPHA, f_max=5.0)
+        assert f_var == pytest.approx(var_root_formula(L, MU, SIGMA, R, horizon, ALPHA), abs=1e-9)
+        f = np.linspace(0, 5, 2001)
+        ok = value_at_risk(f, MU, SIGMA, R, horizon, ALPHA) <= L
+        assert np.all(ok[f < f_var - 1e-6]) and not np.any(ok[f > f_var + 1e-6])
+
+
+def test_expected_shortfall():
+    f = np.array([0.0, 0.3, 0.705, 1.5])
+    es, var = expected_shortfall(f, MU, SIGMA, R, T, ALPHA), value_at_risk(f, MU, SIGMA, R, T, ALPHA)
+    assert es[0] == pytest.approx(var[0]) and np.all(es[1:] > var[1:])    # bad years lose more than the VaR on average
+    for x in [0.3, 0.705, 1.5]:
+        assert expected_shortfall_jump(x, MU, SIGMA, R, T, 0.0, J, ALPHA) == pytest.approx(
+            float(expected_shortfall(x, MU, SIGMA, R, T, ALPHA)), abs=1e-9)
+    assert expected_shortfall_jump(0.705, MU, SIGMA, R, T, LAM, J, ALPHA) > float(expected_shortfall(0.705, MU, SIGMA, R, T, ALPHA))
+    f_es, _ = max_fraction_under_es(L, MU, SIGMA, R, T, ALPHA)
+    assert abs(float(expected_shortfall(f_es, MU, SIGMA, R, T, ALPHA)) - L) < 1e-9
+    assert f_es < max_fraction_under_var(L, MU, SIGMA, R, T, ALPHA)[0]
+
+
+def test_monte_carlo_es_matches_formula():
+    rng = np.random.default_rng(0)
+    W = simulate_wealth(0.7, MU, SIGMA, R, T, 52, 50_000, rng)
+    assert empirical_es(W[:, -1], 1.0, ALPHA) == pytest.approx(float(expected_shortfall(0.7, MU, SIGMA, R, T, ALPHA)), abs=0.01)
+    W = simulate_wealth_jump(0.7, MU, SIGMA, R, T, LAM, J, 52, 50_000, rng)
+    assert empirical_es(W[:, -1], 1.0, ALPHA) == pytest.approx(
+        expected_shortfall_jump(0.7, MU, SIGMA, R, T, LAM, J, ALPHA), abs=0.01)
 
 
 def test_monte_carlo_var_matches_formula():
@@ -154,6 +199,24 @@ def test_monte_carlo_var_with_crashes_matches_formula():
         value_at_risk_jump(f, MU, SIGMA, R, T, LAM, J, ALPHA), abs=0.01)
 
 
+def test_jump_cdf_without_noise():
+    # f = 0: everything in the bank, so log-wealth is exactly r T (no division by zero)
+    assert jump_log_wealth_cdf(R * T - 1e-9, 0.0, MU, SIGMA, R, T, LAM, J) == 0.0
+    assert jump_log_wealth_cdf(R * T + 1e-9, 0.0, MU, SIGMA, R, T, LAM, J) == pytest.approx(1.0)
+
+
+def test_crashes_lower_growth_and_the_kelly_fraction():
+    f = np.linspace(0.1, 2.0, 20)
+    assert np.allclose(growth_rate_jump(f, MU, SIGMA, R, 0.0, J), growth_rate(f, MU, SIGMA, R))
+    assert np.all(growth_rate_jump(f, MU, SIGMA, R, LAM, J) < growth_rate(f, MU, SIGMA, R))   # same average, lower growth
+    assert kelly_fraction_jump(MU, SIGMA, R, 0.0, J)[0] == pytest.approx(1.75, abs=1e-8)
+    f_star, _ = kelly_fraction_jump(MU, SIGMA, R, LAM, J)
+    slope = (growth_rate_jump(f_star + 1e-6, MU, SIGMA, R, LAM, J) - growth_rate_jump(f_star - 1e-6, MU, SIGMA, R, LAM, J)) / 2e-6
+    assert abs(slope) < 1e-8 and f_star == pytest.approx(1.4098, abs=1e-4)
+    f_crash, _ = max_fraction_under_var_jump(L, MU, SIGMA, R, T, LAM, J, ALPHA)
+    assert optimal_fraction_jump(MU, SIGMA, R, T, L, LAM, J, ALPHA) == pytest.approx(f_crash)
+
+
 # --- module 5: more assets ------------------------------------------------------
 
 def test_one_asset_mix_is_module4():
@@ -167,6 +230,43 @@ def test_one_asset_mix_is_module4():
 def test_mix_grid_covers_the_triangle():
     grid = mix_grid(3, 100)
     assert len(grid) == 5151 and np.allclose(grid.sum(axis=1), 1) and grid.min() >= 0
+    # first entry slowest: the same order as matlab/mix_grid.m and MIX_GRID in the web pages
+    assert np.array_equal(mix_grid(3, 2), [[0, 0, 1], [0, 0.5, 0.5], [0, 1, 0], [0.5, 0, 0.5], [0.5, 0.5, 0], [1, 0, 0]])
+
+
+def test_formula_grid_matches_the_bisection_grid():
+    w, f, d = best_mix_under_var(L, MU3, SIG3, RHO3, R, T, ALPHA)
+    w2, f2, d2, _ = best_mix_on_grid(L, MU3, SIG3, RHO3, R, T, ALPHA, 100)
+    assert np.allclose(w, w2, atol=1e-10) and np.array_equal(d, d2)
+    D = np.random.default_rng(2).dirichlet(np.ones(3), 200)
+    fs, gs = fund_fractions(D, L, MU3, SIG3, RHO3, R, T, ALPHA)
+    for d_, f_, g_ in zip(D, fs, gs):
+        f1, g1, _ = fund_fraction(d_, L, MU3, SIG3, RHO3, R, T, ALPHA)
+        assert f_ == pytest.approx(f1, abs=1e-10) and g_ == pytest.approx(g1, abs=1e-12)
+
+
+def test_finer_grids_converge_to_the_best_mix():
+    gs = [best_mix_on_grid(L, MU3, SIG3, RHO3, R, T, ALPHA, s)[3] for s in [25, 50, 100, 200, 400]]
+    assert np.all(np.diff(gs) >= 0)                                 # each grid contains the last: never worse
+    w, f, d, g = refine_best_mix(L, MU3, SIG3, RHO3, R, T, ALPHA)
+    assert g >= gs[-1] and g == pytest.approx(0.0746887, abs=2e-7)
+    assert portfolio_var(w, MU3, SIG3, RHO3, R, T, ALPHA) <= L + 1e-9 and w.min() >= 0 and w.sum() <= 1 + 1e-9
+    for x in np.random.default_rng(3).dirichlet(np.ones(4), 3000)[:, :3]:      # no random safe mix beats it
+        if portfolio_var(x, MU3, SIG3, RHO3, R, T, ALPHA) <= L:
+            assert portfolio_growth(x, MU3, SIG3, RHO3, R)[0] <= g + 1e-12
+
+
+def test_near_optimal_mixes_form_a_flat_band():
+    lo, hi, n = near_optimal_ranges(L, MU3, SIG3, RHO3, R, T, ALPHA, 100, 1e-4)
+    w, _, _ = best_mix_under_var(L, MU3, SIG3, RHO3, R, T, ALPHA)
+    assert n > 1 and np.all(lo <= w + 1e-12) and np.all(w <= hi + 1e-12)
+    assert hi[1] - lo[1] >= 0.05 and hi[0] - lo[0] <= 0.01        # stocks pinned near 73%, gold anywhere in a band
+
+
+def test_one_asset_es_is_module4():
+    for f in [0.0, 0.3, 0.705, 1.0]:
+        assert portfolio_es([f, 0, 0], MU3, SIG3, RHO3, R, T, ALPHA) == pytest.approx(
+            float(expected_shortfall(f, MU, SIGMA, R, T, ALPHA)), abs=1e-12)
 
 
 def test_best_mix_respects_the_limit_and_beats_stocks_only():

@@ -14,12 +14,13 @@ from src.compounding import compound, compounding_error, continuous, error_estim
 from src.gbm import (gbm_log_return_cdf, ks_distance_to_gbm, simulate_walk_paths,
                      walk_log_return_distribution)
 from src.option_pricing import binomial_price, black_scholes
-from src.portfolio import (best_mix_under_var, fund_fraction, mix_grid, portfolio_growth, portfolio_var,
-                           simulate_wealth_mix)
-from src.risk import (binomial_pmf, difference_quotient, empirical_var, growth_rate, kelly_fraction,
-                      jump_log_wealth_cdf, max_fraction_under_var, max_fraction_under_var_jump, numerical_kelly_fraction,
-                      optimal_fraction, poisson_pmf, simulate_wealth, simulate_wealth_jump, value_at_risk,
-                      value_at_risk_jump)
+from src.portfolio import (best_mix_on_grid, best_mix_under_var, fund_fraction, mix_grid, near_optimal_ranges,
+                           portfolio_growth, portfolio_var, refine_best_mix, simulate_wealth_mix)
+from src.risk import (binomial_pmf, difference_quotient, empirical_es, empirical_var, expected_shortfall,
+                      expected_shortfall_jump, growth_rate, growth_rate_jump, jump_log_wealth_cdf, kelly_fraction,
+                      kelly_fraction_jump, max_fraction_under_es, max_fraction_under_var, max_fraction_under_var_jump,
+                      numerical_kelly_fraction, optimal_fraction, optimal_fraction_jump, poisson_pmf, simulate_wealth,
+                      simulate_wealth_jump, value_at_risk, value_at_risk_jump, var_root_formula)
 
 FIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures")
 SEED = 42
@@ -28,7 +29,7 @@ SEED = 42
 P, R_SAVE, T_SAVE = 10_000.0, 0.10, 10.0
 # Module 2: European call option
 S0, K, R_OPT, SIGMA_OPT, T_OPT = 100.0, 100.0, 0.05, 0.20, 1.0
-# Modules 3-4: stock market and risk-free asset (annual numbers)
+# Modules 3-4: stock market and risk-free asset (yearly, continuously compounded: mu = 10% is 10.5% a year)
 MU, SIGMA, R, T = 0.10, 0.20, 0.03, 1.0
 ALPHA, LOSS_LIMIT, F_MAX = 0.95, 0.15, 2.0
 # Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
@@ -167,15 +168,23 @@ def module4_risk():
         elif k == 8:
             print(f"  {'...':>4}")
     f_opt = optimal_fraction(MU, SIGMA, R, T, LOSS_LIMIT, ALPHA, F_MAX)
+    print(f"  check with the quadratic formula: f = {var_root_formula(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA):.6f}"
+          f" (the other root is negative, so this is the only crossing, for any horizon)")
     print(f"\n  f_VaR = {f_var:.6f}  ->  f_opt = min(f*, f_VaR, f_max) = {f_opt:.6f}")
     print(f"  => invest {f_opt:.1%} in the stock and {1 - f_opt:.1%} risk-free;"
-          f" growth {g(f_opt):.2%}/yr, VaR {float(value_at_risk(f_opt, MU, SIGMA, R, T, ALPHA)):.2%}")
+          f" typical growth {g(f_opt):.2%}/yr, VaR {float(value_at_risk(f_opt, MU, SIGMA, R, T, ALPHA)):.2%}")
+    es = float(expected_shortfall(f_opt, MU, SIGMA, R, T, ALPHA))
+    f_es, _ = max_fraction_under_es(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA, F_MAX)
+    print(f"  Expected Shortfall: the worst {1 - ALPHA:.0%} of years lose {es:.2%} on average (VaR only says 'more than"
+          f" {LOSS_LIMIT:.0%}');\n  the same IVT + bisection on ES(f) - L gives f_ES = {f_es:.6f} for 'lose at most"
+          f" {LOSS_LIMIT:.0%} on average in the worst {1 - ALPHA:.0%}'")
 
     rng = np.random.default_rng(SEED)
     print(f"\n  Monte Carlo check (20,000 paths): VaR with rebalancing every dt -> analytic {LOSS_LIMIT:.2%}")
     for label, n in [("yearly", 1), ("quarterly", 4), ("monthly", 12), ("weekly", 52), ("daily", 252)]:
         W = simulate_wealth(f_opt, MU, SIGMA, R, T, n, 20_000, rng)
         print(f"  {label:>10}: VaR = {empirical_var(W[:, -1], 1.0, ALPHA):.2%}")
+    print(f"       daily: ES  = {empirical_es(W[:, -1], 1.0, ALPHA):.2%}  (formula {es:.2%})")
 
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
     f_grid = np.linspace(0, 2 * f_star, 400)
@@ -231,11 +240,15 @@ def module4b_crashes():
         print(f"  {n:>14,} {err:40.2e}")
 
     f_var, _ = max_fraction_under_var(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA, F_MAX)
-    print(f"\n  Value-at-Risk at the normal answer f_VaR = {f_var:.6f}:")
-    print(f"  {'confidence':>12} {'bell curve only':>16} {'with crashes':>14}")
+    print(f"\n  Risk at the normal answer f_VaR = {f_var:.6f}:")
+    print(f"  {'':>12} {'bell curve only':>16} {'with crashes':>14}")
     for a in [0.95, 0.99]:
-        print(f"  {a:>12.0%} {float(value_at_risk(f_var, MU, SIGMA, R, T, a)):16.2%}"
+        print(f"  {'VaR ' + format(a, '.0%'):>12} {float(value_at_risk(f_var, MU, SIGMA, R, T, a)):16.2%}"
               f" {value_at_risk_jump(f_var, MU, SIGMA, R, T, lam, J, a):14.2%}")
+    print(f"  {'ES ' + format(ALPHA, '.0%'):>12} {float(expected_shortfall(f_var, MU, SIGMA, R, T, ALPHA)):16.2%}"
+          f" {expected_shortfall_jump(f_var, MU, SIGMA, R, T, lam, J, ALPHA):14.2%}   (average loss in the worst 5%)")
+    print(f"  {'growth':>12} {float(growth_rate(f_var, MU, SIGMA, R)):16.2%}"
+          f" {float(growth_rate_jump(f_var, MU, SIGMA, R, lam, J)):14.2%}   (same average return, but ln(1 + fJ) < fJ)")
 
     f_crash, hist = max_fraction_under_var_jump(LOSS_LIMIT, MU, SIGMA, R, T, lam, J, ALPHA, F_MAX)
     print(f"\n  IVT + bisection on h(f) = VaR_crash(f) - L (each VaR_crash is itself a bisection on the CDF):")
@@ -245,7 +258,12 @@ def module4b_crashes():
             print(f"  {k + 1:>4} {a:10.6f} {b:10.6f} {mid:10.6f} {hm:12.2e}")
         elif k == 5:
             print(f"  {'...':>4}")
-    print(f"\n  f_crash = {f_crash:.6f}  ->  with crashes, invest {f_crash:.1%} in the stock instead of {f_var:.1%}")
+    f_star_jump, _ = kelly_fraction_jump(MU, SIGMA, R, lam, J)
+    f_opt_jump = optimal_fraction_jump(MU, SIGMA, R, T, LOSS_LIMIT, lam, J, ALPHA, F_MAX)
+    print(f"\n  f_crash = {f_crash:.6f};  Kelly with crashes (bisection on the slope of the growth):"
+          f" f* = {f_star_jump:.4f} instead of {kelly_fraction(MU, SIGMA, R):.2f}")
+    print(f"  => f_opt = min(f*, f_crash, f_max) = {f_opt_jump:.6f}: with crashes, invest {f_opt_jump:.1%}"
+          f" in the stock instead of {f_var:.1%}")
 
     rng = np.random.default_rng(SEED)
     print(f"\n  Monte Carlo check (40,000 paths, crash coin-flips each step): VaR at f_crash -> {LOSS_LIMIT:.2%}")
@@ -301,13 +319,30 @@ def module5_portfolio():
     print(f"  growth {g:.4%}/yr, VaR {portfolio_var(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA):.4%}")
     f4, g4, _ = fund_fraction(np.eye(3)[0], LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)
     print(f"  vs stocks + bank (Module 4): growth {g4:.4%}/yr  ->  +{g - g4:.2%} a year for the same risk")
+    lo, hi, n_near = near_optimal_ranges(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA, 100, 1e-4)
+    print(f"  The top is flat: {n_near} mixes grow within 0.01%/yr of the best: "
+          + ", ".join(f"{name} {a:.0%}-{b:.0%}" for name, a, b in zip(ASSET_NAMES, lo, hi))
+          + " -> about 73% stocks is the message; the gold/bond split barely matters")
+
+    print("\n  Module 5's limit: grid step -> 0 (each grid is twice as fine and contains the last,"
+          " so the best growth never goes down)")
+    print(f"  {'step':>9} {'mixes':>10} {'best mix: stocks / gold / bonds':>34} {'growth':>10}")
+    steps_list, limit_g = [25, 50, 100, 200, 400, 800, 1600], []
+    for s in steps_list:
+        wk, _, _, gk = best_mix_on_grid(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA, s)
+        limit_g.append(gk)
+        print(f"  {1 / s:9.4%} {(s + 1) * (s + 2) // 2:10,} {' / '.join(f'{x:.2%}' for x in wk):>34} {gk:10.5%}")
+    w_lim, _, _, g_lim = refine_best_mix(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)
+    # along the flat top the exact spot is only clear to about 0.1%, so the mix is shown with one decimal
+    print(f"  {'-> 0':>9} {'zoom in':>10} {' / '.join(f'{x:.1%}' for x in w_lim):>34} {g_lim:10.5%}"
+          f"   <- the limit: the exact best mix")
 
     rng = np.random.default_rng(SEED)
     print("\n  Monte Carlo check (40,000 one-year paths, rebalanced daily): VaR of the best mix")
     W = simulate_wealth_mix(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, 252, 40_000, rng)
     print(f"       daily: VaR = {empirical_var(W[:, -1], 1.0, ALPHA):.2%}  (analytic {portfolio_var(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA):.2%})")
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.4))
     ax = axes[0]
     colors = ["C0", "#c08a00", "C2", "0.6"]
     plans = [("stocks + bank\n(Module 4)", np.array([f4, 0, 0])), ("best mix\n(Module 5)", w)]
@@ -337,6 +372,14 @@ def module5_portfolio():
                color="C3", zorder=3, label="best mix")
     ax.set(xlabel="bad-year loss (1-year VaR)", ylabel="growth rate g", title="Random mixes: the best is the highest green one")
     ax.legend(fontsize=9)
+
+    ax = axes[2]
+    pos = np.arange(len(steps_list))
+    ax.plot(pos, np.array(limit_g) * 100, "o-", color="C0", label="best mix on the grid")
+    ax.axhline(g_lim * 100, color="C3", ls="--", label=f"exact best mix: {g_lim:.4%}")
+    ax.set_xticks(pos, [f"{100 / s:g}%" for s in steps_list])
+    ax.set(xlabel="grid step (finer to the right)", ylabel="growth rate g (%)", title="Module 5's limit: finer grid -> exact best")
+    ax.legend(fontsize=9, loc="lower right")
     save(fig, "fig6_best_mix.png")
 
 

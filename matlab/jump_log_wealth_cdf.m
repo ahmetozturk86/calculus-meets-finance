@@ -11,5 +11,9 @@ sd = abs(f) * sigma * sqrt(T);
 jump = log(1 + f * J);
 k = 0:k_max;
 weights = arrayfun(@(i) poisson_pmf(i, lam * T), k);
+if sd == 0                                 % no bell-curve noise (f = 0): steps at m + k jump
+    p = sum(weights .* (x >= m + k * jump));
+    return
+end
 p = sum(weights .* norm_cdf((x - m - k * jump) / sd));
 end

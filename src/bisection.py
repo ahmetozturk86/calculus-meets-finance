@@ -15,7 +15,8 @@ def bisection(fun, a, b, tol=1e-12, max_iter=200):
     """Find c in [a, b] with fun(c) = 0 for a continuous fun.
 
     Returns (root, history). Each history row is [a, b, mid, fun(mid)], so the
-    shrinking interval can be printed or plotted.
+    shrinking interval can be printed or plotted. Signs are compared directly: the
+    product of two tiny values could round to 0 and hide a sign change.
     """
     fa = float(fun(a))
     fb = float(fun(b))
@@ -23,7 +24,7 @@ def bisection(fun, a, b, tol=1e-12, max_iter=200):
         return a, np.empty((0, 4))
     if fb == 0.0:
         return b, np.empty((0, 4))
-    if fa * fb > 0:
+    if (fa < 0) == (fb < 0):
         raise ValueError("IVT condition fails: fun(a) and fun(b) must have opposite signs")
 
     history = []
@@ -34,7 +35,7 @@ def bisection(fun, a, b, tol=1e-12, max_iter=200):
         history.append([a, b, mid, fm])
         if fm == 0.0 or 0.5 * (b - a) < tol:
             break
-        if fa * fm < 0:
+        if (fa < 0) != (fm < 0):
             b = mid
         else:
             a, fa = mid, fm

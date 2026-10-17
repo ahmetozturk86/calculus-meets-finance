@@ -108,8 +108,10 @@
 <section class="card">
   <h2><span class="num">2.</span> Option price: tree bars become a bell curve</h2>
   <p>The binomial tree lets the stock go only up or down, N times. The <b class="c-blue">bars</b> show where the stock can end
-  and how likely each place is. The option pays S<sub>T</sub> − K only to the right of K (<b class="c-green">green</b>).
-  Its price is that payoff averaged over the bars. Black–Scholes uses the smooth <b class="c-red">curve</b> instead.</p>
+  and how likely each place is in the <i>pricing world</i>, where the stock grows like the bank (rate r, not its real return):
+  the risk-neutral probabilities. The option pays S<sub>T</sub> − K only to the right of K (<b class="c-green">green</b>).
+  Its price is that payoff averaged over the bars and then discounted to today (times e<sup>−rT</sup>).
+  Black–Scholes uses the smooth <b class="c-red">curve</b> instead.</p>
   <div class="ctl-main"><label for="N2">Tree steps N <span class="val" data-for="N2"></span></label>
     <input id="N2" type="range" min="1" max="200" step="1" value="2"></div>
   <div class="ctl-small">
@@ -143,6 +145,7 @@
 <section class="card">
   <h2><span class="num">4.</span> How much to put in the stock?</h2>
   <p>You put a share f of your money in a stock (return μ = 10%, risk σ = 20%) and the rest in the bank (3%); f above 1 means borrowing.
+  The rates are continuous, as in section 1: μ = 10% is an average gain of e<sup>0.1</sup> − 1 = 10.5% a year.
   The bell shows where your money can be after one year. The <b class="c-red">red tail</b> is the worst 5% of years;
   where it starts is the <b>Value-at-Risk</b>. Rule: VaR must not go past the loss limit L (dashed line).</p>
   <div class="ctl-main"><label for="f4">Share in the stock f <span class="val" data-for="f4"></span></label>
@@ -194,6 +197,16 @@
   <div class="result" id="out6"></div>
   <div class="chart" id="c6"></div>
   <div class="note" id="note6"></div>
+  <h3>A finer and finer search: the best mix as a limit</h3>
+  <p>Each dot is one mix of stocks, gold and bonds (the corners are “all stocks”, “all gold” and “all bonds”). The stronger the
+  blue, the faster the mix grows under the 15% limit. The computer tries every dot and keeps the <b class="c-green">fastest</b>. With a smaller step
+  there are more dots, so the search gets closer to the <b class="c-red">true best mix</b>: the limit as the step goes to 0.</p>
+  <div class="ctl-main"><label for="s6">Search step <span class="val" data-for="s6"></span></label>
+    <input id="s6" type="range" min="0" max="4" step="1" value="0"></div>
+  <div class="result" id="out6b"></div>
+  <div class="chart" id="c6b"></div>
+  <div class="note">Look at: while the step is big, the green dot jumps around, but the growth it finds only climbs toward the true best.
+  Near the top many dots are almost equally strong: about 73% stocks is what matters, the split between gold and bonds barely does.</div>
 </section>
 </main>
 <footer>Same math as the Python and MATLAB code of this project. An illustrative model for learning, not financial advice.</footer>
@@ -210,11 +223,11 @@ function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
 }
 const normCdf = x => 0.5 * (1 + erf(x / Math.SQRT2));
 const normPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
+function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {   // signs compared directly: a product of tiny values could round to 0
   let fa = fun(a); const fb = fun(b);
   if (fa === 0) return [a, []];
   if (fb === 0) return [b, []];
-  if (fa * fb > 0) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
+  if ((fa < 0) === (fb < 0)) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
   const history = [];
   let mid = 0.5 * (a + b);
   for (let i = 0; i < maxIter; i++) {
@@ -222,14 +235,18 @@ function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
     const fm = fun(mid);
     history.push([a, b, mid, fm]);
     if (fm === 0 || 0.5 * (b - a) < tol) break;
-    if (fa * fm < 0) b = mid; else { a = mid; fa = fm; }
+    if ((fa < 0) !== (fm < 0)) b = mid; else { a = mid; fa = fm; }
   }
   return [mid, history];
 }
 const normPpf = q => bisection(x => normCdf(x) - q, -10, 10, 1e-13)[0];
 
 // Module 3 (src/gbm.py): the walk's log-price moves +/- sigma sqrt(dt) each step, with P(up) matching the GBM drift.
-const upProbability = (mu, sig, dt) => 0.5 + 0.5 * (mu - 0.5 * sig * sig) / sig * Math.sqrt(dt);
+function upProbability(mu, sig, dt) {
+  const p = 0.5 + 0.5 * (mu - 0.5 * sig * sig) / sig * Math.sqrt(dt);
+  if (!(p > 0 && p < 1)) throw new Error("step too long: need dt < sigma^2 / (mu - sigma^2/2)^2 so that 0 < P(up) < 1");
+  return p;
+}
 function walkLogReturnDistribution(mu, sig, T, n) {   // exact: support points x and probabilities pmf
   const dt = T / n, p = upProbability(mu, sig, dt), x = [], pmf = [];
   let logComb = 0;
@@ -278,9 +295,16 @@ function poissonPmf(k, m) {
 }
 function jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax = 30) {
   const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T), jump = Math.log(1 + f * J);
-  let s = 0;
-  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * normCdf((x - m - k * jump) / sd);
+  let s = 0;   // with sd = 0 (f = 0) there is no bell-curve noise: a step at m + k jump
+  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * (sd === 0 ? +(x >= m + k * jump) : normCdf((x - m - k * jump) / sd));
   return s;
+}
+// Long-run growth with crashes (risk.growth_rate_jump): the same average return, but ln(1 + fJ) < fJ lowers it.
+const growthRateJump = (f, mu, sig, r, lam, J) => growthRate(f, mu, sig, r) - lam * J * f + lam * Math.log1p(f * J);
+// Expected Shortfall (risk.expected_shortfall): the average loss in the worst 1 - alpha of years.
+function expectedShortfall(f, mu, sig, r, T, alpha) {
+  const z = normPpf(alpha), m = growthRate(f, mu, sig, r) * T, s = Math.abs(f) * sig * Math.sqrt(T);
+  return 1 - Math.exp(m + 0.5 * s * s) * normCdf(-z - s) / (1 - alpha);
 }
 function valueAtRiskJump(f, mu, sig, r, T, lam, J, alpha, kMax = 30) {
   if (f === 0) return 1 - Math.exp(r * T);
@@ -312,14 +336,49 @@ function fundFraction(d, L, m, alpha, z = normPpf(alpha)) {
   const f = Math.min(fStar, v.f, 1);
   return { f, g: growthRate(f, fd.mu, fd.sig, r), status: v.status };
 }
-function bestMix(m, L, alpha) {
+function bestMix(m, L, alpha, grid = MIX_GRID) {
   const z = normPpf(alpha);
   let best = { f: 0, g: m.rc, d: null };
-  for (const d of MIX_GRID) {
+  for (const d of grid) {
     const res = fundFraction(d, L, m, alpha, z);
     if (res.g > best.g + 1e-15) best = { ...res, d };
   }
   return { ...best, w: best.d ? best.d.map(x => x * best.f) : [0, 0, 0] };
+}
+// Module 5's limit (portfolio.mix_grid, refine_best_mix): every mix on a grid with step 1/steps, first share slowest.
+function mixGrid(steps) {
+  const out = [];
+  for (let i = 0; i <= steps; i++) for (let j = 0; j <= steps - i; j++) out.push([i / steps, j / steps, (steps - i - j) / steps]);
+  return out;
+}
+// For the bell curve VaR(f) = L is a quadratic equation; its two roots have opposite signs (risk.var_root_formula).
+function varRootFormula(L, mu, sig, r, T, alpha, z = normPpf(alpha)) {
+  if (1 - Math.exp(r * T) - L > 0) throw new Error("risk limit L is below the VaR of the risk-free portfolio");
+  if (L >= 1) return Infinity;
+  const a = 0.5 * sig * sig * T, b = z * sig * Math.sqrt(T) - (mu - r) * T, c = Math.log(1 - L) - r * T, disc = Math.sqrt(b * b - 4 * a * c);
+  return b >= 0 ? -2 * c / (b + disc) : (disc - b) / (2 * a);
+}
+function fundFractionFormula(d, L, m, z) {        // fundFraction with the formula instead of bisection (fast)
+  const fd = fundOf(d, m), a = fd.mu - m.rc, s = fd.sig;
+  if (!(a > 0 && s > 0)) return { f: 0, g: m.rc };
+  const f = Math.min(a / (s * s), varRootFormula(L, fd.mu, s, m.rc, 1, 0, z), 1);
+  return { f, g: m.rc + f * a - 0.5 * f * f * s * s };
+}
+// Zoom in on the best mix: a small grid around the current best (+-10 grid steps at first), halved 40 times.
+function refineBestMix(m, L, alpha, start, steps = 100, levels = 40, points = 100) {
+  const z = normPpf(alpha);
+  let d = start, best = fundFractionFormula(d, L, m, z), width = 10 / steps;
+  for (let level = 0; level < levels; level++, width /= 2) {
+    let cand = null;
+    for (let i = 0; i <= points; i++) for (let j = 0; j <= points; j++) {
+      const a = -width + 2 * width * i / points, b = -width + 2 * width * j / points, e = [d[0] + a, d[1] + b, d[2] - a - b];
+      if (e.some(x => x <= -1e-12)) continue;
+      const ec = e.map(x => Math.max(x, 0)), res = fundFractionFormula(ec, L, m, z);
+      if (!cand || res.g > cand.g) cand = { ...res, d: ec };
+    }
+    if (cand.g > best.g) { best = cand; d = cand.d; }
+  }
+  return { ...best, d, w: d.map(x => x * best.f) };
 }
 
 // =====================================================================
@@ -508,9 +567,9 @@ function module4() {
   }
   curve.push({ x: hi, y: 0 }, { x: xMax, y: 0 });
   if (tail.length) tail.push({ x: q, y: dens(q) });
-  const varF = VaR(f), ok = varF <= L;
+  const varF = VaR(f), ok = varF <= L, es = expectedShortfall(f, MU, SIG, R, 1, ALPHA);
   $("out4").innerHTML = `With f = ${f.toFixed(3)}: ` + (varF >= 0
-      ? `in the worst 5% of years you lose more than <b>${pct(varF)}</b> (VaR). `
+      ? `in the worst 5% of years you lose more than <b>${pct(varF)}</b> (VaR), ${pct(es)} on average. `
       : `even in the worst 5% of years you still gain <b>${pct(-varF)}</b> (VaR = ${pct(varF)}). `) +
     `Limit L = ${pct(L, 0)} → ` + (ok ? `<span class="ok">✓ allowed</span>` : `<span class="bad">✗ too risky</span>`);
   drawChart($("c4"), { x: [xMin, xMax], y: [0, 1.1 * peak], hideY: true, xFmt: x => num0(x) + "%", aria: "where your money can be after one year",
@@ -588,7 +647,9 @@ function module4b() {
     : `Stocks fall ${pct(-J, 0)} about once every ${every} years (a ${pct(1 - Math.exp(-lam), 1)} chance each year). ` +
       `At f = ${f.toFixed(3)} a bad year now loses <b>${pct(vj)}</b> → ` +
       (vj <= L4B + 1e-9 ? `<span class="ok">✓ still within 15%</span>` : `<span class="bad">✗ more than 15%</span>`) +
-      `. With crashes the largest safe f is <b>${fCrash.toFixed(3)}</b> (bell curve: ${f.toFixed(3)}).`;
+      `. With crashes the largest safe f is <b>${fCrash.toFixed(3)}</b> (bell curve: ${f.toFixed(3)}). ` +
+      `Even with the same average return, crashes slow the long-run growth at f = ${f.toFixed(3)} from ` +
+      `${pct(growthRate(f, MU, SIG, R))} to <b>${pct(growthRateJump(f, MU, SIG, R, lam, J))}</b> a year: a big loss hurts more than the extra drift helps.`;
 }
 
 // =====================================================================
@@ -625,17 +686,57 @@ function module5() {
     : `Look at: with this much gold, adding bonds only lowers the growth, so the top of this hill is at 0% bonds (${pct(top.y)}).`) +
     ` Trying every mix of all three in 1% steps
     (${MIX_GRID.length.toLocaleString("en-US")} mixes, one bisection each) gives the best:
-    <b>${pct(BEST.w[0], 0)} stocks, ${pct(BEST.w[1], 0)} gold, ${pct(BEST.w[2], 0)} bonds</b>, growth rate <b>${pct(BEST.g)}</b> a year.`;
+    <b>${pct(BEST.w[0], 0)} stocks, ${pct(BEST.w[1], 0)} gold, ${pct(BEST.w[2], 0)} bonds</b>, growth rate <b>${pct(BEST.g)}</b> a year.
+    Below: what happens when the steps get finer.`;
 }
+
+// Module 5's limit: the search grid gets finer and the best mix found approaches the true best (step -> 0).
+const SEARCH_STEPS = [5, 10, 20, 50, 100], searchCache = {};          // steps of 20%, 10%, 5%, 2%, 1%
+const TRUE_BEST = refineBestMix(M5, L5, ALPHA, BEST.d);
+function searchGrid(steps) {
+  if (!searchCache[steps]) {
+    const grid = mixGrid(steps);
+    searchCache[steps] = { grid, g: grid.map(d => fundFraction(d, L5, M5, ALPHA, Z).g), best: bestMix(M5, L5, ALPHA, grid) };
+  }
+  return searchCache[steps];
+}
+const mixWords = (w, digits = 0) => `${pct(w[0], digits)} stocks · ${pct(w[1], digits)} gold · ${pct(w[2], digits)} bonds` +
+  (1 - w[0] - w[1] - w[2] >= 0.005 ? ` · ${pct(1 - w[0] - w[1] - w[2], digits)} bank` : "");
+// A triangle of mixes, drawn like drawChart: corners all stocks (bottom left), all bonds (bottom right), all gold (top).
+function drawTriangle(el, dots, marks, legend) {
+  const W = window.innerWidth < 560 ? 420 : 640, H = Math.round(W * 0.62), side = Math.min(W - 60, (H - 50) / 0.866);
+  const x0 = (W - side) / 2, y0 = H - 26, at = d => [x0 + side * (d[2] + 0.5 * d[1]), y0 - side * 0.866 * d[1]];
+  const corner = (d, label, dy, anchor) => { const [x, y] = at(d);
+    return `<text x="${x}" y="${y + dy}" font-size="12.5" text-anchor="${anchor}" fill="var(--muted)">${label}</text>`; };
+  const parts = [`<path d="M${at([1, 0, 0])}L${at([0, 0, 1])}L${at([0, 1, 0])}Z" fill="none" stroke="var(--line)"/>`,
+    corner([1, 0, 0], "all stocks", 18, "start"), corner([0, 0, 1], "all bonds", 18, "end"), corner([0, 1, 0], "all gold", -8, "middle")];
+  for (const p of dots) { const [x, y] = at(p.d); parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${p.r}" fill="var(--blue)" fill-opacity="${p.o.toFixed(3)}"/>`); }
+  for (const p of marks) { const [x, y] = at(p.d); parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${p.r}" fill="${p.color}" stroke="var(--card)" stroke-width="2"/>`); }
+  const leg = legend.map(l => `<span><i style="background:${l.color}"></i>${l.label}</span>`).join("");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="every mix of stocks, gold and bonds on a triangle">${parts.join("")}</svg><div class="legend">${leg}</div>`;
+}
+function module5b() {
+  const steps = SEARCH_STEPS[v("s6")], s = searchGrid(steps), lo = M5.rc, hi = TRUE_BEST.g;
+  const W = window.innerWidth < 560 ? 420 : 640, r = Math.max(1.6, Math.min(9, 0.42 * (W - 60) / steps));
+  const dots = s.grid.map((d, i) => ({ d, r, o: 0.06 + 0.94 * Math.pow(clampUnit((s.g[i] - lo) / (hi - lo)), 6) }));
+  drawTriangle($("c6b"), dots, [{ d: s.best.d, r: Math.max(5, r + 2), color: "var(--green)" }, { d: TRUE_BEST.d, r: 4.5, color: "var(--red)" }],
+    [{ color: "var(--blue)", label: "one mix (stronger blue = grows faster)" }, { color: "var(--green)", label: "best on this grid" },
+     { color: "var(--red)", label: "true best (step → 0)" }]);
+  $("out6b").innerHTML = `Step ${pct(1 / steps, 0)}: ${s.grid.length.toLocaleString("en-US")} mixes, one bisection each. ` +
+    `Best found: <b>${mixWords(s.best.w)}</b> → growth <b>${pct(s.best.g, 3)}</b> a year. ` +
+    `True best (step → 0): ${mixWords(TRUE_BEST.w, 1)} → <b>${pct(TRUE_BEST.g, 3)}</b>.`;
+}
+const clampUnit = x => Math.min(1, Math.max(0, x));
 
 // =====================================================================
 // Sliders
 // =====================================================================
 const modules = { n1: module1, P: module1, r1: module1, t1: module1, N2: module2, K: module2, s2: module2, n3: module3,
-                  f4: module4, L: module4, lam5: module4b, J5: module4b, b6: module5, gold6: module5 };
+                  f4: module4, L: module4, lam5: module4b, J5: module4b, b6: module5, gold6: module5, s6: module5b };
 const SHOW = { n1: x => N_CHOICES[x][1], P: num0, r1: x => pct(x, 0), t1: x => `${x} years`, s2: x => pct(x, 0),
                n3: x => WALK_CHOICES[x][1], f4: x => x.toFixed(3), L: x => pct(x, 0),
-               lam5: x => CRASH_EVERY[x] ? `once every ${CRASH_EVERY[x]} years` : "never", J5: x => pct(x, 0), b6: x => x + "%", gold6: x => x + "%" };
+               lam5: x => CRASH_EVERY[x] ? `once every ${CRASH_EVERY[x]} years` : "never", J5: x => pct(x, 0), b6: x => x + "%", gold6: x => x + "%",
+               s6: x => `${100 / SEARCH_STEPS[x]}% (${mixGrid(SEARCH_STEPS[x]).length.toLocaleString("en-US")} mixes)` };
 function label(id) {
   const el = document.querySelector(`[data-for="${id}"]`), x = v(id);
   el.textContent = SHOW[id] ? SHOW[id](x) : x;
@@ -650,7 +751,7 @@ for (const [id, fn] of Object.entries(modules)) {
   label(id);
 }
 $("fBell").textContent = F_BELL.toFixed(3);
-const drawAll = () => { module1(); module2(); module3(); module4(); module4b(); module5(); };
+const drawAll = () => { module1(); module2(); module3(); module4(); module4b(); module5(); module5b(); };
 drawAll();
 // Charts are drawn for a narrow or a wide screen (drawChart), so they are redrawn only when that changes.
 let resizeTimer, narrow = window.innerWidth < 560;

@@ -212,7 +212,7 @@
       <h3>Stocks in a normal market</h3>
       <div class="grid">
         <label class="field"><span>Average return (μ)</span>
-          <div class="input"><input id="mu" type="number" min="-50" max="80" step="0.1" value="10"><i>% a year</i></div></label>
+          <div class="input"><input id="mu" type="number" min="-50" max="80" step="0.1" value="10.5"><i>% a year</i></div></label>
         <label class="field"><span>Risk: how much a year swings (σ)</span>
           <div class="input"><input id="sig" type="number" min="1" max="80" step="0.1" value="20"><i>% a year</i></div></label>
       </div>
@@ -386,11 +386,11 @@ function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
 }
 const normCdf = x => 0.5 * (1 + erf(x / Math.SQRT2));
 const normPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
+function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {   // signs compared directly: a product of tiny values could round to 0
   let fa = fun(a); const fb = fun(b);
   if (fa === 0) return [a, []];
   if (fb === 0) return [b, []];
-  if (fa * fb > 0) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
+  if ((fa < 0) === (fb < 0)) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
   const history = [];
   let mid = 0.5 * (a + b);
   for (let i = 0; i < maxIter; i++) {
@@ -398,7 +398,7 @@ function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
     const fm = fun(mid);
     history.push([a, b, mid, fm]);
     if (fm === 0 || 0.5 * (b - a) < tol) break;
-    if (fa * fm < 0) b = mid; else { a = mid; fa = fm; }
+    if ((fa < 0) !== (fm < 0)) b = mid; else { a = mid; fa = fm; }
   }
   return [mid, history];
 }
@@ -428,10 +428,18 @@ function poissonPmf(k, m) {
 }
 function jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax = 30) {
   const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T), jump = Math.log(1 + f * J);
-  let s = 0;
-  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * normCdf((x - m - k * jump) / sd);
+  let s = 0;   // with sd = 0 (f = 0) there is no bell-curve noise: a step at m + k jump
+  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * (sd === 0 ? +(x >= m + k * jump) : normCdf((x - m - k * jump) / sd));
   return s;
 }
+// Kelly with crashes (risk.kelly_fraction_jump): bisection on the slope of the growth g(f) - lam J f + lam ln(1 + f J).
+function kellyFractionJump(mu, sig, r, lam, J, fHi = 10) {
+  if (J < 0) fHi = Math.min(fHi, 0.999999 / -J);
+  return bisection(f => (mu - r) - f * sig * sig - lam * J + lam * J / (1 + f * J), 0, fHi, 1e-10)[0];
+}
+// Expected Shortfall of a bell-curve year with typical growth g and spread s (risk.expected_shortfall):
+// the average loss in the worst 1 - alpha of years, always at least the VaR.
+const esOf = (g, s, alpha) => 1 - Math.exp(g + 0.5 * s * s) * normCdf(-normPpf(alpha) - s) / (1 - alpha);
 function valueAtRiskJump(f, mu, sig, r, T, lam, J, alpha, kMax = 30) {
   if (f === 0) return 1 - Math.exp(r * T);
   if (1 + f * J <= 0) throw new Error("a crash would wipe out the portfolio: need 1 + f J > 0");
@@ -479,8 +487,8 @@ function bestMix(m, L, alpha) {
     if (res.g > best.g + 1e-15) best = { ...res, d };
   }
   const w = best.d ? best.d.map(x => x * best.f) : [0, 0, 0];
-  const v = best.d ? best.varFun(best.f) : 1 - Math.exp(m.rc);
-  return { ...best, w: [...w, 1 - best.f], var: v };
+  const v = best.d ? best.varFun(best.f) : 1 - Math.exp(m.rc), es = best.d ? esOf(best.g, best.f * best.fund.sig, alpha) : v;
+  return { ...best, w: [...w, 1 - best.f], var: v, es };
 }
 
 // =====================================================================
@@ -577,6 +585,7 @@ const MOODS = {
   inflation: { name: "High inflation", icon: "🔥", infl: 0.08, r: 0.06, mu: [0.04, 0.12, 0.01], sig: [0.18, 0.16, 0.08], shock: 0.08,
                text: "Prices rise fast, cash loses value." }};
 // The model works with continuous rates (Module 1): a simple rate x becomes ln(1 + x), so e^(rate) = 1 + x.
+// The same holds for the rates people type (params): every rate on this page is an ordinary yearly rate.
 for (const m of Object.values(MOODS)) { m.rc = Math.log(1 + m.r); m.muc = m.mu.map(x => Math.log(1 + x)); }
 // Markets change over time (a Markov chain): row = this year's market, column = next year's (illustrative).
 const REGIME_KEYS = ["calm", "normal", "crisis", "inflation"];
@@ -596,22 +605,23 @@ const CRASH_SAFE = [1.05, 1.03];                                   // what a mar
 // they belong to the market picked (p.mood); the other states shift them by the MOODS differences. The stock numbers
 // mu, sigma (continuous rates, as in Module 4) are for a normal market, and the other states are shifted the same way,
 // so a crisis is "your market, but worse". Gold and bonds follow MOODS. Crashes: in state s they happen at rate
-// lam_s = lam * shock_s / shock_normal (at most one per year, probability 1 - e^(-lam_s)) and multiply the stock by
-// 1 + J. The stock drift is lowered by ln(1 + pJ), so the average yearly stock return is still e^mu (Module 4b).
+// lam_s = lam * shock_s / shock_normal (at most one per year, probability 1 - e^(-lam_s)) and multiply the assets by
+// `crash` (stocks 1 + J, gold and bonds CRASH_SAFE). Each drift is lowered by ln(1 + p (crash_i - 1)), so every asset's
+// average yearly return is still e^avg, the number in the table (Module 4b): crashes change the shape, not the average.
 function marketStates(p, lam, J) {
   const n = MOODS.normal, c = MOODS[p.mood], out = {};
   for (const k of REGIME_KEYS) {
     const m = MOODS[k], mucAvg = p.mu + (m.muc[0] - n.muc[0]), rc = Math.max(0, p.r + m.rc - c.rc);
-    const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE];
-    out[k] = { key: k, name: m.name, icon: m.icon, text: m.text, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg,
-               mu: [Math.exp(mucAvg) - 1, m.mu[1], m.mu[2]],
-               muc: [mucAvg - Math.log(1 + shock * J), m.muc[1], m.muc[2]],
+    const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE], avg = [mucAvg, m.muc[1], m.muc[2]];
+    out[k] = { key: k, name: m.name, icon: m.icon, text: m.text, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg, avg,
+               mu: avg.map(x => Math.exp(x) - 1),
+               muc: avg.map((x, i) => x - Math.log(1 + shock * (crash[i] - 1))),       // drifts between crashes
                sig: [p.sig * m.sig[0] / n.sig[0], m.sig[1], m.sig[2]] };
   }
   return out;
 }
-// The bell-curve numbers of one state for the math (no crashes: the stock's full average drift).
-const mathState = s => ({ mu: [s.mucAvg, s.muc[1], s.muc[2]], sig: s.sig, rc: s.rc });
+// The bell-curve numbers of one state for the math (no crashes: each asset's full average drift).
+const mathState = s => ({ mu: s.avg, sig: s.sig, rc: s.rc });
 const CRASH_EVERY = [0, 5, 10, 20, 50];             // years between crashes on average (0 = never)
 function crashSettings() {
   const every = CRASH_EVERY[+$("crashEvery").value];
@@ -785,14 +795,15 @@ const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true 
 // Inputs
 // =====================================================================
 const ui = { mood: "normal", risk: "balanced" };
-const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
+const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
-  const p = { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: clamp(num("r", 3), 0, 30) / 100,
+  // People type ordinary yearly rates; the math uses continuous rates (Module 1), so r and mu are ln(1 + typed rate).
+  const p = { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: Math.log(1 + clamp(num("r", 3), 0, 30) / 100),
               infl: clamp(num("infl", 3), -5, 50) / 100, mood: ui.mood, alpha: +$("alpha").value,
-              mu: clamp(num("mu", 10), -50, 80) / 100, sig: clamp(num("sig", 20), 1, 80) / 100,
+              mu: Math.log(1 + clamp(num("mu", 10.5), -50, 80) / 100), sig: clamp(num("sig", 20), 1, 80) / 100,
               years: +$("years").value, fMax: 1, T: 1 };
-  p.L = riskLevels(riskTop(p).maxPct)[ui.risk] / 100;              // the bad-year loss limit behind the choice
+  p.L = riskLimit(p, ui.risk);                                      // the bad-year loss limit behind the choice
   return p;
 }
 for (const [key, m] of Object.entries(MOODS)) {
@@ -806,7 +817,7 @@ for (const [key, m] of Object.entries(MOODS)) {
 function pickMood(key) {
   const from = MOODS[ui.mood], to = MOODS[key], p = params();
   if (key !== ui.mood) {
-    $("r").value = Math.max(0, 100 * p.r + 100 * (to.rc - from.rc)).toFixed(1);
+    $("r").value = (100 * (Math.exp(Math.max(0, p.r + to.rc - from.rc)) - 1)).toFixed(1);
     $("infl").value = (100 * p.infl + 100 * (to.infl - from.infl)).toFixed(1);
     $("moodNote").innerHTML = `We filled in a typical interest rate and inflation for a <b>${to.name.toLowerCase()}</b> market. Type your own if they are different.`;
   }
@@ -959,7 +970,8 @@ function estimate(pts) {
 }
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function fmtDate(t) { const d = new Date(t); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
-const setStock = (mu, sig) => { $("mu").value = (100 * clamp(mu, -0.5, 0.8)).toFixed(1); $("sig").value = (100 * clamp(sig, 0.01, 0.8)).toFixed(1); };
+// The estimate mu is a continuous drift; the input shows it as the average yearly return e^mu - 1.
+const setStock = (mu, sig) => { $("mu").value = (100 * clamp(Math.exp(mu) - 1, -0.5, 0.8)).toFixed(1); $("sig").value = (100 * clamp(sig, 0.01, 0.8)).toFixed(1); };
 
 function loadCsvText(text, name) {
   try {
@@ -1015,20 +1027,23 @@ function crashSolve(p, sol, lam, J) {                // a bisection inside a bis
   if (!crashCache.has(key)) {
     const varFun = f => valueAtRiskJump(f, p.mu, p.sig, p.r, p.T, lam, J, p.alpha);
     const c = maxFractionUnderVar(varFun, p.L, p.fMax), fLimit = c.status === "impossible" ? 0 : c.f;
-    const fOpt = sol.fStar > 0 && c.status !== "impossible" ? Math.max(0, Math.min(sol.fStar, fLimit, p.fMax)) : 0;
-    crashCache.set(key, { lam, J, varFun, status: c.status, fLimit, fOpt });
+    // Kelly with crashes (Module 4b): if its slope is still positive at the top of the search range, it lies beyond it.
+    let fStar = 0;
+    if (p.mu > p.r) try { fStar = kellyFractionJump(p.mu, p.sig, p.r, lam, J); } catch (e) { fStar = Infinity; }
+    const fOpt = fStar > 0 && c.status !== "impossible" ? Math.max(0, Math.min(fStar, fLimit, p.fMax)) : 0;
+    crashCache.set(key, { lam, J, varFun, status: c.status, fLimit, fStar, fOpt });
   }
   return crashCache.get(key);
 }
 const mixCache = new Map();
 function cached(map, key, make) { if (!map.has(key)) { if (map.size > 60) map.clear(); map.set(key, make()); } return map.get(key); }
 // The bell-curve numbers of any split w = [stocks, gold, bonds, savings]: a share f = w0 + w1 + w2 in the fund d = w / f,
-// with the same formulas as fundFraction, so the plan's own split gives exactly plan.g and plan.var.
-function mixStats(w, m, z) {
+// with the same formulas as fundFraction, so the plan's own split gives exactly plan.g, plan.var and plan.es.
+function mixStats(w, m, alpha) {
   const f = w[0] + w[1] + w[2];
-  if (f < 1e-12) return { g: m.rc, var: 1 - Math.exp(m.rc) };
+  if (f < 1e-12) return { g: m.rc, var: 1 - Math.exp(m.rc), es: 1 - Math.exp(m.rc) };
   const fd = fundOf([w[0] / f, w[1] / f, w[2] / f], m), g = growthRate(f, fd.mu, fd.sig, m.rc);
-  return { g, var: 1 - Math.exp(g - z * f * fd.sig) };
+  return { g, var: 1 - Math.exp(g - normPpf(alpha) * f * fd.sig), es: esOf(g, f * fd.sig, alpha) };
 }
 
 // Everything the results show, computed when the button is pressed. Settings the results read later (uploaded data,
@@ -1042,7 +1057,7 @@ function compute() {
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
   const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
   return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J), top: riskTop(p).top,
-           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, normPpf(p.alpha)) } : null, data,
+           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, p.alpha) } : null, data,
            changing: $("changing").checked, events: $("events").checked };
 }
 
@@ -1070,21 +1085,38 @@ const mixText = w => {
   return t.join(" · ");
 };
 
-// The plan with no limit at all is the fastest-growing mix without borrowing. Its bad-year loss is the most risk that
-// still pays: past it more risk makes money grow slower (the Kelly point of Module 4), so "Bold" stops there.
+// The plan with no limit at all is the fastest-growing mix without borrowing, and "Bold" stops at its bad-year loss.
 function riskTop(p) {
   const c = crashSettings(), m = mathState(marketStates(p, c.lam, c.J)[p.mood]);
   const top = cached(mixCache, "top" + [m.mu, m.sig, m.rc, p.alpha].join("|"), () => bestMix(m, 1, p.alpha));
-  return { top, maxPct: Math.max(2, Math.ceil(Math.round(1000 * top.var) / 10)) };
+  return { top, m };
 }
-// The loss limit (in %) behind each choice: a normal market gives 5 / 15 / 22, calmer or harder markets scale it.
-const riskLevels = top => ({ careful: Math.min(5, Math.round(top / 3)), balanced: Math.min(15, Math.round(2 * top / 3)), bold: top });
+// The loss limit behind each choice. Careful and Balanced are the person's own limits, the same in every market: how
+// much you can lose is about you, not the market. Bold has no limit except no borrowing, so its limit is the bad-year
+// loss of the fastest-growing mix itself (at least 2%), and the Bold plan is exactly that mix.
+const RISK_LIMITS = { careful: 0.05, balanced: 0.15 };
+function riskLimit(p, risk) {
+  if (risk !== "bold") return RISK_LIMITS[risk];
+  const { top } = riskTop(p);
+  return top.d ? Math.max(top.var, 0.02) : RISK_LIMITS.careful;
+}
+// Why that plan stops there. "borrow": it is already all in the riskiest asset and going further needs borrowing (with
+// borrowing it would still grow faster, up to the Kelly point). "drag": a riskier mix exists but grows slower, because
+// big losses hurt more than big gains help. "kelly": putting more into the same mix would grow slower (f* < 1).
+// sigma_d^2 = d'Cd is convex, so the riskiest mix is a single asset: the top is "borrow" when it is that asset.
+function topReason(top, m) {
+  if (top.f < 1 - 1e-6) return { why: "kelly" };
+  if (top.fund.sig >= Math.max(...m.sig) - 1e-9) return { why: "borrow", asset: ASSETS[top.d.indexOf(Math.max(...top.d))].name.toLowerCase() };
+  return { why: "drag" };
+}
 function renderInputs() {
   const p = params(), cap = riskTop(p), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
+  const reason = cap.top.d ? topReason(cap.top, cap.m) : null;
   $("riskCap").innerHTML = ui.risk !== "bold" ? ""
-    : cap.top.d ? `Bold is the most risk that still pays in a ${MOODS[p.mood].name.toLowerCase()} market (${mixText(cap.top.w)}): ` +
-                  `more risk would make your money grow slower, not faster.`
-    : `In this market nothing grows faster than the savings account, so the plan keeps everything there.`;
+    : !reason ? `In this market nothing grows faster than the savings account, so the plan keeps everything there.`
+    : reason.why === "borrow" ? `Bold puts all your money in ${reason.asset}, the riskiest asset here. Taking more risk would mean borrowing money, which this plan never does.`
+    : reason.why === "drag" ? `Bold is the fastest-growing mix without borrowing (${mixText(cap.top.w)}). Any riskier mix would grow slower, because big losses hurt more than big gains help.`
+    : `Bold is the fastest-growing plan (${mixText(cap.top.w)}). Putting more into it would make your money grow slower, because big losses hurt more than big gains help.`;
   for (const b of document.querySelectorAll(".market")) {
     b.classList.toggle("sel", b.dataset.mood === p.mood); b.setAttribute("aria-pressed", b.dataset.mood === p.mood);
   }
@@ -1097,7 +1129,12 @@ function renderInputs() {
   $("guessBox").classList.toggle("hidden", !$("useGuess").checked);
   ["gStock", "gGold", "gBond", "gDep"].forEach((id, i) => { $(id + "_v").innerHTML = `${pct(gw[i], 0)}<small>${money(p.S * gw[i])}</small>`; });
   $("guessBar").innerHTML = gw.map((x, i) => `<i style="width:${100 * x}%;background:${ASSETS[i].color}"></i>`).join("");
-  $("riskText").innerHTML = `In a bad year (the worst 1 year in ${every}) you lose at most <b>${money(p.S * p.L)}</b> of your ${money(p.S)}.`;
+  // VaR is not the most you can lose: it is where the worst 1 year in `every` starts, so those years lose more.
+  const lossText = `only about 1 year in ${every} should lose more than <b>${money(p.S * p.L)}</b> of your ${money(p.S)}`;
+  $("riskText").innerHTML = !cap.top.d ? `In this market the savings account grows fastest, so every choice keeps your money there.`
+    : ui.risk === "bold" ? `No loss limit, only no borrowing. With the fastest-growing plan, ${lossText}.`
+    : `Your limit: ${lossText}.` + (cap.top.var <= p.L
+      ? ` In a ${MOODS[p.mood].name.toLowerCase()} market even the fastest-growing plan stays within it, so this gives the same plan as Bold.` : "");
   $("crashEvery_v").textContent = c.every ? `${c.every} years` : "never";
   $("crashSize_v").textContent = pct(-c.J, 0);
   const st = REGIME_KEYS.map(k => states[k]);
@@ -1108,13 +1145,14 @@ function renderInputs() {
     .map(([name, f]) => `<tr><td>${name}</td>${st.map(m => `<td>${f(m)}</td>`).join("")}</tr>`).join("");
   $("crashNote").textContent = c.every ? "A market-crash year: " + ASSETS.slice(0, 3).map((a, i) => { const x = states.normal.crash[i] - 1;
     return `${a.name.toLowerCase()} ${x < 0 ? "−" : "+"}${pct(Math.abs(x), 0)}`; }).join(", ") +
-    " on top of the normal ups and downs (all in one month). Stock averages already include the crashes." : "Crashes are switched off.";
+    " on top of the normal ups and downs (all in one month). The averages above already include the crash years." : "Crashes are switched off.";
   $("transTable").innerHTML = "<tr><th>This year ↓ / next year →</th>" + REGIME_KEYS.map(k => `<th>${MOODS[k].name}</th>`).join("") + "</tr>" +
     REGIME_KEYS.map(k => `<tr><td>${MOODS[k].name}</td>${TRANSITION[k].map(q => `<td>${pct(q, 0)}</td>`).join("")}</tr>`).join("");
   $("transNote").textContent = "Typical length: " + REGIME_KEYS.map((k, i) => `${MOODS[k].name.toLowerCase()} about ${(1 / (1 - TRANSITION[k][i])).toFixed(1)} years`).join(", ") + ".";
   const nData = data ? data.years.length : 0;
   $("dataNote").innerHTML = nData >= 5
-    ? `The real-life test uses <b>your uploaded stock years</b> (${nData} real years, shuffled). Gold, bonds, savings and inflation follow the market.
+    ? `The real-life test uses <b>your uploaded stock years</b> (${nData} real years, shuffled). Their crashes are real ones, so no extra
+       crashes are added, and gold, bonds, savings and inflation stay at the picked market's values (no market changes on top of real years).
        ${nData < p.years ? ` Your data has ${nData} years, so the future lasts ${nData} years.` : ""}`
     : "";
 }
@@ -1124,7 +1162,7 @@ function renderData() {
   if (!data) return;
   $("dataStats").innerHTML = [
     [`${fmtDate(data.pts[0].t)} – ${fmtDate(data.pts[data.n - 1].t)}`, `${data.spanYears.toFixed(1)} years of ${data.freq} prices (${data.n} points)`],
-    [pct(data.mu), "estimated return μ per year"], [pct(data.sig), "estimated volatility σ per year"],
+    [pct(Math.exp(data.mu) - 1), "estimated average return per year"], [pct(data.sig), "estimated volatility σ per year"],
     [pct(data.pts[data.n - 1].p / data.pts[0].p - 1, 0), "total price change"]
   ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
   const YEAR = 365.25 * 864e5, yr = t => 1970 + t / YEAR;
@@ -1149,7 +1187,8 @@ function renderPlan() {
   const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0];
   const where = x => x.key === "dep" ? "the savings account" : x.name.toLowerCase();
   const gain = p.S * (Math.exp(plan.g) - 1), bad = plan.var > 0
-    ? `only about 1 year in ${every} should lose more than <b>${money(p.S * plan.var)}</b>`
+    ? `only about 1 year in ${every} should lose more than <b>${money(p.S * plan.var)}</b> (those years lose about ` +
+      `${money(p.S * plan.es)} on average)`
     : `even a bad year (the worst 1 in ${every}) should still end above where it started`;
   $("planSentence").innerHTML = !(p.S > 0)
     ? `Put <b>${list(parts.map((x, i) => `${pct(x.w, 0)}${i ? "" : " of your money"} in ${where(x)}`))}</b>.`
@@ -1166,14 +1205,17 @@ function renderPlan() {
   let why;
   if (!plan.d) why = `In this market no mix of stocks, gold and bonds is expected to grow faster than the savings account (${pct(st.r, 1)} a year), so taking risk does not pay.`;
   else {
+    const reason = topReason(cur.top, cur.m), notReached = plan.var > p.L - 0.005 ? "" : ` Your ${pct(p.L, 0)} limit is not reached.`;
     why = plan.g >= cur.top.g - 0.0002                            // within 0.02% a year of the fastest-growing mix
-      ? `This is the fastest-growing mix in this market without borrowing. More risk would make your money grow slower, not faster` +
-        (plan.var > p.L - 0.005 ? `.` : `, so your ${pct(p.L, 0)} limit is not reached.`)
+      ? `This is the fastest-growing plan you can build without borrowing. ` + (
+          reason.why === "borrow" ? `It puts all your money in ${reason.asset}, the riskiest asset here; taking more risk would mean borrowing, which this plan never does.`
+          : reason.why === "drag" ? `Any riskier mix would grow slower, because big losses hurt more than big gains help.`
+          : `Putting more into it would make your money grow slower, because big losses hurt more than big gains help.`) + notReached
       : plan.var > p.L - 0.005
         ? `This is the fastest-growing mix whose bad year stays within your ${pct(p.L, 0)} limit. A riskier mix would lose more than ${money(p.S * p.L)} in a bad year.`
-        : `This is the fastest-growing mix in this market without borrowing. More risk would make your money grow slower, so your limit is not reached.`;
+        : `This is the fastest-growing mix in this market without borrowing.` + notReached;
     const g4 = growthRate(sol.fOpt, cur.stockP.mu, cur.stockP.sig, cur.stockP.r), gain = plan.g - g4;
-    if (gain > 0.0005) why += ` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), for the same bad-year risk.`;
+    if (gain > 0.0005) why += ` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), with the same loss limit.`;
   }
   $("planWhy").innerHTML = why;
   renderVsMath();
@@ -1346,7 +1388,7 @@ function renderHistory() {
   if (!ok) return;
   const R = cur.data.windows, sorted = [...R].sort((a, b) => a - b);
   $("histIntro").innerHTML = `Bars: the stock's real return over every one-year period in your data (${R.length} periods).
-    Red curve: what the bell-curve model with μ = ${pct(p.mu)}, σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`;
+    Red curve: what the bell-curve model with an average return of ${pct(Math.exp(p.mu) - 1)} and σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`;
   const lo = Math.min(sorted[0], -0.5), hi = Math.max(sorted[sorted.length - 1], 0.6), nb = 24, w = (hi - lo) / nb, counts = Array(nb).fill(0);
   for (const x of R) counts[Math.min(nb - 1, Math.floor((x - lo) / w))]++;
   const bars = counts.map((c, i) => ({ x0: lo + i * w, x1: lo + (i + 1) * w, y: c / (R.length * w), color: "var(--blue-soft)" }));
@@ -1380,14 +1422,18 @@ const life = { seed: 1, token: 0, manyToken: 0, upto: null, sc: null, scFor: nul
 const LIFE_FUTURES = 500, LIFE_CHUNK = 25;
 function lifeSettings() {
   const { p, c, states, data: d } = cur, useData = !!(d && d.years.length >= 5);
+  // Real stock years already hold the real crashes and market moods: no simulated crashes or market changes on top,
+  // so a real boom year is never called a crash or a crisis, and gold and bonds get no crash-year gains.
   return { S: p.S, L: p.L, alpha: p.alpha, save: p.save, length: p.years, mood: p.mood,
-           changing: cur.changing, events: cur.events, useData, dataYears: useData ? d.years : null, crash: c, states };
+           changing: cur.changing && !useData, events: cur.events, useData, dataYears: useData ? d.years : null,
+           crash: useData ? { ...c, every: 0, lam: 0 } : c, states: useData ? marketStates(p, 0, c.J) : states };
 }
 function settingsText(set) {
   const c = set.crash;
-  return `${set.length} years · starts in a ${set.states[set.mood].name.toLowerCase()} market · ` +
-    `${set.changing ? "markets change over time" : "the market never changes"} · ` +
-    `${c.every ? `a ${pct(-c.J, 0)} crash about every ${c.every} years` : "no crashes"} · life events ${set.events ? "on" : "off"} · ` +
+  return `${set.length} years · ` + (set.useData
+    ? `your real stock years, shuffled (with their real crashes) · gold, bonds and savings in a ${set.states[set.mood].name.toLowerCase()} market · `
+    : `starts in a ${set.states[set.mood].name.toLowerCase()} market · ${set.changing ? "markets change over time" : "the market never changes"} · ` +
+      `${c.every ? `a ${pct(-c.J, 0)} crash about every ${c.every} years` : "no crashes"} · `) + `life events ${set.events ? "on" : "off"} · ` +
     `you add ${money(set.save)} a year`;
 }
 // The main comparison (your plan, your guess if you made one, the savings account) and a few simple extras for "Compare more strategies".
@@ -1522,7 +1568,8 @@ function showLifeMany({ per, n, guessAhead, ties, p }) {
   $("lifeManyNote").innerHTML = `Money is in today's money, after ${n} years. Your plan promises a year over your ${pct(p.L, 0)} limit at most ` +
     `<b>1 year in ${promise}</b>. In these futures it happened <b>${Number.isFinite(seen) ? oneIn(seen) : "never"}</b>` +
     (seen >= promise * 0.9 ? `, <span class="ok">so the promise holds</span>.` : `, <span class="warn">more often than promised</span>: the surprises switched on in More settings (changing markets, crashes) are outside the bell-curve math.`) +
-    ` With a market that never changes, no crashes and no life events, the futures follow exactly the math of your plan.`;
+    ` With a market that never changes, no crashes and no life events, the futures follow the math of your plan closely: the plan is` +
+    ` rebalanced once a year while the math assumes all the time, which makes slightly fewer years go over the limit.`;
 }
 
 // ---- start ----

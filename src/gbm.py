@@ -17,8 +17,14 @@ from src.normal import norm_cdf
 
 
 def up_probability(mu, sigma, dt):
-    """P(up) that makes the walk's log-drift equal (mu - sigma^2/2) per year."""
-    return 0.5 + 0.5 * (mu - 0.5 * sigma**2) / sigma * math.sqrt(dt)
+    """P(up) that makes the walk's log-drift equal (mu - sigma^2/2) per year.
+
+    It is a probability only while dt < sigma^2 / (mu - sigma^2/2)^2 (6.25 years for mu = 10%, sigma = 20%).
+    """
+    p = 0.5 + 0.5 * (mu - 0.5 * sigma**2) / sigma * math.sqrt(dt)
+    if not 0.0 < p < 1.0:
+        raise ValueError("step too long: need dt < sigma^2 / (mu - sigma^2/2)^2 so that 0 < P(up) < 1")
+    return p
 
 
 def simulate_walk_paths(S0, mu, sigma, T, n_steps, n_paths, rng):

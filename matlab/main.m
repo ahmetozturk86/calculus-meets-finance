@@ -11,7 +11,7 @@ rng(42);
 P = 10000; R_SAVE = 0.10; T_SAVE = 10;
 % Module 2: European call option
 S0 = 100; K = 100; R_OPT = 0.05; SIGMA_OPT = 0.20; T_OPT = 1;
-% Modules 3-4: stock market and risk-free asset (annual numbers)
+% Modules 3-4: stock market and risk-free asset (yearly, continuously compounded: mu = 10% is 10.5% a year)
 MU = 0.10; SIGMA = 0.20; R = 0.03; T = 1;
 ALPHA = 0.95; LOSS_LIMIT = 0.15; F_MAX = 2;
 % Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
@@ -155,9 +155,16 @@ for k = 1:size(hist, 1)
     end
 end
 f_opt = optimal_fraction(MU, SIGMA, R, T, LOSS_LIMIT, ALPHA, F_MAX);
+fprintf('  check with the quadratic formula: f = %.6f (the other root is negative, so this is the only crossing, for any horizon)\n', ...
+    var_root_formula(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA));
 fprintf('\n  f_VaR = %.6f  ->  f_opt = min(f*, f_VaR, f_max) = %.6f\n', f_var, f_opt);
-fprintf('  => invest %.1f%% in the stock and %.1f%% risk-free; growth %.2f%%/yr, VaR %.2f%%\n', ...
+fprintf('  => invest %.1f%% in the stock and %.1f%% risk-free; typical growth %.2f%%/yr, VaR %.2f%%\n', ...
     100 * f_opt, 100 * (1 - f_opt), 100 * g(f_opt), 100 * value_at_risk(f_opt, MU, SIGMA, R, T, ALPHA));
+es = expected_shortfall(f_opt, MU, SIGMA, R, T, ALPHA);
+f_es = max_fraction_under_es(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA, F_MAX);
+fprintf(['  Expected Shortfall: the worst %.0f%% of years lose %.2f%% on average (VaR only says ''more than %.0f%%'');\n' ...
+    '  the same IVT + bisection on ES(f) - L gives f_ES = %.6f for ''lose at most %.0f%% on average in the worst %.0f%%''\n'], ...
+    100 * (1 - ALPHA), 100 * es, 100 * LOSS_LIMIT, f_es, 100 * LOSS_LIMIT, 100 * (1 - ALPHA));
 
 fprintf('\n  Monte Carlo check (20,000 paths): VaR with rebalancing every dt -> analytic %.2f%%\n', 100 * LOSS_LIMIT);
 freq_labels = {'yearly', 'quarterly', 'monthly', 'weekly', 'daily'};
@@ -166,6 +173,7 @@ for i = 1:numel(freq_steps)
     W = simulate_wealth(f_opt, MU, SIGMA, R, T, freq_steps(i), 20000);
     fprintf('  %10s: VaR = %.2f%%\n', freq_labels{i}, 100 * empirical_var(W(:, end), 1, ALPHA));
 end
+fprintf('       daily: ES  = %.2f%%  (formula %.2f%%)\n', 100 * empirical_es(W(:, end), 1, ALPHA), 100 * es);
 
 fig = figure('Position', [100 100 1100 800]);
 f_grid = linspace(0, 2 * f_star, 400);
@@ -230,12 +238,16 @@ for n = [1 12 52 252 10000]
     fprintf('  %14d %40.2e\n', n, err);
 end
 
-fprintf('\n  Value-at-Risk at the normal answer f_VaR = %.6f:\n', f_var);
-fprintf('  %12s %16s %14s\n', 'confidence', 'bell curve only', 'with crashes');
+fprintf('\n  Risk at the normal answer f_VaR = %.6f:\n', f_var);
+fprintf('  %12s %16s %14s\n', '', 'bell curve only', 'with crashes');
 for a = [0.95 0.99]
-    fprintf('  %11.0f%% %15.2f%% %13.2f%%\n', 100 * a, 100 * value_at_risk(f_var, MU, SIGMA, R, T, a), ...
+    fprintf('  %12s %15.2f%% %13.2f%%\n', sprintf('VaR %.0f%%', 100 * a), 100 * value_at_risk(f_var, MU, SIGMA, R, T, a), ...
         100 * value_at_risk_jump(f_var, MU, SIGMA, R, T, lam, J, a));
 end
+fprintf('  %12s %15.2f%% %13.2f%%   (average loss in the worst 5%%)\n', sprintf('ES %.0f%%', 100 * ALPHA), ...
+    100 * expected_shortfall(f_var, MU, SIGMA, R, T, ALPHA), 100 * expected_shortfall_jump(f_var, MU, SIGMA, R, T, lam, J, ALPHA));
+fprintf('  %12s %15.2f%% %13.2f%%   (same average return, but ln(1 + fJ) < fJ)\n', 'growth', ...
+    100 * growth_rate(f_var, MU, SIGMA, R), 100 * growth_rate_jump(f_var, MU, SIGMA, R, lam, J));
 
 [f_crash, hist] = max_fraction_under_var_jump(LOSS_LIMIT, MU, SIGMA, R, T, lam, J, ALPHA, F_MAX);
 fprintf('\n  IVT + bisection on h(f) = VaR_crash(f) - L (each VaR_crash is itself a bisection on the CDF):\n');
@@ -247,8 +259,12 @@ for k = 1:size(hist, 1)
         fprintf('  %4s\n', '...');
     end
 end
-fprintf('\n  f_crash = %.6f  ->  with crashes, invest %.1f%% in the stock instead of %.1f%%\n', ...
-    f_crash, 100 * f_crash, 100 * f_var);
+f_star_jump = kelly_fraction_jump(MU, SIGMA, R, lam, J);
+f_opt_jump = optimal_fraction_jump(MU, SIGMA, R, T, LOSS_LIMIT, lam, J, ALPHA, F_MAX);
+fprintf('\n  f_crash = %.6f;  Kelly with crashes (bisection on the slope of the growth): f* = %.4f instead of %.2f\n', ...
+    f_crash, f_star_jump, kelly_fraction(MU, SIGMA, R));
+fprintf('  => f_opt = min(f*, f_crash, f_max) = %.6f: with crashes, invest %.1f%% in the stock instead of %.1f%%\n', ...
+    f_opt_jump, 100 * f_opt_jump, 100 * f_var);
 
 fprintf('\n  Monte Carlo check (40,000 paths, crash coin-flips each step): VaR at f_crash -> %.2f%%\n', 100 * LOSS_LIMIT);
 freq_labels = {'yearly', 'monthly', 'weekly', 'daily'};
@@ -306,14 +322,33 @@ fprintf('  stocks %.0f%%, gold %.0f%%, bonds %.0f%%, bank %.0f%%\n', 100 * w5, 1
 fprintf('  growth %.4f%%/yr, VaR %.4f%%\n', 100 * g5, 100 * portfolio_var(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA));
 [f4, g4] = fund_fraction([1 0 0], LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA);
 fprintf('  vs stocks + bank (Module 4): growth %.4f%%/yr  ->  +%.2f%% a year for the same risk\n', 100 * g4, 100 * (g5 - g4));
+[lo, hi, n_near] = near_optimal_ranges(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA, 100, 1e-4);
+fprintf(['  The top is flat: %d mixes grow within 0.01%%/yr of the best: stocks %.0f%%-%.0f%%, gold %.0f%%-%.0f%%,' ...
+    ' bonds %.0f%%-%.0f%% -> about 73%% stocks is the message; the gold/bond split barely matters\n'], n_near, 100 * [lo; hi]);
+
+fprintf(['\n  Module 5''s limit: grid step -> 0 (each grid is twice as fine and contains the last,' ...
+    ' so the best growth never goes down)\n']);
+fprintf('  %9s %10s %34s %10s\n', 'step', 'mixes', 'best mix: stocks / gold / bonds', 'growth');
+steps_list = [25 50 100 200 400 800 1600];
+limit_g = zeros(size(steps_list));
+for i = 1:numel(steps_list)
+    s = steps_list(i);
+    [wk, ~, ~, limit_g(i)] = best_mix_on_grid(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA, s);
+    fprintf('  %8.4f%% %10d %34s %9.5f%%\n', 100 / s, (s + 1) * (s + 2) / 2, ...
+        sprintf('%.2f%% / %.2f%% / %.2f%%', 100 * wk), 100 * limit_g(i));
+end
+% along the flat top the exact spot is only clear to about 0.1%, so the mix is shown with one decimal
+[w_lim, ~, ~, g_lim] = refine_best_mix(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA);
+fprintf('  %9s %10s %34s %9.5f%%   <- the limit: the exact best mix\n', '-> 0', 'zoom in', ...
+    sprintf('%.1f%% / %.1f%% / %.1f%%', 100 * w_lim), 100 * g_lim);
 
 fprintf('\n  Monte Carlo check (40,000 one-year paths, rebalanced daily): VaR of the best mix\n');
 W = simulate_wealth_mix(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, 252, 40000);
 fprintf('       daily: VaR = %.2f%%  (analytic %.2f%%)\n', 100 * empirical_var(W(:, end), 1, ALPHA), ...
     100 * portfolio_var(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA));
 
-fig = figure('Position', [100 100 1100 420]);
-subplot(1, 2, 1);
+fig = figure('Position', [100 100 1600 440]);
+subplot(1, 3, 1);
 plans = [f4 0 0 1 - f4; w5 1 - sum(w5)];
 b = barh(100 * plans, 'stacked');
 colors = [0.12 0.47 0.71; 0.75 0.54 0; GREEN; 0.6 0.6 0.6];
@@ -324,7 +359,7 @@ xlim([0 130]); xlabel('share of the money (%)');
 title(sprintf('Same risk (VaR = %.0f%%), more growth', 100 * LOSS_LIMIT));
 legend('stocks', 'gold', 'bonds', 'bank', 'Location', 'northoutside', 'Orientation', 'horizontal');
 
-subplot(1, 2, 2);
+subplot(1, 3, 2);
 x = -log(rand(3000, 4)); x = x ./ sum(x, 2); x = x(:, 1:3);   % random mixes of the 3 assets + bank (Dirichlet)
 pts = zeros(3000, 2);
 for k = 1:3000
@@ -342,6 +377,16 @@ xlabel('bad-year loss (1-year VaR)'); ylabel('growth rate g');
 title('Random mixes: the best is the highest green one');
 legend('breaks the limit', 'within the limit', sprintf('limit L = %.0f%%', 100 * LOSS_LIMIT), 'stocks + bank', ...
     'best mix', 'Location', 'northwest');
+
+subplot(1, 3, 3);
+plot(1:numel(steps_list), 100 * limit_g, 'o-', 'Color', [0.12 0.47 0.71]); hold on;
+yline(100 * g_lim, '--', 'Color', RED);
+set(gca, 'XTick', 1:numel(steps_list), ...
+    'XTickLabel', arrayfun(@(s) sprintf('%g%%', 100 / s), steps_list, 'UniformOutput', false));
+xlim([0.5, numel(steps_list) + 0.5]);
+xlabel('grid step (finer to the right)'); ylabel('growth rate g (%)');
+title('Module 5''s limit: finer grid -> exact best');
+legend('best mix on the grid', sprintf('exact best mix: %.4f%%', 100 * g_lim), 'Location', 'southeast');
 save_fig(fig, fig_dir, 'fig6_best_mix.png');
 
 %% Local functions

@@ -14,7 +14,10 @@ Real investing happens in discrete steps (interest paid monthly, prices quoted
 every second, portfolios rebalanced daily). Discrete models are hard to analyse,
 so we take **limits** to get continuous models with clean formulas, and then
 use **continuity** to guarantee and compute the answer. The project builds this
-up in four steps.
+up in five modules, plus an extension with market crashes (Module 4b).
+
+All rates are continuously compounded, as in Module 1: μ = 10% means an average
+gain of $e^{0.1}-1 = 10.5\%$ a year, and r = 3% means 3.05% a year.
 
 ---
 
@@ -127,9 +130,20 @@ Define $h(f) = \text{VaR}(f) - L$ with L = 0.15.
 * $h(2) = 0.283 > 0$.
 
 By the **Intermediate Value Theorem** there is an $f_{VaR}\in(0,2)$ with
-$h(f_{VaR}) = 0$, i.e. VaR exactly equal to the limit. Moreover $h'(f) > 0$
-whenever $(\mu - r)\sqrt{T} < z\sigma$ (here 0.07 < 0.329), so VaR is increasing,
-the root is unique, and every $f \le f_{VaR}$ satisfies the rule.
+$h(f_{VaR}) = 0$, i.e. VaR exactly equal to the limit.
+
+**The root is unique, for any horizon.** $\text{VaR}(f) = L$ means
+$\ln(1-L) = g(f)T - zf\sigma\sqrt{T}$, which is a quadratic equation:
+
+$$\tfrac12\sigma^2T\,f^2 + \big(z\sigma\sqrt{T} - (\mu - r)T\big)f + \big(\ln(1-L) - rT\big) = 0 .$$
+
+Its last coefficient is negative exactly when $h(0) < 0$, so the product of its two
+roots, $(\ln(1-L) - rT)/(\tfrac12\sigma^2T)$, is negative: one root is negative and
+one is positive. So $f_{VaR}$ is the only crossing with $f \ge 0$, and every
+$f \le f_{VaR}$ satisfies the rule. (For T = 1, VaR is even increasing, because
+$(\mu - r)\sqrt{T} < z\sigma$, here 0.07 < 0.329. For horizons beyond 22 years it first
+falls, but the root is still unique.) The quadratic formula gives 0.705014 as well,
+an independent check on the bisection.
 
 **Bisection** turns the IVT into an algorithm. Each step halves the interval
 and keeps the half where h changes sign. After k steps the root lies in an
@@ -154,8 +168,10 @@ allowed f:
 
 $$f_{opt} = \min(f^*, f_{VaR}, f_{max}) = \min(1.75,\ 0.705,\ 2) = 0.705 .$$
 
-**Invest 70.5% in the stock and 29.5% in the risk-free asset.** Expected growth
-is 6.94% per year (compared with 9.13% at Kelly), and the VaR is exactly 15%.
+**Invest 70.5% in the stock and 29.5% in the risk-free asset.** The typical
+(median) growth is 6.94% per year (compared with 9.13% at Kelly), and the VaR is
+exactly 15%. The *average* wealth grows faster, at $r + f(\mu - r) = 7.94\%$, but g is
+what a typical investor gets in the long run: $g = E[\ln(W_T/W_0)]/T$.
 
 ### 5.5 Verification by simulation
 
@@ -165,7 +181,24 @@ These are all within Monte Carlo noise of the analytic 15%. Figure 4 shows the
 growth curve, the VaR curve crossing the limit, the wealth bands (much narrower
 for $f_{opt}$ than for Kelly), and the simulated loss distribution.
 
-### 5.6 Fat tails: adding rare crashes
+### 5.6 How bad are the bad years? Expected Shortfall
+
+VaR says where the worst 5% of years *start*. It does not say how bad they are. The
+**Expected Shortfall** is the average loss in those years. With
+$\ln(W_T/W_0)\sim N(m, s^2)$, $m = g(f)T$, $s = f\sigma\sqrt T$, completing the square
+(as for $E[e^X]$) gives
+
+$$\text{ES}(f) = 1 - e^{m + s^2/2}\,\frac{\Phi(-z_\alpha - s)}{1-\alpha} \;\ge\; \text{VaR}(f).$$
+
+At $f_{VaR} = 0.705$ the worst 5% of years lose **19.76% on average**, although VaR
+only says "more than 15%". A simulation with daily rebalancing gives 19.91%.
+
+ES is continuous in f, so the same IVT + bisection works for the stricter rule
+"lose at most 15% on average in the worst 5%": $f_{ES} = 0.547$. This root is unique
+too: $\ln(1 - \text{ES}(f)) = (r + f(\mu - r))T + \ln\Phi(-z - f\sigma\sqrt T) - \ln(1-\alpha)$
+is concave because $\Phi$ is log-concave.
+
+### 5.7 Fat tails: adding rare crashes
 
 The bell curve makes big losses almost impossible, but real markets sometimes
 crash. Following Merton's jump-diffusion model, the stock now also falls by
@@ -210,22 +243,35 @@ $$F(x) = \sum_{k\ge 0} P(N=k)\,\Phi\!\left(\frac{x - (g(f)-\lambda J f)T - k\ln(
 
 With λ = 0 every formula reduces exactly to Section 5.3.
 
+**Same average return, lower growth.** The long-run growth with crashes is
+
+$$g_{crash}(f) = \frac{E[\ln(W_T/W_0)]}{T} = g(f) - \lambda Jf + \lambda\ln(1 + fJ) \;<\; g(f),$$
+
+because $\ln(1 + x) < x$: a big loss hurts more than the extra drift of the good
+years helps. Its slope $(\mu - r) - f\sigma^2 - \lambda J + \lambda J/(1 + fJ)$ is
+continuous, equals $\mu - r > 0$ at f = 0 and goes to $-\infty$ where one crash would
+wipe out the portfolio, so by the IVT bisection finds the **crash-aware Kelly
+fraction $f^*_{crash} = 1.41$** (instead of 1.75). The decision is again
+$f_{opt} = \min(f^*_{crash}, f_{crash}, f_{max})$.
+
 **Result.** Crashes matter most for the biggest losses:
 
 | at f = 0.705 | bell curve only | with rare crashes |
 |---|---|---|
 | 95% VaR | 15.00% | 17.47% |
 | 99% VaR | 22.79% | 27.29% |
+| average loss in the worst 5% (ES) | 19.76% | 23.48% |
 | years losing more than 15% | 1 in 20 | 1 in 14 |
 | P(lose more than 30%) | 0.1% | 0.6% |
+| typical growth per year | 6.94% | 6.76% |
 
 The 70.5% answer therefore breaks the rule in a world with crashes. The
-crash-aware answer is **$f_{crash}$ = 61.7% in stocks**. A Monte Carlo check
+crash-aware answer is **$f_{opt} = \min(1.41,\ 0.617,\ 2) = f_{crash}$ = 61.7% in stocks**. A Monte Carlo check
 with crash coin-flips at every step gives a VaR of 14.5% (yearly steps), 15.0%
 (monthly), 15.0% (weekly) and 15.0% (daily) at $f_{crash}$, converging to 15%.
 This is the binomial → Poisson limit at work. See Figure 5.
 
-### 5.7 More assets: stocks, gold, bonds and the bank
+### 5.8 More assets: stocks, gold, bonds and the bank
 
 So far the only choice was stocks or the bank. Now the investor can also hold
 gold and bonds. The numbers are illustrative long-run values, not data:
@@ -273,6 +319,37 @@ check with daily rebalancing gives a VaR of 14.95%. See Figure 6. With gold and
 bonds paying only the bank rate, the method returns exactly the Module 4 answer
 (70.5% stocks), which is tested.
 
+**Exactly one best mix.** The problem is convex: $g$ is concave, and
+$\mathrm{sd}(w) = \sqrt{w^\top Cw}$ is a norm, so $g(w)T - z\,\mathrm{sd}(w)\sqrt T$ is concave
+and the mixes with VaR ≤ L form a convex set (a superlevel set of a concave function).
+A strictly concave function has at most one maximum on a convex set, so the best mix is
+unique. Its top is flat, though: every mix on the 1% grid within 0.01% a year of the best
+has 73% stocks, but anywhere from 1% to 7% gold (bonds 20–26%). **About 73% stocks is
+the message**; the split between gold and bonds barely matters.
+
+**Module 5's own limit: grid step → 0.** Let $G_s$ be the best growth on the grid with
+step 1/s. If s divides s′, the finer grid contains the coarser one, so
+$G_s \le G_{s'}$: the sequence $G_{25}, G_{50}, G_{100}, \dots$ is increasing and
+bounded by the true maximum, so it converges (monotone convergence). The limit *is* the
+true maximum, because each fund's growth depends continuously on the mix and the grids
+fill the triangle. For the bell curve, $f_{VaR}$ of every fund is also given by the
+quadratic formula of Section 5.3, so even grids with a million mixes take a second:
+
+| grid step | mixes | best mix (stocks / gold / bonds) | growth g |
+|---|---|---|---|
+| 4% | 351 | 72 / 12 / 16 | 7.45461% |
+| 2% | 1,326 | 72 / 12 / 16 | 7.45461% |
+| 1% | 5,151 | 73 / 4 / 23 | 7.46824% |
+| 0.5% | 20,301 | 72.98 / 4.50 / 22.49 | 7.46828% |
+| 0.25% | 80,601 | 73 / 4.25 / 22.75 | 7.46875% |
+| 0.125% | 321,201 | 73 / 4.25 / 22.75 | 7.46875% |
+| 0.0625% | 1,282,401 | 72.94 / 5 / 22.06 | 7.46882% |
+| → 0 (zooming in) | | 72.9 / 4.9 / 22.2 | **7.46887%** |
+
+The last row zooms in on the best fund with a small grid whose step halves 40 times. The
+1% grid is only 0.0006% a year short of the exact best, but its gold share (4%) is not
+precise: the exact best has 4.9%.
+
 ---
 
 ## 6. Conclusion
@@ -282,20 +359,24 @@ bonds paying only the bank rate, the method returns exactly the Module 4 answer
 | Limit of a sequence | $(1+r/n)^{nt} \to e^{rt}$; binomial price → Black–Scholes |
 | Limit of distributions | random walk → GBM as Δt → 0, measured by the KS distance |
 | Derivative as a limit | g'(f) from difference quotients → Kelly fraction |
-| Continuity + IVT | existence of $f_{VaR}$ and $z_{0.95}$; bisection computes them |
-| Poisson limit + IVT twice | crash coin-flips → Poisson; quantile of a mixture and $f_{crash}$ by bisection |
+| Continuity + IVT | existence of $f_{VaR}$, $f_{ES}$ and $z_{0.95}$; bisection computes them |
+| Concavity | uniqueness of $f_{VaR}$ and $f_{ES}$ for any horizon; exactly one best mix |
+| Poisson limit + IVT twice | crash coin-flips → Poisson; quantile of a mixture, $f_{crash}$ and $f^*_{crash}$ by bisection |
 | IVT for every fund | best mix of stocks, gold and bonds: one bisection per mix |
+| Monotone convergence | finer and finer grids of mixes → the exact best mix |
 
 Limits turn messy discrete models into continuous formulas, and continuity
 guarantees the answer exists, so it can be found reliably. The result is a
 concrete recommendation: **70.5% in stocks** under a "max 15% loss at 95%
 confidence" rule. If rare crashes are taken into account, the same method gives
-**61.7%**. With gold and bonds available, the best mix is **73% stocks, 4% gold
-and 23% bonds**, which grows 0.53% a year faster for the same risk.
+**61.7%**. With gold and bonds available, the best mix is about **73% stocks**, with
+the rest in bonds and a little gold (4% on the 1% grid, 4.9% exactly), which grows
+0.53% a year faster for the same risk.
 
 **Limitations.** Constant μ and σ, no transaction costs, and borrowing at r. Fat
-tails are handled only by the simple crash model of Section 5.6, with an
-assumed crash size and frequency. Extensions: estimate μ and σ (and the crash
+tails are handled only by the simple crash model of Section 5.7, with an
+assumed crash size and frequency. VaR ignores how bad the worst years are; the
+Expected Shortfall of Section 5.6 shows it. Extensions: estimate μ and σ (and the crash
 rate) from real price data, or use historical or Student-t VaR. The gold and
 bond numbers of Section 5.7 are assumptions, and real average returns are very
 hard to estimate, so the best mix can change a lot with small changes in the

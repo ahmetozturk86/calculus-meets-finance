@@ -58,7 +58,8 @@ window.MathJax = {
 \(r = 3\%\) per year, or invest in a stock index with expected return \(\mu = 10\%\) and volatility
 \(\sigma = 20\%\). <b>What fraction \(f\) of the savings should go into the stock</b> so that wealth grows as fast
 as possible, while respecting the rule <i>“with 95% confidence, do not lose more than 15% in one year”</i>?</p>
-<p><span class="label">The answer</span> (derived in Part V): \(f_{opt} = 0.705\) — put <b>70.5% in the stock and 29.5% risk-free</b>.</p>
+<p><span class="label">The answer</span> (derived in Part V): \(f_{opt} = 0.705\) — put <b>70.5% in the stock and 29.5% risk-free</b>.
+If rare crashes can happen (Part VI): 61.7%. With gold and bonds available too (Part VII): about <b>73% stocks</b>, the rest mostly bonds.</p>
 <p><span class="label">The method.</span> Real finance is <i>discrete</i> (interest paid monthly, prices quoted tick by tick,
 portfolios rebalanced daily). We let the step size go to zero — a <b>limit</b> — and obtain continuous models with
 closed-form expressions. Then <b>continuity</b> (the Intermediate Value Theorem) guarantees the optimal allocation
@@ -71,9 +72,11 @@ exists, and bisection computes it.</p>
   <li><b>Part II — Module 1:</b> compounding \((1+r/n)^{nt}\to e^{rt}\), with monotonicity and rate of convergence.</li>
   <li><b>Part III — Module 2:</b> the binomial option model and its limit, the Black–Scholes formula (full derivation).</li>
   <li><b>Part IV — Module 3:</b> a coin-flip random walk converges to Geometric Brownian Motion; exact KS distance and the \(1/\sqrt n\) rate.</li>
-  <li><b>Part V — Module 4:</b> portfolio growth \(g(f)\) as a limit, the Kelly fraction, Value-at-Risk, the IVT, and the optimal allocation.</li>
-  <li><b>Part VI — From mathematics to code</b> and numerical issues.</li>
-  <li><b>Part VII — Summary, assumptions, and questions you may be asked.</b></li>
+  <li><b>Part V — Module 4:</b> portfolio growth \(g(f)\) as a limit, the Kelly fraction, Value-at-Risk, the IVT, the optimal allocation, and Expected Shortfall.</li>
+  <li><b>Part VI — Module 4b:</b> rare crashes; coin-flips converge to the Poisson law; the quantile of a mixture by the IVT; growth and Kelly with crashes.</li>
+  <li><b>Part VII — Module 5:</b> stocks, gold and bonds; one mix is one fund; convexity and the unique best mix; the grid step \(\to0\) limit.</li>
+  <li><b>Part VIII — From mathematics to code</b> and numerical issues.</li>
+  <li><b>Part IX — Summary, assumptions, and questions you may be asked.</b></li>
 </ol>
 
 <div class="box">
@@ -83,7 +86,10 @@ exists, and bisection computes it.</p>
 <tr><td class="l">1 Compounding</td><td class="l">\(P = 10{,}000\), \(r = 10\%\), \(t = 10\) years</td></tr>
 <tr><td class="l">2 Options</td><td class="l">\(S = K = 100\), \(r = 5\%\), \(\sigma = 20\%\), \(T = 1\)</td></tr>
 <tr><td class="l">3–4 Market</td><td class="l">\(\mu = 10\%\), \(\sigma = 20\%\), \(r = 3\%\), \(T = 1\) year, \(\alpha = 95\%\), loss limit \(L = 15\%\), leverage cap \(f_{max}=2\)</td></tr>
+<tr><td class="l">4b Crashes</td><td class="l">rate \(\lambda = 0.1\) per year, size \(J = -25\%\)</td></tr>
+<tr><td class="l">5 More assets</td><td class="l">gold \(\mu=\ln1.05\), \(\sigma=15\%\); bonds \(\mu=\ln1.045\), \(\sigma=6\%\); correlations 0 (stocks–gold), −0.2 (stocks–bonds), 0.3 (gold–bonds); no borrowing</td></tr>
 </table>
+<p>All rates are continuously compounded (Module 1): \(\mu=10\%\) means an average gain of \(e^{0.1}-1=10.5\%\) a year, \(r=3\%\) means 3.05%.</p>
 </div>
 
 <!-- ================================================================== -->
@@ -423,11 +429,16 @@ Note \(\mathrm{VaR}(0)=1-e^{rT}=-3.05\%\): the all-bank portfolio has a negative
 <div class="res"><p><span class="label">By the Intermediate Value Theorem</span> there exists \(f_{VaR}\in(0,2)\) with \(h(f_{VaR})=0\): an allocation whose
 risk is <i>exactly</i> at the limit.</p></div>
 
-<div class="thm"><p><span class="label">Proposition 5.4 (uniqueness and the feasible set).</span> If \((\mu-r)\sqrt T\lt z_\alpha\sigma\), then \(\mathrm{VaR}\) is strictly
-increasing on \([0,\infty)\). Hence the root \(f_{VaR}\) is unique and \(\{f\ge0:\mathrm{VaR}(f)\le L\}=[0,f_{VaR}]\).</p></div>
-<div class="proof">\(\mathrm{VaR}(f)=1-e^{\eta(f)}\) with \(\eta(f)=rT+f\big((\mu-r)T-z_\alpha\sigma\sqrt T\big)-\tfrac12f^2\sigma^2T\).
-\(\eta'(f)=(\mu-r)T-z_\alpha\sigma\sqrt T-f\sigma^2T\lt0\) for \(f\ge0\) under the assumption, so \(\eta\) decreases and \(\mathrm{VaR}\) increases.
-Here \((\mu-r)\sqrt T=0.07\lt z\sigma=0.329\).</div>
+<div class="thm"><p><span class="label">Proposition 5.4 (uniqueness and the feasible set).</span> If \(h(0)\lt0\), then for <b>every</b> horizon \(T\) the root
+\(f_{VaR}\) is the only root on \([0,\infty)\), and \(\{f\ge0:\mathrm{VaR}(f)\le L\}=[0,f_{VaR}]\). If moreover \((\mu-r)\sqrt T\lt z_\alpha\sigma\), VaR is strictly
+increasing on \([0,\infty)\).</p></div>
+<div class="proof">\(\mathrm{VaR}(f)=1-e^{\eta(f)}\) with \(\eta(f)=rT+f\big((\mu-r)T-z_\alpha\sigma\sqrt T\big)-\tfrac12f^2\sigma^2T\), so
+\(\mathrm{VaR}(f)\le L\iff\eta(f)\ge\ln(1-L)\), and \(\eta(f)=\ln(1-L)\) is the quadratic equation
+\(\tfrac12\sigma^2T\,f^2+\big(z_\alpha\sigma\sqrt T-(\mu-r)T\big)f+\big(\ln(1-L)-rT\big)=0\). Its constant term is negative, because \(h(0)\lt0\iff rT\gt\ln(1-L)\).
+The product of the two roots is the constant term divided by \(\tfrac12\sigma^2T\gt0\), so it is negative: one root is negative and exactly one is positive.
+Between the roots the parabola is below 0, that is \(\eta\gt\ln(1-L)\); so for \(f\ge0\) the rule holds exactly on \([0,f_{VaR}]\).
+For the monotonicity, \(\eta'(f)=(\mu-r)T-z_\alpha\sigma\sqrt T-f\sigma^2T\lt0\) for \(f\ge0\) under the extra assumption, so VaR increases.
+Here \((\mu-r)\sqrt T=0.07\lt z\sigma=0.329\). For horizons beyond \((z\sigma/(\mu-r))^2\approx22\) years VaR first <i>falls</i> and then rises, but the root is still unique.</div>
 
 <h4>Bisection on \(h\) over \([0,2]\)</h4>
 <table>
@@ -486,8 +497,127 @@ because \(\Delta t=1\) is far from the limit. The simulation confirms Theorem 5.
 <figcaption>Figure 4. Top left: concave growth \(g(f)\), max at Kelly \(f^*\). Top right: VaR\((f)\) crosses the limit \(L\) at the IVT root.
 Bottom left: simulated wealth bands — Kelly is much wider. Bottom right: simulated loss distribution at \(f_{opt}\).</figcaption></figure>
 
+<h3>5.8 How bad are the bad years? Expected Shortfall</h3>
+<p>VaR says where the worst \(1-\alpha\) of years <i>start</i>, not how bad they are. The <b>Expected Shortfall</b> is their average loss.</p>
+<div class="thm"><p><span class="label">Proposition 5.5 (Expected Shortfall).</span> With \(Y=\ln(W_T/W_0)\sim N(m,s^2)\), \(m=g(f)T\), \(s=f\sigma\sqrt T\) and the
+VaR point \(q=m-z_\alpha s\),
+\[ \mathrm{ES}_\alpha(f)=1-\frac{E\big[e^{Y}\mathbf 1_{\{Y\le q\}}\big]}{1-\alpha}=1-e^{m+s^2/2}\,\frac{\Phi(-z_\alpha-s)}{1-\alpha}\;\ge\;\mathrm{VaR}_\alpha(f). \]</p></div>
+<div class="proof">As in Lemma 1.11, \(e^{y}\) times the \(N(m,s^2)\) density equals \(e^{m+s^2/2}\) times the \(N(m+s^2,s^2)\) density, so
+\(E[e^{Y}\mathbf 1_{\{Y\le q\}}]=e^{m+s^2/2}\,\Phi\big(\tfrac{q-m-s^2}{s}\big)=e^{m+s^2/2}\,\Phi(-z_\alpha-s)\). On the event \(\{Y\le q\}\) the loss is at least
+the VaR, so its average is too.</div>
+<p>At \(f_{VaR}=0.705\): VaR = 15%, but <b>ES = 19.76%</b> (a simulation with daily rebalancing gives 19.91%). Since \(m+s^2/2=(r+f(\mu-r))T\) is linear in \(f\)
+and \(\ln\Phi\) is concave (\(\Phi\) is log-concave), \(\ln(1-\mathrm{ES}(f))\) is concave; so, exactly as in Proposition 5.4, the rule \(\mathrm{ES}(f)\le L\) holds on an
+interval \([0,f_{ES}]\) with one boundary point. Bisection gives \(f_{ES}=0.547\): the stricter rule “lose at most 15% <i>on average</i> in the worst 5% of years”.</p>
+
 <!-- ================================================================== -->
-<h2>Part VI — From mathematics to code</h2>
+<h2>Part VI — Module 4b: Fat tails with rare crashes</h2>
+
+<h3>6.1 Model</h3>
+<p>The bell curve makes a really bad year almost impossible. Now crashes arrive at rate \(\lambda=0.1\) per year (about once in 10 years) and multiply
+the stock by \(1+J\) with \(J=-25\%\). Between crashes the stock is a GBM with drift \(\mu-\lambda J\), so the average return is unchanged:
+\(E[dS/S]=(\mu-\lambda J)\,dt+J\cdot\lambda\,dt=\mu\,dt\). With a fraction \(f\) in the stock, rebalanced continuously, a crash multiplies wealth by \(1+fJ\), so with
+\(N\sim\text{Poisson}(\lambda T)\) crashes
+\[ \ln\frac{W_T}{W_0}=\big(g(f)-\lambda Jf\big)T+N\ln(1+fJ)+f\sigma\sqrt T\,Z . \]</p>
+
+<h3>6.2 A new limit: coin-flips become the Poisson law</h3>
+<div class="thm"><p><span class="label">Theorem 6.1 (Poisson limit).</span> If a crash happens in each of \(n\) steps of a year with probability \(\lambda/n\), the number of
+crashes \(B_n\sim\text{Bin}(n,\lambda/n)\) satisfies \(\displaystyle\lim_{n\to\infty}P(B_n=k)=e^{-\lambda}\frac{\lambda^k}{k!}\) for every \(k\).</p></div>
+<div class="proof">\(P(B_n=k)=\dfrac{n(n-1)\cdots(n-k+1)}{n^k}\cdot\dfrac{\lambda^k}{k!}\cdot\Big(1-\dfrac\lambda n\Big)^{n}\cdot\Big(1-\dfrac\lambda n\Big)^{-k}\).
+The first factor is a product of \(k\) terms that each tend to 1, and so does the last one. The third tends to \(e^{-\lambda}\): this is Theorem 2.1 with
+\(r=-\lambda\), whose proof works unchanged for a negative rate because Lemma 1.5 also holds for \(-1\lt u\lt0\).</div>
+<p>The largest difference between the two probability tables is \(9.5\cdot10^{-3}\) for \(n=1\), \(3.4\cdot10^{-5}\) for \(n=252\) and \(8.6\cdot10^{-7}\) for \(n=10{,}000\).</p>
+
+<h3>6.3 The VaR of a mixture: the IVT twice</h3>
+<p>Given the number of crashes \(N=k\), log-wealth is normal, so its CDF is a <b>mixture of bell curves</b>:
+\[ F(x)=\sum_{k\ge0}P(N=k)\,\Phi\!\left(\frac{x-(g(f)-\lambda Jf)T-k\ln(1+fJ)}{f\sigma\sqrt T}\right). \]
+\(F\) is continuous and strictly increasing from 0 to 1, so \(F(x)=1-\alpha\) has exactly one solution (IVT + monotonicity), which bisection finds; then
+\(\mathrm{VaR}_{crash}(f)=1-e^{x}\). It has no formula, but it is continuous in \(f\), with \(h(0)=-0.180\lt0\) and \(h(2)=0.361\gt0\) for
+\(h(f)=\mathrm{VaR}_{crash}(f)-L\). So a second bisection, whose function is itself a bisection, finds \(f_{crash}=0.617447\) (VaR\(_{crash}\) is increasing here,
+checked on a fine grid, so this is the only root). The sum is cut at \(k=30\); the Poisson weights after that are far below rounding error.</p>
+
+<h3>6.4 Same average return, lower growth</h3>
+<div class="thm"><p><span class="label">Proposition 6.2.</span> The long-run growth with crashes is
+\(g_{crash}(f)=E[\ln(W_T/W_0)]/T=g(f)-\lambda Jf+\lambda\ln(1+fJ)\), and \(g_{crash}(f)\lt g(f)\) for every \(f\ne0\).</p></div>
+<div class="proof">\(E[N]=\lambda T\) gives the formula. By Lemma 1.5, \(\ln(1+x)\lt x\) for \(x\ne0\); with \(x=fJ\) this gives \(\lambda\ln(1+fJ)\lt\lambda fJ\).</div>
+<p>A big loss hurts more than the extra drift of the good years helps: at \(f=0.705\) the growth falls from 6.94% to 6.76% a year, although the average
+return is the same. \(g_{crash}\) is strictly concave (\(g_{crash}''=-\sigma^2-\lambda J^2/(1+fJ)^2\lt0\)), and its slope
+\((\mu-r)-f\sigma^2-\lambda J+\lambda J/(1+fJ)\) is continuous, equals \(\mu-r\gt0\) at \(f=0\) and tends to \(-\infty\) as \(1+fJ\to0\). By the IVT bisection finds
+the <b>crash-aware Kelly fraction \(f^*_{crash}=1.4098\)</b> (instead of 1.75). The decision is again \(f_{opt}=\min(f^*_{crash},f_{crash},f_{max})=0.617\).</p>
+
+<h3>6.5 Results</h3>
+<table>
+<tr><th class="l">at \(f=0.705\)</th><th>bell curve only</th><th>with rare crashes</th></tr>
+<tr><td class="l">95% VaR</td><td>15.00%</td><td>17.47%</td></tr>
+<tr><td class="l">99% VaR</td><td>22.79%</td><td>27.29%</td></tr>
+<tr><td class="l">average loss in the worst 5% (ES)</td><td>19.76%</td><td>23.48%</td></tr>
+<tr><td class="l">years losing more than 15%</td><td>1 in 20</td><td>1 in 14</td></tr>
+<tr><td class="l">typical growth per year</td><td>6.94%</td><td>6.76%</td></tr>
+</table>
+<p>The ES with crashes uses Proposition 5.5 for each bell curve of the mixture below the VaR point. A simulation with a crash coin-flip in every step
+gives a VaR at \(f_{crash}\) of 14.46% (yearly steps), 14.97% (monthly), 14.96% (weekly) and 15.04% (daily): the binomial → Poisson limit at work.</p>
+
+<figure><img src="../figures/fig5_fat_tails.png" alt="Fat tails">
+<figcaption>Figure 5. Left: the chance of big losses at \(f=0.705\), with and without crashes. Right: crashes move the IVT root to the left.</figcaption></figure>
+
+<!-- ================================================================== -->
+<h2>Part VII — Module 5: The best mix of stocks, gold and bonds</h2>
+
+<h3>7.1 Model</h3>
+<p>Weights \(w=(w_1,w_2,w_3)\) go to stocks, gold and bonds, and \(1-\sum w_i\) to the bank, with no borrowing (\(\sum w_i\le1\)) and no short selling
+(\(w_i\ge0\)). With the covariance matrix \(C_{ij}=\rho_{ij}\sigma_i\sigma_j\) and continuous rebalancing, exactly as in Theorem 5.1, log-wealth is normal with
+\[ g(w)=r+w\cdot(\mu-r)-\tfrac12w^\top Cw,\qquad \mathrm{sd}(w)=\sqrt{w^\top Cw},\qquad \mathrm{VaR}(w)=1-e^{\,g(w)T-z_\alpha\,\mathrm{sd}(w)\sqrt T}. \]</p>
+
+<div class="thm"><p><span class="label">Lemma 7.1 (one mix is one fund).</span> For a mix \(d\) of the risky assets (\(d_i\ge0\), \(\sum d_i=1\)) and \(w=fd\),
+\(g(w)=r+f(\mu_d-r)-\tfrac12f^2\sigma_d^2\) and \(\mathrm{sd}(w)=f\sigma_d\), with \(\mu_d=r+d\cdot(\mu-r)\) and \(\sigma_d=\sqrt{d^\top Cd}\).</p></div>
+<div class="proof">\(w\cdot(\mu-r)=f\,d\cdot(\mu-r)=f(\mu_d-r)\) and \(w^\top Cw=f^2\,d^\top Cd=f^2\sigma_d^2\).</div>
+<p>So each fund is Module 4 with one “stock” \((\mu_d,\sigma_d)\), and its best share is \(f(d)=\min(f^*_d,f_{VaR}(d),1)\), with \(f_{VaR}(d)\) from the IVT +
+bisection. Every allowed \(w\) is \(f\,d\) for some fund \(d\) and \(f\in[0,1]\), so the best mix is the best fund.</p>
+
+<h3>7.2 Exactly one best mix</h3>
+<div class="thm"><p><span class="label">Theorem 7.2 (convexity).</span> The allowed mixes with \(\mathrm{VaR}(w)\le L\) form a convex set, and the growth \(g\) has exactly
+one maximum on it.</p></div>
+<div class="proof">\(g\) is strictly concave because its Hessian \(-C\) is negative definite (the correlation matrix has leading minors \(1, 1, 0.87\gt0\)).
+\(\mathrm{sd}(w)=\lVert C^{1/2}w\rVert\) is a norm, hence convex (triangle inequality), so \(q(w)=g(w)T-z_\alpha\,\mathrm{sd}(w)\sqrt T\) is concave for
+\(\alpha\gt\tfrac12\). \(\mathrm{VaR}(w)\le L\iff q(w)\ge\ln(1-L)\) is a superlevel set of a concave function, so it is convex, and so is its intersection with
+\(\{w\ge0,\ \sum w_i\le1\}\). This set is closed and bounded, so by the Extreme Value Theorem \(g\) has a maximum on it; if there were two, \(g\) at their
+midpoint would be larger (strict concavity), a contradiction.</div>
+
+<h3>7.3 Searching on a grid, and the limit as the step goes to 0</h3>
+<p>Trying every fund on the grid with steps of 1% (5,151 funds, so 5,151 bisections) gives <b>73% stocks, 4% gold, 23% bonds</b> with growth 7.46824% and
+VaR 14.9953%: 0.53% a year more than stocks + bank (6.94%) for the same risk. But a grid only finds the best <i>grid</i> fund.</p>
+<div class="thm"><p><span class="label">Theorem 7.3 (grid limit).</span> Let \(G(d)=g(f(d)\,d)\) be the growth of fund \(d\) and \(G_s\) its maximum over the grid with step
+\(1/s\). If \(s\) divides \(s'\), then \(G_s\le G_{s'}\); and \(G_s\to\max G\) as \(s\to\infty\).</p></div>
+<div class="proof">If \(s\mid s'\), every point of the coarse grid is also a point of the fine one, so the fine maximum cannot be smaller. \(G\) is continuous on
+the triangle: \(f^*_d\) and \(f_{VaR}(d)\) (the positive root of a quadratic whose coefficients depend continuously on \(d\), Proposition 5.4) are continuous,
+and so is their minimum with 1. The triangle is closed and bounded, so \(G\) is uniformly continuous; every point lies within \(1/s\) of a grid point, so
+\(\max G-G_s\to0\).</div>
+<p>So the doubling sequence \(G_{25}\le G_{50}\le G_{100}\le\dots\) increases to the exact maximum. For the bell curve \(f_{VaR}(d)\) is the root of the quadratic
+of Proposition 5.4, so even grids with a million funds take a second:</p>
+<table>
+<tr><th>grid step</th><th>mixes</th><th class="l">best mix (stocks / gold / bonds)</th><th>growth \(g\)</th></tr>
+<tr><td>4%</td><td>351</td><td class="l">72 / 12 / 16</td><td>7.45461%</td></tr>
+<tr><td>2%</td><td>1,326</td><td class="l">72 / 12 / 16</td><td>7.45461%</td></tr>
+<tr><td>1%</td><td>5,151</td><td class="l">73 / 4 / 23</td><td>7.46824%</td></tr>
+<tr><td>0.5%</td><td>20,301</td><td class="l">72.98 / 4.50 / 22.49</td><td>7.46828%</td></tr>
+<tr><td>0.25%</td><td>80,601</td><td class="l">73 / 4.25 / 22.75</td><td>7.46875%</td></tr>
+<tr><td>0.125%</td><td>321,201</td><td class="l">73 / 4.25 / 22.75</td><td>7.46875%</td></tr>
+<tr><td>0.0625%</td><td>1,282,401</td><td class="l">72.94 / 5 / 22.06</td><td>7.46882%</td></tr>
+<tr><td>\(\to0\)</td><td>(zoom in)</td><td class="l">72.9 / 4.9 / 22.2</td><td><b>7.46887%</b></td></tr>
+</table>
+<p>The last row zooms in on the best fund with a small grid whose step halves 40 times. At the exact best both rules bind: all the money is invested and the VaR
+is exactly 15%.</p>
+
+<h3>7.4 A flat top</h3>
+<p>The growth hardly changes along the 15% boundary: every fund on the 1% grid within 0.01% a year of the best has 73% stocks, but anywhere from 1% to 7% gold
+(bonds 20–26%). So the precise gold share is not a meaningful answer; <b>about 73% stocks</b>, the rest mostly bonds, is. Bonds replace the bank because they
+pay a bit more and move a little against stocks. A simulation with daily rebalancing gives a VaR of 14.95% for the best mix.</p>
+
+<figure><img src="../figures/fig6_best_mix.png" alt="Best mix">
+<figcaption>Figure 6. Left: same risk, more growth than stocks + bank. Middle: random mixes; the best is the highest one within the limit.
+Right: finer grids find better mixes and converge to the exact best.</figcaption></figure>
+
+<!-- ================================================================== -->
+<h2>Part VIII — From mathematics to code</h2>
 
 <table>
 <tr><th class="l">Mathematics</th><th class="l">Python (<code>src/</code>)</th><th class="l">MATLAB (<code>matlab/</code>)</th></tr>
@@ -498,6 +628,9 @@ Bottom left: simulated wealth bands — Kelly is much wider. Bottom right: simul
 <tr><td class="l">Walk distribution, \(D_n\)</td><td class="l"><code>gbm.walk_log_return_distribution / ks_distance_to_gbm</code></td><td class="l"><code>ks_distance_to_gbm.m</code> …</td></tr>
 <tr><td class="l">\(g\), \(f^*\), VaR, \(f_{VaR}\), \(f_{opt}\)</td><td class="l"><code>risk.growth_rate / kelly_fraction / value_at_risk / max_fraction_under_var / optimal_fraction</code></td><td class="l">same names <code>.m</code></td></tr>
 <tr><td class="l">Monte Carlo §5.7</td><td class="l"><code>risk.simulate_wealth / empirical_var</code></td><td class="l"><code>simulate_wealth.m</code>, <code>quantile_linear.m</code></td></tr>
+<tr><td class="l">Quadratic root (Prop 5.4), ES (Prop 5.5)</td><td class="l"><code>risk.var_root_formula / expected_shortfall / max_fraction_under_es</code></td><td class="l">same names <code>.m</code></td></tr>
+<tr><td class="l">Crashes (Part VI)</td><td class="l"><code>risk.poisson_pmf / value_at_risk_jump / max_fraction_under_var_jump / growth_rate_jump / kelly_fraction_jump</code></td><td class="l">same names <code>.m</code></td></tr>
+<tr><td class="l">Best mix and its limit (Part VII)</td><td class="l"><code>portfolio.fund_fraction / best_mix_under_var / best_mix_on_grid / refine_best_mix / near_optimal_ranges</code></td><td class="l">same names <code>.m</code></td></tr>
 </table>
 
 <h3>Numerical details worth knowing</h3>
@@ -512,9 +645,9 @@ Only the Monte Carlo checks are random; they differ slightly between languages.<
 </ul>
 
 <!-- ================================================================== -->
-<h2>Part VII — Summary, assumptions, and likely questions</h2>
+<h2>Part IX — Summary, assumptions, and likely questions</h2>
 
-<h3>7.1 Where each theorem is used</h3>
+<h3>9.1 Where each theorem is used</h3>
 <table>
 <tr><th class="l">Mathematical idea</th><th class="l">Where</th></tr>
 <tr><td class="l">Limit of a sequence, squeeze, monotone convergence</td><td class="l">\((1+r/n)^{nt}\to e^{rt}\) (Thm 2.1, Prop 2.2)</td></tr>
@@ -523,25 +656,36 @@ Only the Monte Carlo checks are random; they differ slightly between languages.<
 <tr><td class="l">Limit in distribution, CLT</td><td class="l">binomial tree → Black–Scholes; random walk → GBM</td></tr>
 <tr><td class="l">Rates of convergence</td><td class="l">\(1/n\) (compounding), \(1/N\) (options), \(1/\sqrt n\) (KS distance)</td></tr>
 <tr><td class="l">Derivative as a limit; concavity</td><td class="l">\(g'(f)\), Kelly fraction \(f^*\)</td></tr>
-<tr><td class="l">Intermediate Value Theorem</td><td class="l">existence of \(f_{VaR}\), of \(z_{0.95}\), and of the root of \(g'\)</td></tr>
-<tr><td class="l">Bisection (nested intervals)</td><td class="l">computing all three roots; 41 iterations</td></tr>
-<tr><td class="l">Extreme Value Theorem</td><td class="l">existence of the optimal allocation on \([0,c]\)</td></tr>
+<tr><td class="l">Intermediate Value Theorem</td><td class="l">existence of \(f_{VaR}\), \(f_{ES}\), \(z_{0.95}\), the root of \(g'\), the crash quantile, \(f_{crash}\), \(f^*_{crash}\), and \(f_{VaR}(d)\) for every fund</td></tr>
+<tr><td class="l">Bisection (nested intervals)</td><td class="l">computing all these roots; 41 iterations on \([0,2]\)</td></tr>
+<tr><td class="l">Concavity, quadratic roots</td><td class="l">uniqueness of \(f_{VaR}\) and \(f_{ES}\) for every horizon (Props 5.4, 5.5); exactly one best mix (Thm 7.2)</td></tr>
+<tr><td class="l">Extreme Value Theorem</td><td class="l">existence of the optimal allocation on \([0,c]\) and of the best mix</td></tr>
+<tr><td class="l">Poisson limit</td><td class="l">crash coin-flips → Poisson law (Thm 6.1)</td></tr>
+<tr><td class="l">Monotone convergence, uniform continuity</td><td class="l">\((1+r/n)^n\) increases to its limit; finer grids of mixes increase to the best mix (Thm 7.3)</td></tr>
 <tr><td class="l">Law of large numbers</td><td class="l">\(\sum Z_k^2\Delta t\to T\) (Thm 5.1); Monte Carlo check</td></tr>
 </table>
 
-<h3>7.2 Assumptions and limitations</h3>
+<h3>9.2 Assumptions and limitations</h3>
 <ul>
 <li>Constant \(\mu\), \(\sigma\), \(r\); in reality they change and \(\mu\) is hard to estimate.</li>
 <li>Normal log-returns. Real returns have <i>fat tails</i>, so the true 95% VaR is somewhat higher than the model's.</li>
 <li>Free, continuous rebalancing; borrowing at the risk-free rate; no taxes.</li>
-<li>VaR ignores <i>how bad</i> losses beyond the 5% threshold are (Expected Shortfall addresses this). The same IVT/bisection method works for it, since it is also continuous in \(f\).</li>
+<li>VaR ignores <i>how bad</i> losses beyond the 5% threshold are. The Expected Shortfall of §5.8 measures it, and the same IVT/bisection method works for it,
+since it is also continuous in \(f\).</li>
+<li>Fat tails come only from the simple crash model of Part VI, with an assumed crash size and frequency. The gold and bond numbers of Part VII are assumptions,
+and the best mix has a flat top, so its exact split is not robust; “about 73% stocks” is.</li>
 </ul>
 
-<h3>7.3 Questions you may be asked</h3>
+<h3>9.3 Questions you may be asked</h3>
 <div class="qa">
 <p class="q">Where exactly is the limit in your project?</p>
-<p>Four places: \((1+r/n)^{nt}\to e^{rt}\); the binomial price \(C_N\to C_{BS}\); the random walk \(\to\) GBM as \(\Delta t\to0\); and the derivative
-\(g'(f)\) as the limit of difference quotients. Theorem 5.1 (discrete rebalancing \(\to\) continuous) combines them.</p>
+<p>Six places: \((1+r/n)^{nt}\to e^{rt}\); the binomial price \(C_N\to C_{BS}\); the random walk \(\to\) GBM as \(\Delta t\to0\); the derivative
+\(g'(f)\) as the limit of difference quotients; crash coin-flips \(\to\) the Poisson law; and the best grid mix \(\to\) the exact best mix as the grid step
+\(\to0\). Theorem 5.1 (discrete rebalancing \(\to\) continuous) combines the first four.</p>
+
+<p class="q">Is 0.705 the only allocation with VaR exactly 15%?</p>
+<p>Yes, for any horizon. \(\mathrm{VaR}(f)=L\) is a quadratic equation in \(f\) whose two roots have a negative product, so only one root is positive
+(Proposition 5.4). The quadratic formula gives 0.705014 too.</p>
 
 <p class="q">Where is continuity used, and why is it essential?</p>
 <p>The VaR function is continuous in \(f\), with \(h(0)\lt0\lt h(2)\), so the IVT guarantees an allocation with risk exactly 15%. Without continuity
@@ -566,9 +710,10 @@ equal gains help (\(-50\%\) needs \(+100\%\) to recover). It is also why growth 
 (\(N\cdot\)error \(\approx2.00\) for even \(N\), \(1.75\) for odd \(N\)). Both still go to zero like \(1/N\).</p>
 
 <p class="q">How did you check the results are right?</p>
-<p>15 automated tests compare against known values (\(e^{0.1}\), the Black–Scholes reference 10.4506, put–call parity, \(z_{0.95}\),
-\(f^*=1.75\)), the closed-form root confirms bisection, the \(1/\sqrt n\) prediction matches the KS distances, and Monte Carlo simulation
-confirms the VaR.</p>
+<p>35 automated tests (repeated in MATLAB) compare against known values (\(e^{0.1}\), the Black–Scholes reference 10.4506, put–call parity, \(z_{0.95}\),
+\(f^*=1.75\)), check the limits (Poisson, finer grids never worse), check that every crash function equals its bell-curve twin when \(\lambda=0\), and
+check the Expected Shortfall. The closed-form root confirms bisection, the \(1/\sqrt n\) prediction matches the KS distances, and Monte Carlo simulation
+confirms the VaR and the ES.</p>
 </div>
 
 <h3>References</h3>
