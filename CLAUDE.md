@@ -36,4 +36,11 @@ MATLAB (from the `matlab/` folder): `run_tests` then `main` (figures go to `matl
 
 `web/index.html` (explainer, uses Chart.js from a CDN) and `web/investor.html` (real-life tool + game, no external libraries, SVG charts) re-implement the deterministic formulas in JavaScript: `bisection`, `normPpf`, `growthRate`, `kellyFraction`, `valueAtRisk`, `maxFractionUnderVar` and `quantileLinear` mirror `src/bisection.py`, `src/normal.py` and `src/risk.py`. Keep them in sync when the Python changes. The JS numbers must match Python, for example f_VaR = 0.705014 with the default parameters and f_max = 2. Uploaded CSVs are parsed client-side only, so never add network calls. There is no JS test runner; verify by opening the page in headless Edge with an isolated `--user-data-dir` and an injected test script.
 
+The game in `investor.html` (tab 4) is separate from the project's math, which covers only stocks and deposit:
+- **Moods:** the `MOODS` values are illustrative, simulated simple yearly rates, not data. They are converted to continuous rates (`rc`, `muc` = ln(1 + x)) before use.
+- **`portfolioVar`:** the multi-asset generalisation of `value_at_risk`. With only stocks it must equal `valueAtRisk`.
+- **`riskEstimate`:** adds TL-crash years as a two-normal mixture and finds the quantile by bisection.
+- **Fair comparisons:** every strategy goes through `stepYear` on the same pre-generated, seeded `years`, so comparisons and "replay" are fair. Keep it that way.
+- **Animations:** they must respect `prefers-reduced-motion`. Tests set `window.INVESTOR_NO_ANIM = true`.
+
 The numbers quoted in `README.md` and `report/report.md` (e.g. f* = 1.75, f_VaR = 0.705014, C_BS = 10.4506) come from `python main.py` output; update both docs if parameters change.

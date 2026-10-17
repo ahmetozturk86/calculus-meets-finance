@@ -91,7 +91,13 @@ Open these files in a browser:
   - estimates μ and σ from the prices;
   - computes how much to put in stocks with the same IVT + bisection method;
   - checks the answer against historical one-year returns (historical VaR and a backtest);
-  - includes a game where you manage the money year by year and are compared with the safe and greedy strategies.
+  - includes a game where you split your savings each year between stocks, gold, US dollars and a TL deposit.
+    - Each year plays out month by month, with life events (emergencies, bonuses, raises).
+    - You choose a market mood: calm, normal, crisis or high inflation. The moods are illustrative simulated
+      settings, not forecasts. If you uploaded prices, the stock years come from your real data.
+    - What counts is your money in today's money. Three years that lose more than your limit get you fired.
+    - A risk meter uses the same VaR idea (with TL-crash years, solved by bisection).
+    - At the end you are compared with fixed strategies on exactly the same years.
 
   The uploaded file is read only inside the page and is never sent anywhere. `investor.html` uses no external libraries.
 
