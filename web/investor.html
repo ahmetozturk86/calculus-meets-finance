@@ -9,55 +9,70 @@
     --bg: #f4f6fb; --card: #ffffff; --text: #0f172a; --muted: #5b6576; --line: #e2e8f0; --soft: #f1f5f9; --soft2: #e8eef7;
     --blue: #2563eb; --blue-soft: rgba(37,99,235,0.16); --red: #dc2626; --red-soft: rgba(220,38,38,0.28);
     --green: #15803d; --green-soft: rgba(21,128,61,0.14); --amber: #d97706; --ink: #111827; --gray: #94a3b8;
-    --goldc: #c08a00; --bond: #0f9488; --dep: #64748b; --purple: #7c3aed;
+    --goldc: #c08a00; --gold-ui: #a16207; --bond: #0f9488; --dep: #64748b; --purple: #7c3aed;
     --band-calm: rgba(21,128,61,0.09); --band-crisis: rgba(220,38,38,0.11); --band-infl: rgba(217,119,6,0.14);
-    --hero1: #1e3a8a; --hero2: #2563eb; --hero3: #0ea5e9;
-    --shadow: 0 1px 2px rgba(15,23,42,0.05), 0 10px 30px rgba(15,23,42,0.07);
+    --shadow: 0 1px 2px rgba(15,23,42,0.04);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0b0f15; --card: #141a22; --text: #e6e9ee; --muted: #9aa4b2; --line: #263040; --soft: #1a212b; --soft2: #222b37;
       --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.2); --red: #f87171; --red-soft: rgba(248,113,113,0.3);
       --green: #4ade80; --green-soft: rgba(74,222,128,0.14); --amber: #fbbf24; --ink: #e6e9ee; --gray: #6b7686;
-      --goldc: #fbbf24; --bond: #2dd4bf; --dep: #94a3b8; --purple: #a78bfa;
+      --goldc: #fbbf24; --gold-ui: #fbbf24; --bond: #2dd4bf; --dep: #94a3b8; --purple: #a78bfa;
       --band-calm: rgba(74,222,128,0.08); --band-crisis: rgba(248,113,113,0.12); --band-infl: rgba(251,191,36,0.12);
-      --hero1: #0b1b4a; --hero2: #1d4ed8; --hero3: #0369a1;
-      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.35);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
   }
   * { box-sizing: border-box; }
   a { color: var(--blue); }
   body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.5;
          font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
-  .hero { background: linear-gradient(135deg, var(--hero1), var(--hero2) 55%, var(--hero3)); color: #fff; padding: 34px 0 72px; }
-  .hero .brand { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
-  .hero h1 { margin: 6px 0 8px; font-size: clamp(28px, 5vw, 40px); line-height: 1.15; }
-  .hero p { margin: 0; max-width: 680px; font-size: 17px; opacity: .92; }
-  main.wrap { margin-top: -48px; padding-bottom: 40px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow); }
-  .card h3 { margin: 18px 0 8px; font-size: 16px; }
-  .step { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .step > span { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-weight: 800; }
-  .step h2 { margin: 0; font-size: 22px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+  .top { padding: 36px 16px 20px; }
+  .top .brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
+  .top h1 { margin: 4px 0 6px; font-size: clamp(26px, 4.5vw, 34px); line-height: 1.15; }
+  .top p { margin: 0; font-size: 16px; color: var(--muted); }
+  main.wrap { padding-bottom: 40px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .card > h2 { margin: 0 0 16px; font-size: 22px; }
+  .card h3 { margin: 22px 0 8px; font-size: 16px; }
   .muted { color: var(--muted); }
   small, .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 18px; }
+  .fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+  @media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
   .field > span, .label { display: block; font-weight: 650; font-size: 15px; margin-bottom: 6px; }
   .input { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); padding: 0 12px; transition: border-color .15s; }
   .input:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
   .input input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 19px; font-weight: 650; padding: 10px 0; }
   .input i { font-style: normal; color: var(--muted); font-size: 14px; white-space: nowrap; }
-  .block { margin-top: 22px; }
-  .markets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  @media (max-width: 640px) { .markets { grid-template-columns: repeat(2, 1fr); } }
-  .market { text-align: left; padding: 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text);
-            cursor: pointer; font: inherit; transition: border-color .15s, background .15s, transform .15s; }
+  .block { margin-top: 26px; }
+  .markets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 600px) { .markets { grid-template-columns: repeat(2, 1fr); } }
+  .market { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 8px; border: 1.5px solid var(--line); border-radius: 12px;
+            background: var(--card); color: var(--text); cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 650; transition: border-color .15s, background .15s; }
   .market:hover { border-color: var(--blue); }
   .market.sel { border-color: var(--blue); background: var(--blue-soft); }
-  .market .ic { font-size: 24px; line-height: 1; }
-  .market b { display: block; margin-top: 6px; font-size: 15px; }
-  .market span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+  .market .ic { font-size: 18px; line-height: 1; }
+  .guess { display: grid; gap: 8px; }
+  .grow { display: grid; grid-template-columns: 96px 1fr 128px; gap: 12px; align-items: center; }
+  .grow > span:first-child { font-weight: 600; white-space: nowrap; }
+  .grow input[type=range] { margin: 0; }
+  .grow > b { text-align: right; font-variant-numeric: tabular-nums; font-size: 14.5px; white-space: nowrap; }
+  .grow > b small { display: inline; margin: 0 0 0 6px; font-weight: 400; }
+  @media (max-width: 480px) {
+    .grow { grid-template-columns: 1fr auto; gap: 2px 12px; }
+    .grow > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  }
+  .stackbar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--soft2); margin-top: 12px; }
+  .stackbar i { display: block; height: 100%; transition: width .2s ease; }
+  .calc { display: block; width: 100%; margin-top: 24px; padding: 14px; border-radius: 14px; font-size: 17px; }
+  #calcNote { text-align: center; }
+  #results.show { animation: fadeUp .35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #results.stale { opacity: .45; transition: opacity .2s; }
+  .split { display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin: 10px 0 4px; background: var(--soft2); }
+  .split span { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; }
+  .verdict { margin: 10px 0 0; }
   .risk-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .presets { display: flex; gap: 8px; flex-wrap: wrap; }
   .pill { border: 1.5px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -80,7 +95,6 @@
   .btn.ghost { background: transparent; color: var(--blue); }
   .btn:disabled { opacity: .5; cursor: default; }
   .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-  .cta { margin: 20px 0 0; text-align: center; }
   .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 14px; text-align: center; }
   .drop.over { border-color: var(--blue); background: var(--soft); }
   .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; } .warn { color: var(--amber); font-weight: 700; }
@@ -127,38 +141,31 @@
 </style>
 </head>
 <body>
-<header class="hero">
-  <div class="wrap">
-    <div class="brand">The Investor</div>
-    <h1>How should I split my money?</h1>
-    <p>Tell us your situation. The math finds the mix of stocks, gold, bonds and savings that grows fastest
-    without losing more than you accept in a bad year. Then it tests that mix in hundreds of possible futures.</p>
-  </div>
+<header class="top wrap">
+  <div class="brand">The Investor</div>
+  <h1>How should I split my money?</h1>
+  <p>Tell us your situation, make your own guess, then let the math find the best mix.</p>
 </header>
 
 <main class="wrap">
 
-<!-- ============ 1. Inputs ============ -->
+<!-- ============ Inputs ============ -->
 <section class="card" id="inputs">
-  <div class="step"><span>1</span><h2>Your situation</h2></div>
   <div class="fields">
     <label class="field"><span>Money to invest now</span>
-      <div class="input"><input id="S" type="number" min="0" step="100" value="10000" inputmode="decimal"></div>
-      <small>Any currency.</small></label>
+      <div class="input"><input id="S" type="number" min="0" step="100" value="10000" inputmode="decimal"></div></label>
     <label class="field"><span>You add each year</span>
-      <div class="input"><input id="save" type="number" min="0" step="100" value="1000" inputmode="decimal"></div>
-      <small>Grows with inflation.</small></label>
+      <div class="input"><input id="save" type="number" min="0" step="100" value="1000" inputmode="decimal"></div></label>
     <label class="field"><span>Savings account interest</span>
-      <div class="input"><input id="r" type="number" min="0" max="30" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div>
-      <small>The safe rate your bank pays.</small></label>
+      <div class="input"><input id="r" type="number" min="0" max="30" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div></label>
     <label class="field"><span>Inflation</span>
-      <div class="input"><input id="infl" type="number" min="-5" max="50" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div>
-      <small>How fast prices rise.</small></label>
+      <div class="input"><input id="infl" type="number" min="-5" max="50" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div></label>
   </div>
 
   <div class="block">
     <div class="label">How is the market right now?</div>
     <div class="markets" id="moodPick"></div>
+    <small id="moodText"></small>
     <small id="moodNote"></small>
   </div>
 
@@ -171,6 +178,22 @@
       <button class="pill" data-l="30">Bold · 30%</button>
     </div>
     <small id="riskText"></small>
+  </div>
+
+  <div class="block">
+    <div class="label">Your guess: how would you split your money?</div>
+    <div class="guess">
+      <div class="grow"><span><i class="dot" style="background:var(--blue)"></i>Stocks</span>
+        <input id="gStock" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: stocks (%)" style="accent-color:var(--blue)"><b id="gStock_v"></b></div>
+      <div class="grow"><span><i class="dot" style="background:var(--goldc)"></i>Gold</span>
+        <input id="gGold" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: gold (%)" style="accent-color:var(--gold-ui)"><b id="gGold_v"></b></div>
+      <div class="grow"><span><i class="dot" style="background:var(--bond)"></i>Bonds</span>
+        <input id="gBond" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: bonds (%)" style="accent-color:var(--bond)"><b id="gBond_v"></b></div>
+      <div class="grow"><span><i class="dot" style="background:var(--dep)"></i>Savings</span>
+        <span class="muted">the rest</span><b id="gDep_v"></b></div>
+    </div>
+    <div class="stackbar" id="guessBar" aria-hidden="true"></div>
+    <small>Guess first, then see if you can beat the math.</small>
   </div>
 
   <details class="more" id="moreSettings">
@@ -236,25 +259,30 @@
       <small id="transNote"></small>
     </div>
   </details>
-  <p class="cta"><a class="btn" href="#plan">See my plan ↓</a></p>
+  <button class="btn calc" id="calc" type="button">Calculate my plan</button>
+  <small class="hidden" id="calcNote">You changed your inputs. Press the button again to update the results.</small>
 </section>
 
-<!-- ============ 2. The plan ============ -->
+<div id="results" class="hidden">
+<!-- ============ The plan ============ -->
 <section class="card" id="plan">
-  <div class="step"><span>2</span><h2>Your plan</h2></div>
+  <h2>Your plan</h2>
   <div class="plan">
     <div id="donut"></div>
     <div><div class="headline" id="planHead"></div><div class="parts" id="planParts"></div></div>
   </div>
   <div class="tiles" id="planTiles"></div>
   <p id="planWhy"></p>
+  <h3>Your guess vs the math</h3>
+  <div class="scroll"><table id="vsMath"></table></div>
+  <p class="verdict" id="vsVerdict"></p>
   <div class="callout hidden" id="planCrash"></div>
   <div class="callout amber hidden" id="planHistory"></div>
 </section>
 
-<!-- ============ 3. Real life ============ -->
+<!-- ============ Real life ============ -->
 <section class="card" id="lifeCard">
-  <div class="step"><span>3</span><h2>Your plan in real life</h2></div>
+  <h2>Your plan in real life</h2>
   <p class="muted" id="lifeSettings"></p>
   <div class="buttons"><button class="btn" id="lifePlay">▶ Play the years</button> <button class="btn ghost" id="lifeSkip">Skip to the end</button>
      <button class="btn ghost" id="lifeNew">Another future</button></div>
@@ -262,13 +290,21 @@
   <div class="chart" id="lifeChart"></div>
   <div class="scroll"><table id="lifeTable"></table></div>
   <h3>One future can be lucky or unlucky. Here are 500 of them:</h3>
+  <div id="lifeWins"></div>
   <div class="scroll"><table id="lifeMany"></table></div>
   <small id="lifeManyNote"></small>
+  <details class="more" id="moreStrategies">
+    <summary>Compare more strategies <span class="sub">stocks only, all gold, …</span></summary>
+    <div class="more-body">
+      <p class="muted">The same 500 futures for other simple strategies.</p>
+      <div class="scroll"><table id="lifeExtra"></table></div>
+    </div>
+  </details>
 </section>
 
-<!-- ============ 4. How it works ============ -->
+<!-- ============ How it works ============ -->
 <section class="card" id="how">
-  <div class="step"><span>4</span><h2>How we found your plan</h2></div>
+  <h2>How we found your plan</h2>
   <p class="muted" style="margin-top:0">The math behind the plan, step by step. Open any part.</p>
 
   <details class="more">
@@ -334,6 +370,7 @@
     </div>
   </details>
 </section>
+</div>
 </main>
 <footer>An illustrative model for learning, not financial advice. Same math as the <a href="index.html">Limits in Finance</a> project:
 continuous limits, the Intermediate Value Theorem and bisection.</footer>
@@ -655,7 +692,7 @@ function bestMixCrash(s, L, alpha) {
 // All years of a future, drawn up front: monthly growth factors of the four assets, inflation and a life event.
 function generateYears(set, seed) {
   const rng = mulberry32(seed), C = cholesky(RHO), dt = 1 / 12;
-  const real = set.useData ? shuffleWith(rng, [...data.years]) : null;
+  const real = set.useData ? shuffleWith(rng, [...set.dataYears]) : null;
   const n = real ? Math.min(set.length, real.length) : set.length, years = [];
   let regime = set.mood;
   for (let k = 0; k < n; k++) {
@@ -746,7 +783,7 @@ const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true 
 // Inputs
 // =====================================================================
 const ui = { mood: "normal" };
-const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, L: 15, mu: 10, sig: 20 };
+const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, L: 15, mu: 10, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
   return { S: Math.max(0, num("S", 0)), save: Math.max(0, num("save", 0)), r: clamp(num("r", 3), 0, 30) / 100,
@@ -757,7 +794,7 @@ function params() {
 for (const [key, m] of Object.entries(MOODS)) {
   const b = document.createElement("button");
   b.className = "market"; b.dataset.mood = key; b.type = "button";
-  b.innerHTML = `<div class="ic" aria-hidden="true">${m.icon}</div><b>${m.name}</b><span>${m.text}</span>`;
+  b.innerHTML = `<span class="ic" aria-hidden="true">${m.icon}</span>${m.name}`;
   b.addEventListener("click", () => pickMood(key));
   $("moodPick").appendChild(b);
 }
@@ -770,16 +807,42 @@ function pickMood(key) {
     $("moodNote").innerHTML = `We filled in a typical interest rate and inflation for a <b>${to.name.toLowerCase()}</b> market. Type your own if they are different.`;
   }
   ui.mood = key;
-  renderAll();
+  onInputChange();
 }
-for (const b of document.querySelectorAll("#riskPresets .pill")) b.addEventListener("click", () => { $("L").value = b.dataset.l; renderAll(); });
+for (const b of document.querySelectorAll("#riskPresets .pill")) {
+  b.type = "button";
+  b.addEventListener("click", () => { $("L").value = b.dataset.l; onInputChange(); });
+}
 for (const id of ["S", "save", "r", "infl", "L", "alpha", "mu", "sig", "years", "goal", "changing", "events", "crashEvery", "crashSize"])
-  $(id).addEventListener("input", renderAll);
+  $(id).addEventListener("input", onInputChange);
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
   ui.mood = "normal"; $("moodNote").textContent = "";
-  renderAll();
+  onInputChange();
 });
+// Your guess: stocks, gold and bonds in whole percent; the savings account gets the rest. A slider first takes from the
+// savings account; past that, the other two make room in proportion to their size.
+const GUESS = ["gStock", "gGold", "gBond"];
+const guessW = () => { const [s, g, b] = GUESS.map(id => +$(id).value); return [s / 100, g / 100, b / 100, (100 - s - g - b) / 100]; };
+for (const id of GUESS) $(id).addEventListener("input", () => {
+  const others = GUESS.filter(x => x !== id).sort((a, b) => $(b).value - $(a).value);
+  const tot = others.reduce((s, x) => s + +$(x).value, 0), excess = +$(id).value - (100 - tot);
+  if (excess > 0) {
+    const cut = Math.min(+$(others[0]).value, Math.ceil(excess * $(others[0]).value / tot));
+    $(others[0]).value -= cut;
+    $(others[1]).value -= excess - cut;
+  }
+  onInputChange();
+});
+// Inputs only redraw the input card; the results wait for the button (and are dimmed until it is pressed again).
+function onInputChange() {
+  renderInputs();
+  renderData();
+  if (!cur) return;
+  $("results").classList.add("stale");
+  $("calc").textContent = "Recalculate my plan";
+  $("calcNote").classList.remove("hidden");
+}
 
 // =====================================================================
 // CSV upload (read locally with FileReader; nothing leaves the page)
@@ -902,7 +965,7 @@ function loadCsvText(text, name) {
     data = null;
     $("dataStatus").innerHTML = `<span class="bad">✗ ${e.message}</span>`;
   }
-  renderAll();
+  onInputChange();
 }
 function readFile(file) {
   if (!file) return;
@@ -917,8 +980,8 @@ const drop = $("drop");
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFile(e.dataTransfer.files[0]); });
-$("useEstimates").addEventListener("click", () => { if (data) { setStock(data.mu, data.sig); renderAll(); } });
-$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; $("dataStatus").innerHTML = ""; renderAll(); });
+$("useEstimates").addEventListener("click", () => { if (data) { setStock(data.mu, data.sig); onInputChange(); } });
+$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; $("dataStatus").innerHTML = ""; onInputChange(); });
 
 // =====================================================================
 // The answer, computed once per change of the inputs
@@ -951,7 +1014,17 @@ function crashSolve(p, sol, lam, J) {                // a bisection inside a bis
 }
 const mixCache = new Map();
 function cached(map, key, make) { if (!map.has(key)) { if (map.size > 60) map.clear(); map.set(key, make()); } return map.get(key); }
+// The bell-curve numbers of any split w = [stocks, gold, bonds, savings]: a share f = w0 + w1 + w2 in the fund d = w / f,
+// with the same formulas as fundFraction, so the plan's own split gives exactly plan.g and plan.var.
+function mixStats(w, m, z) {
+  const f = w[0] + w[1] + w[2];
+  if (f < 1e-12) return { g: m.rc, var: 1 - Math.exp(m.rc) };
+  const fd = fundOf([w[0] / f, w[1] / f, w[2] / f], m), g = growthRate(f, fd.mu, fd.sig, m.rc);
+  return { g, var: 1 - Math.exp(g - z * f * fd.sig) };
+}
 
+// Everything the results show, computed when the button is pressed. Settings the results read later (uploaded data,
+// the surprise switches) are kept here too, so dimmed results stay consistent while the inputs change.
 let cur = null;
 function compute() {
   const p = params(), c = crashSettings(), states = marketStates(p, c.lam, c.J), st = states[p.mood], m = mathState(st);
@@ -959,22 +1032,30 @@ function compute() {
   const key = [m.mu, m.sig, m.rc, p.L, p.alpha].join("|");
   const plan = cached(mixCache, "p" + key, () => bestMix(m, p.L, p.alpha));
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
-  const sol = solve(stockP), lamS = -Math.log(1 - st.shock);
-  return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J) };
+  const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
+  return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J),
+           guess: { w: gw, ...mixStats(gw, m, normPpf(p.alpha)) }, data,
+           changing: $("changing").checked, events: $("events").checked };
 }
 
 // =====================================================================
 // Rendering
 // =====================================================================
-function renderAll() {
+function calculate() {
   cur = compute();
-  renderInputs();
-  renderData();
+  delete $("fTry").dataset.touched;                                // part 4's slider starts at the new plan
+  const res = $("results"), first = res.classList.contains("hidden");
+  res.classList.remove("hidden", "stale");
+  if (first) res.classList.add("show");
+  $("calc").textContent = "Calculate my plan";
+  $("calcNote").classList.add("hidden");
   renderPlan();
   renderHow();
   renderHistory();
   renderLife();
+  $("plan").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
 }
+$("calc").addEventListener("click", calculate);
 const mixText = w => {
   const t = [0, 1, 2].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${ASSETS[i].name.toLowerCase()}`);
   if (w[3] >= 0.005) t.push(`${pct(w[3], 0)} savings`);
@@ -982,9 +1063,18 @@ const mixText = w => {
 };
 
 function renderInputs() {
-  const { p, c, states } = cur, every = Math.round(1 / (1 - p.alpha));
-  for (const b of document.querySelectorAll(".market")) b.classList.toggle("sel", b.dataset.mood === p.mood);
-  for (const b of document.querySelectorAll("#riskPresets .pill")) b.classList.toggle("sel", +b.dataset.l === Math.round(p.L * 100));
+  const p = params(), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
+  for (const b of document.querySelectorAll(".market")) {
+    b.classList.toggle("sel", b.dataset.mood === p.mood); b.setAttribute("aria-pressed", b.dataset.mood === p.mood);
+  }
+  for (const b of document.querySelectorAll("#riskPresets .pill")) {
+    const on = +b.dataset.l === Math.round(p.L * 100);
+    b.classList.toggle("sel", on); b.setAttribute("aria-pressed", on);
+  }
+  $("moodText").textContent = MOODS[p.mood].text;
+  const gw = guessW();
+  ["gStock", "gGold", "gBond", "gDep"].forEach((id, i) => { $(id + "_v").innerHTML = `${pct(gw[i], 0)}<small>${money(p.S * gw[i])}</small>`; });
+  $("guessBar").innerHTML = gw.map((x, i) => `<i style="width:${100 * x}%;background:${ASSETS[i].color}"></i>`).join("");
   $("Lv").textContent = pct(p.L, 0);
   $("riskText").innerHTML = `In a bad year (the worst 1 year in ${every}) you lose at most <b>${pct(p.L, 0)}</b>, which is <b>${money(p.S * p.L)}</b> of your ${money(p.S)}.`;
   $("crashEvery_v").textContent = c.every ? `${c.every} years` : "never";
@@ -1053,19 +1143,41 @@ function renderPlan() {
     if (gain > 0.0005) why += ` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), for the same bad-year risk.`;
   }
   $("planWhy").innerHTML = why;
+  renderVsMath();
   const showCrash = crashPlan && c.every;
   $("planCrash").classList.toggle("hidden", !showCrash);
   if (showCrash) $("planCrash").innerHTML = `<b>Safer if crashes happen.</b> The bell-curve math above ignores rare crashes. If stocks can fall ${pct(-c.J, 0)}
     about once every ${c.every} years (in a ${st.name.toLowerCase()} market: a ${pct(st.shock, 1)} chance each year), a mix that keeps the same promise is
-    <b>${crashPlan.d ? mixText(crashPlan.w) : "all in the savings account"}</b>. Both are tested in real life below.`;
+    <b>${crashPlan.d ? mixText(crashPlan.w) : "all in the savings account"}</b>. It is tested in real life below, under “Compare more strategies”.`;
   let hn = "";
-  if (data && data.windows.length >= 10) {
+  if (cur.data && cur.data.windows.length >= 10) {
     const hs = solveHistory(cur.stockP);
     if (hs.f < sol.fOpt - 0.005) hn = `<b>History check:</b> in your uploaded data, real bad years were worse than the bell curve predicts. ` +
       `With only stocks and the savings account, history suggests at most <b>${pct(hs.f, 0)}</b> in stocks instead of ${pct(sol.fOpt, 0)} (see part 4).`;
   }
   $("planHistory").classList.toggle("hidden", !hn);
   $("planHistory").innerHTML = hn;
+}
+// Your guess next to the math's plan, with the same bell-curve numbers.
+function renderVsMath() {
+  const { p, plan, guess } = cur, n = p.years, every = Math.round(1 / (1 - p.alpha)), within = x => x.var <= p.L + 1e-9;
+  const loss = x => `${x.var > 0 ? "−" + pct(x.var) : signed(-x.var)} ${within(x) ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`}`;
+  $("vsMath").innerHTML = `<tr><th></th><th>Split</th><th>Typical growth a year</th><th>Bad year (worst 1 in ${every})</th><th>After ${n} years</th></tr>` +
+    [["Your guess", "var(--amber)", guess], ["The math", "var(--blue)", plan]].map(([name, color, x]) =>
+      `<tr><td><i class="dot" style="background:${color}"></i><b>${name}</b></td><td>${mixText(x.w)}</td><td>${signed(Math.exp(x.g) - 1)}</td>
+       <td>${loss(x)}</td><td>${money(typicalAfter(p, x.g, n))}</td></tr>`).join("");
+  const gap = typicalAfter(p, plan.g, n) - typicalAfter(p, guess.g, n);
+  let v;
+  if (!within(guess))
+    v = `<span class="bad">Your guess breaks your limit:</span> in a bad year it loses ${pct(guess.var)}, more than your ${pct(p.L, 0)}.` +
+        (guess.g > plan.g ? " It grows faster only because it takes more risk than you accept." : " And the math still grows faster.");
+  else if (guess.g > plan.g - 0.0005)
+    v = `<span class="ok">You found the math's answer!</span> Your guess keeps your limit and grows as fast as the plan` +
+        (guess.g > plan.g + 0.0005 ? " (even a little faster: the math tries mixes in 1% steps)." : ".");
+  else
+    v = `<span class="ok">Both keep your limit</span>, but the math grows <b>${signed(Math.exp(plan.g) - Math.exp(guess.g), 2)}</b> a year faster:` +
+        ` about <b>${money(gap)}</b> more after ${n} years.`;
+  $("vsVerdict").innerHTML = v;
 }
 
 function renderHow() {
@@ -1182,7 +1294,7 @@ function renderCrash(p, sol) {
 // ---- History check (stocks + savings account) ----
 function histPortfolio(p, f) {         // one-year portfolio growth factors from the real windows
   const bank = Math.exp(p.r) - 1;
-  return data.windows.map(R => 1 + f * R + (1 - f) * bank);
+  return cur.data.windows.map(R => 1 + f * R + (1 - f) * bank);
 }
 function historicalVar(p, f) {
   const w = histPortfolio(p, f).sort((a, b) => a - b);
@@ -1193,11 +1305,11 @@ function solveHistory(p) {
   return { f: v.status === "impossible" ? 0 : v.f, status: v.status };
 }
 function renderHistory() {
-  const p = cur.stockP, sol = cur.sol, ok = data && data.windows.length >= 10;
+  const p = cur.stockP, sol = cur.sol, ok = cur.data && cur.data.windows.length >= 10;
   $("histEmpty").classList.toggle("hidden", !!ok);
   $("histBody").classList.toggle("hidden", !ok);
   if (!ok) return;
-  const R = data.windows, sorted = [...R].sort((a, b) => a - b);
+  const R = cur.data.windows, sorted = [...R].sort((a, b) => a - b);
   $("histIntro").innerHTML = `Bars: the stock's real return over every one-year period in your data (${R.length} periods).
     Red curve: what the bell-curve model with μ = ${pct(p.mu)}, σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`;
   const lo = Math.min(sorted[0], -0.5), hi = Math.max(sorted[sorted.length - 1], 0.6), nb = 24, w = (hi - lo) / nb, counts = Array(nb).fill(0);
@@ -1229,12 +1341,12 @@ function renderHistory() {
 // =====================================================================
 // Your plan in real life: the plan played through simulated years, next to simple strategies
 // =====================================================================
-const life = { seed: 1, token: 0, upto: null, timer: 0, sc: null, scKey: "" };
-const LIFE_FUTURES = 500;
+const life = { seed: 1, token: 0, manyToken: 0, upto: null, sc: null, scFor: null, many: null };
+const LIFE_FUTURES = 500, LIFE_CHUNK = 25;
 function lifeSettings() {
-  const { p, c, states } = cur;
+  const { p, c, states, data: d } = cur, useData = !!(d && d.years.length >= 5);
   return { S: p.S, L: p.L, alpha: p.alpha, save: p.save, goal: p.goal, length: p.years, mood: p.mood,
-           changing: $("changing").checked, events: $("events").checked, useData: !!(data && data.years.length >= 5), crash: c, states };
+           changing: cur.changing, events: cur.events, useData, dataYears: useData ? d.years : null, crash: c, states };
 }
 function settingsText(set) {
   const c = set.crash;
@@ -1243,50 +1355,52 @@ function settingsText(set) {
     `${c.every ? `a ${pct(-c.J, 0)} crash about every ${c.every} years` : "no crashes"} · life events ${set.events ? "on" : "off"} · ` +
     `you add ${money(set.save)} a year${set.goal ? ` · goal ${set.goal}× your money` : ""}`;
 }
+// The main comparison (your plan, your guess, the savings account) and a few simple extras for "Compare more strategies".
 function lifeStrategies() {
-  const { plan, crashPlan, sol, c } = cur, f = sol.fOpt;
-  const rows = [{ key: "plan", name: "Your plan", desc: plan.d ? mixText(plan.w) : "all savings", w: plan.w, color: "var(--blue)", width: 3.4 }];
+  const { plan, crashPlan, sol, c, guess } = cur, f = sol.fOpt;
+  const rows = [
+    { key: "plan", name: "Your plan", desc: plan.d ? mixText(plan.w) : "all savings", w: plan.w, color: "var(--blue)", width: 3.4, main: true },
+    { key: "guess", name: "Your guess", desc: mixText(guess.w), w: guess.w, color: "var(--amber)", width: 2.4, main: true },
+    { key: "bank", name: "Savings account only", desc: "no risk", w: [0, 0, 0, 1], color: "var(--dep)", main: true }];
   if (crashPlan && c.every && crashPlan.w.some((x, i) => Math.abs(x - plan.w[i]) > 0.005))
     rows.push({ key: "crash", name: "Crash-safe plan", desc: crashPlan.d ? mixText(crashPlan.w) : "all savings", w: crashPlan.w, color: "var(--purple)" });
   return rows.concat([
-    { key: "stock4", name: "Stocks + savings only", desc: `${pct(f, 0)} stocks`, w: [f, 0, 0, 1 - f], color: "var(--amber)" },
-    { key: "bank", name: "Savings account only", desc: "no risk", w: [0, 0, 0, 1], color: "var(--dep)" },
+    { key: "stock4", name: "Stocks + savings only", desc: `${pct(f, 0)} stocks`, w: [f, 0, 0, 1 - f], color: "var(--green)" },
     { key: "stocks", name: "All stocks", desc: "100% stocks", w: [1, 0, 0, 0], color: "var(--red)" },
-    { key: "equal", name: "Equal mix", desc: "25% each", w: [0.25, 0.25, 0.25, 0.25], color: "var(--green)" },
     { key: "gold", name: "All gold", desc: "100% gold", w: [0, 1, 0, 0], color: "var(--goldc)" }]);
 }
-function lifeScenario(seed) {
-  const set = lifeSettings(), years = generateYears(set, seed);
-  const rows = lifeStrategies().map(r => ({ ...r, st: runStrategy(r.w, years, set) }));
+function lifeScenario(seed, set = lifeSettings(), strategies = lifeStrategies()) {
+  const years = generateYears(set, seed);
+  const rows = strategies.map(r => ({ ...r, st: runStrategy(r.w, years, set) }));
   return { set, years, rows, keep: runStrategy(null, years, set) };
 }
 function scenarioNow() {                                           // cached: the animation redraws many times a second
-  const key = life.seed + "|" + JSON.stringify([cur.p, cur.c, lifeSettings().changing, lifeSettings().events, !!data, cur.plan.w]);
-  if (key !== life.scKey) { life.scKey = key; life.sc = lifeScenario(life.seed); }
+  if (life.scFor !== cur || life.sc.seed !== life.seed) { life.scFor = cur; life.sc = { ...lifeScenario(life.seed), seed: life.seed }; }
   return life.sc;
 }
 function renderLife() {
-  clearTimeout(life.timer);
-  life.timer = setTimeout(() => { life.token++; life.upto = null; drawLife(); renderLifeMany(); }, 150);
+  life.token++; life.upto = null;
+  drawLife();
+  life.many = renderLifeMany();
 }
 const nameCell = r => `<i class="dot" style="background:${r.color}"></i>${r.name} <span class="muted">(${r.desc})</span>`;
 function drawLife() {
-  const sc = scenarioNow(), n = sc.years.length;
+  const sc = scenarioNow(), n = sc.years.length, main = sc.rows.filter(r => r.main);
   const upto = life.upto === null ? n : life.upto, real = st => st.money / st.price;
-  $("lifeSettings").innerHTML = `One possible future: your plan next to simple strategies, on exactly the same years. ` +
+  $("lifeSettings").innerHTML = `One possible future: your plan, your guess and the savings account, on exactly the same years. ` +
     `<b>Settings:</b> ${settingsText(sc.set)} (change them in More settings). Future #${life.seed}.`;
   const cut = path => {                                            // the part of a path up to time `upto`, smoothly
     const pts = path.filter(q => q.x <= upto), next = path.find(q => q.x > upto), last = pts[pts.length - 1];
     return next && last ? pts.concat({ x: upto, y: last.y + (next.y - last.y) * (upto - last.x) / (next.x - last.x) }) : pts;
   };
-  const all = sc.rows.concat([{ st: sc.keep }]).flatMap(r => r.st.path.map(q => q.y));
+  const all = main.concat([{ st: sc.keep }]).flatMap(r => r.st.path.map(q => q.y));
   const top = Math.max(...all, sc.set.S * (sc.set.goal || 1)) * 1.08;
   drawChart($("lifeChart"), { x: [0, n], y: [0, top], xFmt: v => v, yFmt: v => money(v), xLabel: "year", yLabel: "in today's money",
     bars: regimeBands(sc.years, Math.ceil(upto), top), aria: "your plan in one possible future",
     series: [{ pts: cut(sc.keep.path), color: "var(--gray)", dash: "5 4", width: 1.6 },
-             ...sc.rows.slice().reverse().map(r => ({ pts: cut(r.st.path), color: r.color, width: r.width || 2 }))],
+             ...main.slice().reverse().map(r => ({ pts: cut(r.st.path), color: r.color, width: r.width || 2 }))],
     hlines: [{ y: sc.set.S, color: "var(--gray)", dash: "4 4" }, ...(sc.set.goal ? [{ y: sc.set.goal * sc.set.S, color: "var(--green)", dash: "6 4" }] : [])],
-    legend: sc.rows.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }],
+    legend: main.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }],
             sc.set.goal ? [{ color: "var(--green)", label: "goal", dash: true }] : [], BAND_LEGEND) });
   // what happened in the last finished year
   const k = Math.min(n, Math.floor(upto + 1e-9));
@@ -1299,14 +1413,14 @@ function drawLife() {
     const over = ch(sc.rows[0].w) < -sc.set.L ? ` <span class="bad">Your plan lost more than your ${pct(sc.set.L, 0)} limit this year.</span>` : "";
     $("lifeLog").innerHTML = `<b>Year ${k}${y.label ? ` (${y.label})` : ""}:</b> a <b>${sc.set.states[y.regime].name.toLowerCase()}</b> year` +
       (prev && prev !== y.regime ? ` (the market turned)` : "") + (y.shock ? `, <span class="bad">market crash!</span>` : "") +
-      `. Your plan ${fmt(ch(sc.rows[0].w))}, all stocks ${fmt(ch([1, 0, 0, 0]))}, all gold ${fmt(ch([0, 1, 0, 0]))}, savings ${fmt(ch([0, 0, 0, 1]))}. ` +
+      `. Your plan ${fmt(ch(sc.rows[0].w))}, your guess ${fmt(ch(cur.guess.w))}, savings ${fmt(ch([0, 0, 0, 1]))}. ` +
       `Prices rose ${pct(y.infl, 1)}.${ev}${over}`;
   }
   // the result table, once all years are shown
   const done = upto >= n - 1e-9, goal = sc.set.goal * sc.set.S;
   $("lifeTable").innerHTML = done ? "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Years over your limit</th>" +
     (sc.set.goal ? "<th>Goal</th>" : "") + "</tr>" +
-    sc.rows.map(r => `<tr><td>${nameCell(r)}</td><td>${money(r.st.money)}</td><td><b>${money(real(r.st))}</b></td>
+    main.map(r => `<tr><td>${nameCell(r)}</td><td>${money(r.st.money)}</td><td><b>${money(real(r.st))}</b></td>
       <td>${r.st.strikes} of ${n}</td>${sc.set.goal ? `<td>${real(r.st) >= goal ? `<span class="ok">✓ reached</span>` : pct(real(r.st) / goal, 0)}</td>` : ""}</tr>`).join("") +
     `<tr><td><i class="dot" style="background:var(--gray)"></i>Just keeping up with inflation <span class="muted">(reference)</span></td><td>${money(sc.keep.money)}</td><td>${money(real(sc.keep))}</td><td>–</td>${sc.set.goal ? "<td></td>" : ""}</tr>` : "";
 }
@@ -1320,25 +1434,56 @@ $("lifePlay").addEventListener("click", animateLife);
 $("lifeSkip").addEventListener("click", () => { life.token++; life.upto = null; drawLife(); });
 $("lifeNew").addEventListener("click", () => { life.seed++; animateLife(); });
 // Many futures: the same comparison over seeds 1..LIFE_FUTURES, so one lucky or unlucky story does not decide.
+// They run in small chunks so the page stays responsive, and a newer calculation stops an older run.
 function renderLifeMany() {
-  const per = [], set0 = lifeSettings(), p = cur.p;
-  let n = 0;
-  for (let seed = 1; seed <= LIFE_FUTURES; seed++) {
-    const sc = lifeScenario(seed), bank = sc.rows.find(x => x.key === "bank"), bankReal = bank.st.money / bank.st.price;
-    n = sc.years.length;
-    sc.rows.forEach((r, i) => { (per[i] = per[i] || { ...r, real: [], strikes: 0, beat: 0, goal: 0 });
-      const v = r.st.money / r.st.price;
-      per[i].real.push(v); per[i].strikes += r.st.strikes; per[i].beat += v > bankReal ? 1 : 0;
-      per[i].goal += sc.set.goal && v >= sc.set.goal * sc.set.S ? 1 : 0; });
-  }
-  const q = (a, x) => quantileLinear(a.slice().sort((u, v) => u - v), x), share = x => pct(x / LIFE_FUTURES, 0);
+  const token = ++life.manyToken, set = lifeSettings(), strategies = lifeStrategies(), per = [], real = st => st.money / st.price;
+  let n = 0, seed = 1, guessAhead = 0, ties = 0;
+  return new Promise(done => {
+    const step = () => {
+      if (token !== life.manyToken) { done(false); return; }
+      for (const end = Math.min(LIFE_FUTURES, seed + LIFE_CHUNK - 1); seed <= end; seed++) {
+        const sc = lifeScenario(seed, set, strategies), bankReal = real(sc.rows.find(x => x.key === "bank").st);
+        const vPlan = real(sc.rows[0].st), vGuess = real(sc.rows.find(x => x.key === "guess").st);
+        if (Math.abs(vGuess - vPlan) < 0.5) ties++; else if (vGuess > vPlan) guessAhead++;
+        n = sc.years.length;
+        sc.rows.forEach((r, i) => { (per[i] = per[i] || { ...r, real: [], strikes: 0, beat: 0, goal: 0 });
+          const v = real(r.st);
+          per[i].real.push(v); per[i].strikes += r.st.strikes; per[i].beat += v > bankReal ? 1 : 0;
+          per[i].goal += set.goal && v >= set.goal * set.S ? 1 : 0; });
+      }
+      if (seed <= LIFE_FUTURES) {
+        $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures… ${pct((seed - 1) / LIFE_FUTURES, 0)}`;
+        setTimeout(step);
+        return;
+      }
+      showLifeMany(per, n, guessAhead, ties, set);
+      done(true);
+    };
+    $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures…`;
+    setTimeout(step);
+  });
+}
+function showLifeMany(per, n, guessAhead, ties, set) {
+  const p = cur.p, N = LIFE_FUTURES;
+  const q = (a, x) => quantileLinear(a.slice().sort((u, v) => u - v), x), share = x => pct(x / N, 0);
   const oneIn = x => x >= 100 ? `almost never (1 in ${Math.round(x)})` : `1 year in ${x < 20 ? x.toFixed(1) : Math.round(x)}`;
-  const every = r => r.strikes ? oneIn(LIFE_FUTURES * n / r.strikes) : "never";
-  $("lifeMany").innerHTML = "<tr><th>Strategy</th><th>Typical result (median)</th><th>Bad luck (worst 5%)</th><th>Ends above savings only</th><th>A year over your limit</th>" +
-    (set0.goal ? "<th>Reaches the goal</th>" : "") + "</tr>" +
-    per.map(r => `<tr><td>${nameCell(r)}</td><td><b>${money(q(r.real, 0.5))}</b></td><td>${money(q(r.real, 0.05))}</td>
-      <td>${r.key === "bank" ? "–" : share(r.beat)}</td><td>${every(r)}</td>${set0.goal ? `<td>${share(r.goal)}</td>` : ""}</tr>`).join("");
-  const promise = Math.round(1 / (1 - p.alpha)), you = per[0], seen = you.strikes ? LIFE_FUTURES * n / you.strikes : Infinity;
+  const every = r => r.strikes ? oneIn(N * n / r.strikes) : "never";
+  const head = "<tr><th>Strategy</th><th>Typical result (median)</th><th>Bad luck (worst 5%)</th><th>Ends above savings only</th><th>A year over your limit</th>" +
+    (set.goal ? "<th>Reaches the goal</th>" : "") + "</tr>";
+  const row = r => `<tr><td>${nameCell(r)}</td><td><b>${money(q(r.real, 0.5))}</b></td><td>${money(q(r.real, 0.05))}</td>
+      <td>${r.key === "bank" ? "–" : share(r.beat)}</td><td>${every(r)}</td>${set.goal ? `<td>${share(r.goal)}</td>` : ""}</tr>`;
+  $("lifeMany").innerHTML = head + per.filter(r => r.main).map(row).join("");
+  $("lifeExtra").innerHTML = head + per.filter(r => !r.main).map(row).join("");
+  // Who ended with more money in each future: the math's plan or your guess.
+  const you = per[0], guess = per.find(r => r.key === "guess"), mathAhead = N - guessAhead - ties;
+  const seg = (k, color, label) => k ? `<span style="width:${100 * k / N}%;background:${color}">${k / N >= 0.15 ? label : ""}</span>` : "";
+  $("lifeWins").innerHTML = ties === N
+    ? `<p class="muted">Your guess is the same split as the math's plan, so both end with the same money in every future.</p>`
+    : `<div class="split" role="img" aria-label="the math ahead in ${share(mathAhead)}, your guess ahead in ${share(guessAhead)} of futures">` +
+      `${seg(mathAhead, "var(--blue)", `Math ${share(mathAhead)}`)}${seg(ties, "var(--gray)", `same ${share(ties)}`)}${seg(guessAhead, "var(--amber)", `You ${share(guessAhead)}`)}</div>` +
+      `<small>Who ended with more money after ${n} years: the math's plan in <b>${share(mathAhead)}</b> of the futures, your guess in <b>${share(guessAhead)}</b>` +
+      (ties ? ` (the same in ${share(ties)})` : "") + `. A year over your ${pct(p.L, 0)} limit: the plan ${every(you)}, your guess ${every(guess)}.</small>`;
+  const promise = Math.round(1 / (1 - p.alpha)), seen = you.strikes ? N * n / you.strikes : Infinity;
   $("lifeManyNote").innerHTML = `Money is in today's money, after ${n} years. Your plan promises a year over your ${pct(p.L, 0)} limit at most ` +
     `<b>1 year in ${promise}</b>. In these futures it happened <b>${Number.isFinite(seen) ? oneIn(seen) : "never"}</b>` +
     (seen >= promise * 0.9 ? `, <span class="ok">so the promise holds</span>.` : `, <span class="warn">more often than promised</span>: the surprises switched on in More settings (changing markets, crashes) are outside the bell-curve math.`) +
@@ -1346,9 +1491,16 @@ function renderLifeMany() {
 }
 
 // ---- start ----
-renderAll();
-let resizeTimer;
-window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderAll, 150); });
+renderInputs();
+renderData();
+// Charts are drawn for a narrow or a wide screen (drawChart), so they are redrawn only when that changes, with no new calculation.
+let resizeTimer, narrow = window.innerWidth < 560;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
+  if ((window.innerWidth < 560) === narrow) return;
+  narrow = !narrow;
+  renderData();
+  if (cur) { renderHow(); renderHistory(); drawLife(); }
+}, 150); });
 </script>
 </body>
 </html>
