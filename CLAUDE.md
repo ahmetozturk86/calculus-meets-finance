@@ -39,7 +39,10 @@ MATLAB (from the `matlab/` folder): `run_tests` then `main` (figures go to `matl
 The game in `investor.html` (tab 4) is separate from the project's math, which covers only stocks and deposit:
 - **Moods:** the `MOODS` values are illustrative, simulated simple yearly rates, not data. They are converted to continuous rates (`rc`, `muc` = ln(1 + x)) before use.
 - **`portfolioVar`:** the multi-asset generalisation of `value_at_risk`. With only stocks it must equal `valueAtRisk`.
-- **`riskEstimate`:** adds TL-crash years as a two-normal mixture and finds the quantile by bisection.
+- **Markets change over time:** each year's state (`regime`) follows the illustrative Markov chain `TRANSITION` over `REGIME_KEYS`. It is drawn in `generateYears` from the seeded rng.
+- **`riskEstimate(w, mix, alpha)`:** takes either one mood or a list of [mood, probability]. It mixes the possible states, each with or without a TL crash, and finds the quantile of the mixture by bisection.
+- **`forecast(g)`:** what the player knows: last year's state plus its transition row.
+- **`adaptiveSafe`:** the project's rule, re-applied each year for last year's state.
 - **Fair comparisons:** every strategy goes through `stepYear` on the same pre-generated, seeded `years`, so comparisons and "replay" are fair. Keep it that way.
 - **Animations:** they must respect `prefers-reduced-motion`. Tests set `window.INVESTOR_NO_ANIM = true`.
 

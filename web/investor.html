@@ -10,6 +10,7 @@
     --blue: #2563eb; --blue-soft: rgba(37,99,235,0.18); --red: #dc2626; --red-soft: rgba(220,38,38,0.30);
     --green: #15803d; --green-soft: rgba(21,128,61,0.15); --amber: #d97706; --ink: #111827; --gray: #9ca3af;
     --goldc: #c08a00; --usd: #0f766e; --dep: #64748b;
+    --band-calm: rgba(21,128,61,0.09); --band-crisis: rgba(220,38,38,0.11); --band-infl: rgba(217,119,6,0.14);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -17,6 +18,7 @@
       --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.22); --red: #f87171; --red-soft: rgba(248,113,113,0.32);
       --green: #4ade80; --green-soft: rgba(74,222,128,0.15); --amber: #fbbf24; --ink: #e6e8eb; --gray: #6b7280;
       --goldc: #fbbf24; --usd: #2dd4bf; --dep: #94a3b8;
+      --band-calm: rgba(74,222,128,0.09); --band-crisis: rgba(248,113,113,0.13); --band-infl: rgba(251,191,36,0.13);
     }
   }
   * { box-sizing: border-box; }
@@ -234,8 +236,11 @@
     then watch the year happen month by month. Life happens too: emergencies, bonuses, raises. Prices rise with inflation,
     so what really counts is your money <b>in today's money</b>.</p>
     <p>Your boss's rule (from tab 1): a year that loses more than <b id="gsL"></b> is a <b>strike</b>. <b>Three strikes and you are fired.</b></p>
-    <h3>Market mood</h3>
+    <h3>Starting market</h3>
     <div class="moods" id="moodPick"></div>
+    <p style="margin:10px 0 0"><label><input id="gsChange" type="checkbox" checked> <b>Markets change over time</b> (recommended)</label><br>
+    <span class="hint">Like real life: calm years, normal years, crises and high-inflation spells follow each other, and crises tend to last a while.
+    You only find out what kind of year it was after it happens.</span></p>
     <div class="grid" style="margin-top:12px">
       <div class="param"><label for="gsSave">You save from your salary each year</label>
         <div class="row"><input id="gsSave" type="number" class="wide" min="0" step="100"></div>
@@ -250,8 +255,11 @@
       <div class="param"><label for="gsLen">Years</label>
         <div class="row"><select id="gsLen"><option value="10" selected>10 years</option><option value="20">20 years</option></select></div></div>
     </div>
-    <details style="margin-top:10px"><summary class="muted">Mood settings (illustrative simulated values, not forecasts)</summary>
-      <div style="overflow-x:auto"><table id="moodTable"></table></div></details>
+    <details style="margin-top:10px"><summary class="muted">Market settings (illustrative simulated values, not forecasts)</summary>
+      <div style="overflow-x:auto"><table id="moodTable"></table></div>
+      <h3>How the market changes from one year to the next</h3>
+      <div style="overflow-x:auto"><table id="transTable"></table></div>
+      <p class="hint" id="transNote"></p></details>
     <p class="muted" id="gsData"></p>
     <p><button class="btn" id="gameStart">Start the game ▶</button> <span class="bad" id="gsError"></span></p>
     <div id="topScores"></div>
@@ -263,7 +271,7 @@
       <div class="stat" id="gMoneyBox"><span>Money</span><b id="gMoney"></b></div>
       <div class="stat"><span>In today's money</span><b id="gReal"></b></div>
       <div class="stat" id="gStrikesBox"><span>Strikes</span><b id="gStrikes"></b></div>
-      <div class="stat"><span>Market mood</span><b id="gMood"></b></div>
+      <div class="stat"><span>Market</span><b id="gMood"></b></div>
     </div>
     <div class="goal hidden" id="goalBar"><div id="goalFill"></div><span id="goalText"></span></div>
     <h3>Your mix this year</h3>
@@ -404,7 +412,7 @@ function drawChart(el, o) {
   if (o.xLabel) parts.push(`<text x="${ml + pw / 2}" y="${H - 6}" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.xLabel}</text>`);
   if (o.yLabel && !o.hideY) parts.push(`<text transform="translate(13,${mt + ph / 2}) rotate(-90)" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.yLabel}</text>`);
   const legend = (o.legend || []).map(l =>
-    `<span><i style="background:${l.color};${l.dash ? `background:repeating-linear-gradient(90deg,${l.color} 0 5px,transparent 5px 8px)` : ""}"></i>${l.label}</span>`).join("");
+    `<span><i style="background:${l.color};${l.dash ? `background:repeating-linear-gradient(90deg,${l.color} 0 5px,transparent 5px 8px)` : ""}${l.box ? "width:12px;height:12px;border:1px solid var(--muted);border-radius:2px" : ""}"></i>${l.label}</span>`).join("");
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria || "chart"}">${parts.join("")}</svg><div class="legend">${legend}</div>`;
 }
 
@@ -785,6 +793,18 @@ const MOODS = {
                text: "The deposit pays less than inflation, so cash quietly shrinks." }};
 // The model works with continuous rates (Module 1): a simple rate x becomes ln(1 + x), so e^(rate) = 1 + x.
 for (const m of Object.values(MOODS)) { m.rc = Math.log(1 + m.r); m.muc = m.mu.map(x => Math.log(1 + x)); }
+// Markets change over time (a Markov chain): row = this year's market, column = next year's (illustrative).
+const REGIME_KEYS = ["calm", "normal", "crisis", "inflation"];
+const TRANSITION = { calm:      [0.70, 0.25, 0.03, 0.02],
+                     normal:    [0.15, 0.65, 0.12, 0.08],
+                     crisis:    [0.00, 0.35, 0.45, 0.20],
+                     inflation: [0.00, 0.25, 0.15, 0.60] };
+const REGIME_BAND = { calm: "var(--band-calm)", normal: null, crisis: "var(--band-crisis)", inflation: "var(--band-infl)" };
+function nextRegime(rng, from) {
+  let u = rng(), i = 0;
+  for (; i < 3; i++) { u -= TRANSITION[from][i]; if (u < 0) break; }
+  return REGIME_KEYS[i];
+}
 const RHO = [[1, -0.1, -0.3], [-0.1, 1, 0.6], [-0.3, 0.6, 1]];   // correlations of stocks, gold, US dollar
 const SHOCK = [0.75, 1.25, 1.35];                                  // what a TL-crash year does to stocks, gold, US dollar
 const SHOCK_INFL = 0.15;                                           // extra inflation in a crash year
@@ -820,30 +840,40 @@ function portfolioVar(w, mood, alpha) {
   }
   return 1 - Math.exp(g - 0.5 * v - normPpf(alpha) * Math.sqrt(v));
 }
-// Risk meter: the same VaR, but a year can also be a TL-crash year (probability mood.shock), which multiplies the
-// mix by s = sum w_i SHOCK_i. Log-wealth is then a mix of two bell curves and its quantile has no formula.
-// Its CDF is continuous and increasing, so by the IVT it hits 1 - alpha exactly once, and bisection finds it.
-function riskEstimate(w, mood, alpha) {
-  let m = mood.rc, v = 0;
-  for (let i = 0; i < 3; i++) {
-    m += w[i] * (mood.muc[i] - mood.rc);
-    for (let j = 0; j < 3; j++) v += w[i] * w[j] * RHO[i][j] * mood.sig[i] * mood.sig[j];
+// Risk meter: the same VaR, but next year's market is uncertain. `mix` lists the possible market states with their
+// probabilities (or is one state), and each state may also bring a TL-crash year (probability mood.shock) that multiplies
+// the mix by s = sum w_i SHOCK_i. Log-wealth is then a mixture of bell curves and its quantile has no formula.
+// The mixture CDF is continuous and increasing, so by the IVT it hits 1 - alpha exactly once, and bisection finds it.
+function riskEstimate(w, mix, alpha) {
+  if (mix.rc !== undefined) mix = [[mix, 1]];                      // a single, known market state
+  const comps = [], ls = Math.log(w[0] * SHOCK[0] + w[1] * SHOCK[1] + w[2] * SHOCK[2] + w[3]);
+  for (const [mood, p] of mix) {
+    if (!(p > 0)) continue;
+    let m = mood.rc, v = 0;
+    for (let i = 0; i < 3; i++) {
+      m += w[i] * (mood.muc[i] - mood.rc);
+      for (let j = 0; j < 3; j++) v += w[i] * w[j] * RHO[i][j] * mood.sig[i] * mood.sig[j];
+    }
+    m -= 0.5 * v;
+    const sd = Math.max(Math.sqrt(v), 1e-9);                       // all in the deposit: (almost) no spread
+    comps.push([p * (1 - mood.shock), m, sd]);
+    if (mood.shock > 0) comps.push([p * mood.shock, m + ls, sd]);
   }
-  m -= 0.5 * v;
-  const sd = Math.sqrt(v);
-  if (sd < 1e-12) return 1 - Math.exp(m);                          // all in the deposit: no risk
-  const ls = Math.log(w[0] * SHOCK[0] + w[1] * SHOCK[1] + w[2] * SHOCK[2] + w[3]), p = mood.shock;
-  const F = x => (1 - p) * normCdf((x - m) / sd) + p * normCdf((x - m - ls) / sd) - (1 - alpha);
-  const [x] = bisection(F, m + Math.min(0, ls) - 12 * sd, m + Math.max(0, ls) + 12 * sd, 1e-10);
+  const F = x => comps.reduce((s, [p, m, sd]) => s + p * normCdf((x - m) / sd), 0) - (1 - alpha);
+  const lo = Math.min(...comps.map(c => c[1] - 12 * c[2])), hi = Math.max(...comps.map(c => c[1] + 12 * c[2]));
+  const [x] = bisection(F, lo, hi, 1e-11);
   return 1 - Math.exp(x);
 }
 
 // All years of a game, drawn up front: monthly growth factors of the four assets, inflation and a life event.
 function generateYears(set, seed) {
-  const rng = mulberry32(seed), mood = MOODS[set.mood], C = cholesky(RHO), dt = 1 / 12;
+  const rng = mulberry32(seed), C = cholesky(RHO), dt = 1 / 12;
   const real = set.useData ? shuffleWith(rng, [...data.years]) : null;
   const n = real ? Math.min(set.length, real.length) : set.length, years = [];
+  let regime = set.mood;
   for (let k = 0; k < n; k++) {
+    if (k > 0 && set.changing) regime = nextRegime(rng, regime);
+    const mood = MOODS[regime];
     const shock = rng() < mood.shock, shockMonth = Math.floor(rng() * 12), logs = [[0, 0, 0, 0]];
     for (let m = 1; m <= 12; m++) {
       const e = [gauss(rng), gauss(rng), gauss(rng)], prev = logs[m - 1], next = [];
@@ -864,7 +894,7 @@ function generateYears(set, seed) {
                 : u < 0.20 ? { type: "bonus", size: 0.05 + 0.10 * size }
                 : u < 0.26 ? { type: "raise", size: 0.20 } : null;
     years.push({ months: logs.map(l => l.map(Math.exp)), shock, infl: mood.infl + (shock ? SHOCK_INFL : 0), event,
-                 label: real ? real[k].label : null });
+                 regime, label: real ? real[k].label : null });
   }
   return years;
 }
@@ -948,7 +978,7 @@ function confetti() {
 }
 
 // ---- setup screen ----
-for (const [key, m] of Object.entries(MOODS).concat([["surprise", { name: "Surprise me", text: "A random mood, revealed at the end." }]])) {
+for (const [key, m] of Object.entries(MOODS).concat([["surprise", { name: "Surprise me", text: "You don't know how the market starts." }]])) {
   const b = document.createElement("button");
   b.className = "mood"; b.dataset.mood = key;
   b.innerHTML = `<b>${m.name}</b><span>${m.text}</span>`;
@@ -961,6 +991,9 @@ $("moodTable").innerHTML = "<tr><th></th>" + Object.values(MOODS).map(m => `<th>
    ...[0, 1, 2].map(i => [`${ASSETS[i].name}: average / risk`, m => `${pct(m.mu[i], 0)} / ${pct(m.sig[i], 0)}`]),
    ["Chance of a TL-crash year", m => pct(m.shock, 0)]]
   .map(([name, f]) => `<tr><td>${name}</td>${Object.values(MOODS).map(m => `<td>${f(m)}</td>`).join("")}</tr>`).join("");
+$("transTable").innerHTML = "<tr><th>This year ↓ / next year →</th>" + REGIME_KEYS.map(k => `<th>${MOODS[k].name}</th>`).join("") + "</tr>" +
+  REGIME_KEYS.map(k => `<tr><td>${MOODS[k].name}</td>${TRANSITION[k].map(p => `<td>${pct(p, 0)}</td>`).join("")}</tr>`).join("");
+$("transNote").textContent = "Typical length: " + REGIME_KEYS.map((k, i) => `${MOODS[k].name.toLowerCase()} about ${(1 / (1 - TRANSITION[k][i])).toFixed(1)} years`).join(", ") + ".";
 
 function topScores() { try { return JSON.parse(store("investor.top5") || "[]"); } catch (e) { return []; } }
 function renderGameIntro(p) {
@@ -970,8 +1003,8 @@ function renderGameIntro(p) {
   const nData = data ? data.years.length : 0;
   $("gsData").innerHTML = nData >= 5
     ? `Stock years come from <b>your uploaded data</b> (${nData} real years, shuffled; the dates are shown after each year).
-       Gold, dollar, deposit and inflation follow the mood.${nData < +$("gsLen").value ? ` Your data has ${nData} years, so the game lasts ${nData} years.` : ""}`
-    : "All years are simulated from the mood. Upload stock prices in tab 1 to replay real stock years.";
+       Gold, dollar, deposit and inflation follow the market.${nData < +$("gsLen").value ? ` Your data has ${nData} years, so the game lasts ${nData} years.` : ""}`
+    : "All years are simulated from the market settings. Upload stock prices in tab 1 to replay real stock years.";
   const tops = topScores();
   $("topScores").innerHTML = tops.length ? `<h3>Your best games</h3><table><tr><th>Mood</th><th>Years</th><th>Final, in today's money</th><th>Date</th></tr>` +
     tops.map(t => `<tr><td>${t.mood}</td><td>${t.years}</td><td>${money(t.real)}</td><td>${t.date}</td></tr>`).join("") + "</table>" : "";
@@ -980,7 +1013,7 @@ function renderGameIntro(p) {
 function gameSettings() {
   const p = params();
   return { S: p.S, L: p.L, alpha: p.alpha, save: Math.max(0, parseFloat($("gsSave").value) || 0), goal: +$("gsGoal").value,
-           length: +$("gsLen").value, moodPick: setup.mood, useData: !!(data && data.years.length >= 5) };
+           length: +$("gsLen").value, moodPick: setup.mood, changing: $("gsChange").checked, useData: !!(data && data.years.length >= 5) };
 }
 
 // ---- playing ----
@@ -992,12 +1025,36 @@ for (const id of MIX_IDS) $(id).addEventListener("input", () => {
   if (+$(id).value + others > 100) $(id).value = 100 - others;   // the deposit can't go below 0%
   renderMix();
 });
+// What the player knows about next year: last year's market (or the starting market) and the transition table.
+function forecast(g) {
+  const set = g.set, k = g.k;
+  if (k === 0 && set.hidden) return { known: null, mix: REGIME_KEYS.map(r => [MOODS[r], 0.25]) };
+  if (k === 0) return { known: set.mood, first: true, mix: [[MOODS[set.mood], 1]] };
+  const last = g.years[Math.min(k, g.years.length) - 1].regime;
+  return { known: last, mix: set.changing ? REGIME_KEYS.map((r, i) => [MOODS[r], TRANSITION[last][i]]) : [[MOODS[last], 1]] };
+}
+const safeCache = {};
+function safeFor(regime, set) {              // the project's rule (stocks + deposit) for one market state
+  const key = `${regime}|${set.L}|${set.alpha}`, m = MOODS[regime];
+  if (!(key in safeCache)) safeCache[key] = solve({ S: set.S, mu: m.muc[0], sig: m.sig[0], r: m.rc, L: set.L, alpha: set.alpha, fMax: 1, T: 1 });
+  return safeCache[key];
+}
+function renderHint() {
+  const g = game, fc = forecast(g);
+  if (!fc.known) { $("gHint").innerHTML = "Hint: the starting market is a surprise. Your first year will show you what kind of market you are in."; return; }
+  const m = MOODS[fc.known], safe = safeFor(fc.known, g.set);
+  const like = fc.first ? `The market starts <b>${m.name}</b>.` : `Last year was <b>${m.name}</b>.`;
+  const odds = fc.mix.length > 1 ? ` Next year could be ${fc.mix.filter(([, p]) => p > 0).map(([mm, p]) => `${mm.name.toLowerCase()} (${pct(p, 0)})`).join(", ")}.` : "";
+  $("gHint").innerHTML = `Hint: ${like}${odds} ` + (safe.reason === "noPremium"
+    ? `In a ${m.name.toLowerCase()} market stocks are not expected to beat the deposit (${pct(m.mu[0], 0)} vs ${pct(m.r, 0)}), so the project's math puts <b>0%</b> in stocks; gold and dollars may still protect you from inflation.`
+    : `If next year is like that, the project's math (stocks + deposit only, ignoring crash years) says about <b>${pct(safe.fOpt, 0)}</b> in stocks.`);
+}
 function renderMix() {
   if (!game) return;
   const w = getMix(), m = game.st.money;
   $("mixBar").innerHTML = w.map((wi, i) => `<div style="width:${wi * 100}%;background:${ASSETS[i].color}">${wi >= 0.12 ? ASSETS[i].name + " " + pct(wi, 0) : ""}</div>`).join("");
   ["mixStock_v", "mixGold_v", "mixUsd_v", "mixDep_v"].forEach((id, i) => { $(id).textContent = `${pct(w[i], 0)} = ${money(m * w[i])}`; });
-  const v = riskEstimate(w, game.mood, game.set.alpha), L = game.set.L, scale = Math.max(2 * L, 0.01);
+  const v = riskEstimate(w, forecast(game).mix, game.set.alpha), L = game.set.L, scale = Math.max(2 * L, 0.01);
   const color = v > L ? "var(--red)" : v > 0.8 * L ? "var(--amber)" : "var(--green)";
   $("riskFill").style.width = `${clamp(v / scale, 0, 1) * 100}%`;
   $("riskFill").style.background = color;
@@ -1005,7 +1062,7 @@ function renderMix() {
   const every = Math.round(1 / (1 - game.set.alpha));
   $("riskText").innerHTML = (v > 0 ? `Risk meter: in a bad year (1 in ${every}) this mix loses about <b>${pct(v)}</b>` : `Risk meter: even a bad year (1 in ${every}) is a gain of <b>${pct(-v)}</b>`) +
     ` (limit ${pct(L, 0)}, black line) → ` + (v > L ? `<span class="bad">risky</span>` : v > 0.8 * L ? `<span class="warn">close to your limit</span>` : `<span class="ok">safe</span>`) +
-    `. Model estimate, including the chance of a TL-crash year.`;
+    `. Model estimate that includes what next year's market might be and the chance of a TL crash.`;
 }
 
 function newGame(replay) {
@@ -1021,15 +1078,10 @@ function newGame(replay) {
     set.mood = set.hidden ? Object.keys(MOODS)[Math.floor(mulberry32(seed ^ 0x9e3779b9)() * 4)] : set.moodPick;
     years = generateYears(set, seed);
   }
-  const mood = MOODS[set.mood];
-  const safe = solve({ S: set.S, mu: mood.muc[0], sig: mood.sig[0], r: mood.rc, L: set.L, alpha: set.alpha, fMax: 1, T: 1 });
-  game = { set, seed, years, mood, safeF: safe.fOpt, st: newState(set), k: 0, choices: [], over: false, busy: false, yMax: 0 };
+  game = { set, seed, years, st: newState(set), k: 0, choices: [], over: false, busy: false, yMax: 0 };
   $("gameSetup").classList.add("hidden"); $("gameEnd").classList.add("hidden"); $("gameBoard").classList.remove("hidden");
   $("goalBar").classList.toggle("hidden", !set.goal);
-  $("gHint").innerHTML = set.hidden ? "Hint: the mood is a surprise. Watch how the first years behave."
-    : safe.reason === "noPremium"
-      ? `Hint: in this mood stocks are not expected to beat the deposit (${pct(mood.mu[0], 0)} vs ${pct(mood.r, 0)} a year), so the project's math puts <b>0%</b> in stocks. Gold and dollars may still protect you from inflation.`
-      : `Hint: the project's math (stocks + deposit only, ignoring crash years) says about <b>${pct(game.safeF, 0)}</b> in stocks keeps a bad year within your limit in this mood.`;
+  renderHint();
   $("gAssets").innerHTML = "";
   $("gReveal").innerHTML = replay ? "Same years, same events, same luck. Try a different strategy!" : "Choose your mix and press play.";
   $("gPlay").disabled = false;
@@ -1045,7 +1097,8 @@ function drawBoard(anim) {
   const real = anim ? anim.real : st.money / st.price;
   $("gReal").textContent = money(real);
   $("gStrikes").innerHTML = Array.from({ length: MAX_STRIKES }, (_, i) => `<span class="strike ${i < st.strikes ? "on" : ""}"></span>`).join("");
-  $("gMood").textContent = set.hidden && !g.over ? "Surprise" : g.mood.name;
+  const fc = forecast(g);
+  $("gMood").textContent = g.over ? MOODS[g.years[g.k - 1].regime].name : !fc.known ? "Unknown" : fc.first ? `${MOODS[fc.known].name} (start)` : `Last year: ${MOODS[fc.known].name}`;
   if (set.goal) {
     const target = set.goal * set.S;
     $("goalFill").style.width = `${clamp(real / target, 0, 1) * 100}%`;
@@ -1059,12 +1112,19 @@ function drawBoard(anim) {
   }
   g.yMax = Math.max(g.yMax, ...pts.map(q => q.y), set.S * (set.goal || 1.5)) ;
   const target = set.goal ? [{ y: set.goal * set.S, color: "var(--green)", dash: "6 4" }] : [];
+  const played = anim ? Math.floor(anim.upto) : g.k;
   drawChart($("gameChart"), { x: [0, g.years.length], y: [0, g.yMax * 1.08], xFmt: v => v, yFmt: v => money(v), xLabel: "year",
-    yLabel: "in today's money", series: [{ pts, color: "var(--blue)", width: 2.4 }], dots: [{ ...pts[pts.length - 1], color: "var(--blue)", r: 5 }],
+    bars: regimeBands(g.years, played, g.yMax * 1.08), yLabel: "in today's money", series: [{ pts, color: "var(--blue)", width: 2.4 }], dots: [{ ...pts[pts.length - 1], color: "var(--blue)", r: 5 }],
     hlines: [{ y: set.S, color: "var(--gray)", dash: "4 4" }, ...target], aria: "your money in today's money",
     legend: [{ color: "var(--blue)", label: "your money (today's money)" }, { color: "var(--gray)", label: "where you started", dash: true },
-             ...(set.goal ? [{ color: "var(--green)", label: "goal", dash: true }] : [])] });
+             ...(set.goal ? [{ color: "var(--green)", label: "goal", dash: true }] : []), ...BAND_LEGEND] });
 }
+// Background bands showing what kind of market each played year was.
+function regimeBands(years, played, top) {
+  return years.slice(0, played).map((y, k) => ({ x0: k, x1: k + 1, y: top, color: REGIME_BAND[y.regime] })).filter(b => b.color);
+}
+const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true }, { color: "var(--band-crisis)", label: "crisis year", box: true },
+                     { color: "var(--band-infl)", label: "high-inflation year", box: true }];
 
 async function playYear() {
   const g = game;
@@ -1082,14 +1142,15 @@ async function playYear() {
     return `<div class="asset pop" style="--c:${a.color};animation-delay:${i * 90}ms"><span>${a.name}${w[i] ? ` · you had ${pct(w[i], 0)}` : ""}</span>
       <b class="${R >= 0 ? "up" : "down"}">${R >= 0 ? "▲" : "▼"} ${pct(Math.abs(R))}</b></div>`;
   }).join("");
-  const change = res.factor - 1;
-  $("gReveal").innerHTML = (year.label ? `<b>${year.label}</b> (real stock year). ` : "") + (year.shock ? `<span class="bad">TL crash this year!</span> ` : "") +
+  const change = res.factor - 1, now = MOODS[year.regime].name, prev = k > 0 ? MOODS[g.years[k - 1].regime].name : null;
+  const marketText = `This was a <b>${now}</b> year${prev && prev !== now ? ` (the market turned: ${prev} → ${now})` : ""}. `;
+  $("gReveal").innerHTML = (year.label ? `<b>${year.label}</b> (real stock year). ` : "") + marketText + (year.shock ? `<span class="bad">TL crash!</span> ` : "") +
     `Your mix ${change >= 0 ? "grew" : "fell"} <b>${pct(Math.abs(change))}</b>. ` +
     (res.strike ? `<span class="bad">Strike! You lost more than ${pct(g.set.L, 0)}.</span> ` : change < 0 ? `<span class="warn">A loss, but within your limit.</span> ` : `<span class="ok">Good year.</span> `) +
     `Prices rose ${pct(year.infl, 0)}. You saved ${money(res.saved)} from your salary. ${res.eventText}`;
   if (res.strike) { flash($("gameBoard"), "shake"); flash($("gStrikesBox"), "flash-red"); }
   else if (change >= 0) flash($("gMoneyBox"), "flash-green");
-  drawBoard(); renderMix();
+  drawBoard(); renderHint(); renderMix();
   g.busy = false;
   if (g.st.fired || g.k >= g.years.length) endGame(); else $("gPlay").disabled = false;
 }
@@ -1100,7 +1161,7 @@ function endGame() {
   const rows = [
     { name: "You", st: g.st, color: "var(--blue)", width: 3.2 },
     { name: "Bank only (TL deposit)", st: runStrategy([0, 0, 0, 1], years, set), color: "var(--dep)" },
-    { name: `Project's safe rule: ${pct(g.safeF, 0)} stocks, rest deposit`, st: runStrategy([g.safeF, 0, 0, 1 - g.safeF], years, set), color: "var(--green)" },
+    { name: "Project's safe rule, adapting to last year's market", st: runStrategy(adaptiveSafe(g), years, set), color: "var(--green)" },
     { name: "Equal mix: 25% each", st: runStrategy([0.25, 0.25, 0.25, 0.25], years, set), color: "var(--goldc)" },
     { name: "All stocks", st: runStrategy([1, 0, 0, 0], years, set), color: "var(--red)" }];
   const keep = runStrategy(null, years, set);
@@ -1110,32 +1171,43 @@ function endGame() {
   if (fired) { title = you.money <= 0 ? "Bankrupt" : "The Gambler"; sub = `Fired after ${g.k} year${g.k === 1 ? "" : "s"}: too many bad years.`; }
   else if (reached) { title = "Dream achieved"; sub = `You reached your goal of ${money(target)} in today's money.`; }
   else if (youReal < real(keep)) { title = "Inflation victim"; sub = "You kept your job, but your money grew slower than prices plus your savings."; }
-  else if (youReal >= real(safeRow.st)) { title = "Smart investor"; sub = "You beat the project's safe rule without getting fired."; }
+  else if (youReal >= real(safeRow.st)) { title = "Smart investor"; sub = "You beat the project's adaptive safe rule without getting fired."; }
   else { title = "Careful saver"; sub = "You kept your job and beat inflation."; }
   const avg = [0, 1, 2, 3].map(i => g.choices.reduce((s, w) => s + w[i], 0) / Math.max(1, g.choices.length));
-  $("gResultCard").innerHTML = `<div class="muted">Market mood: <b>${g.mood.name}</b>${set.hidden ? " (it was a surprise)" : ""}</div>
+  const seq = years.slice(0, g.k).map(y => MOODS[y.regime].name), crises = years.slice(0, g.k).filter(y => y.regime === "crisis").length;
+  $("gResultCard").innerHTML = `<div class="muted">Started in a <b>${MOODS[set.mood].name}</b> market${set.hidden ? " (it was a surprise)" : ""}${set.changing ? `; ${crises} crisis year${crises === 1 ? "" : "s"}` : ""}</div>
     <div class="title">${title}</div><div>${sub}</div>
     <div class="stats"><div class="stat"><b>${money(you.money)}</b><span>final money</span></div>
       <div class="stat"><b>${money(youReal)}</b><span>in today's money (started with ${money(set.S)})</span></div>
       <div class="stat"><b>${you.strikes} of ${MAX_STRIKES}</b><span>strikes</span></div>
       ${set.goal ? `<div class="stat"><b>${reached ? "✓ reached" : pct(youReal / target, 0)}</b><span>of your goal</span></div>` : ""}</div>`;
   $("gEndText").innerHTML = `On average you held <b>${pct(avg[0], 0)}</b> stocks, <b>${pct(avg[1], 0)}</b> gold, <b>${pct(avg[2], 0)}</b> dollars and
-    <b>${pct(avg[3], 0)}</b> deposit. Here is how fixed strategies did on <b>exactly the same years and life events</b>:`;
+    <b>${pct(avg[3], 0)}</b> deposit.${set.changing ? ` The market went: ${seq.join(" → ")}.` : ""}
+    Here is how other strategies did on <b>exactly the same years and life events</b>:`;
   $("gEndTable").innerHTML = "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Strikes</th><th>Result</th></tr>" +
     rows.map(r => `<tr><td><i class="dot" style="background:${r.color}"></i>${r.name}</td><td>${money(r.st.money)}</td><td>${money(real(r.st))}</td>
       <td>${r.st.strikes}</td><td>${r.st.fired ? `<span class="bad">fired in year ${r.st.fired}</span>` : `<span class="ok">kept the job</span>`}</td></tr>`).join("") +
     `<tr><td><i class="dot" style="background:var(--gray)"></i>Just keeping up with inflation (reference)</td><td>${money(keep.money)}</td><td>${money(real(keep))}</td><td>–</td><td class="muted">no risk, no real growth</td></tr>`;
   const ys = rows.concat([{ st: keep }]).flatMap(r => r.st.path.map(q => q.y));
-  drawChart($("gameEndChart"), { x: [0, years.length], y: [0, Math.max(...ys) * 1.08], xFmt: v => v, yFmt: v => money(v), xLabel: "year", yLabel: "in today's money",
+  const top = Math.max(...ys) * 1.08;
+  drawChart($("gameEndChart"), { x: [0, years.length], y: [0, top], xFmt: v => v, yFmt: v => money(v), xLabel: "year", yLabel: "in today's money",
+    bars: regimeBands(years, years.length, top),
     series: [{ pts: keep.path, color: "var(--gray)", dash: "5 4", width: 1.8 }, ...rows.slice().reverse().map(r => ({ pts: r.st.path, color: r.color, width: r.width || 2 }))],
-    aria: "strategies compared", legend: rows.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }]) });
+    aria: "strategies compared", legend: rows.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }], BAND_LEGEND) });
   if (!fired) {
-    const tops = topScores().concat([{ real: youReal, mood: g.mood.name, years: g.k, date: new Date().toISOString().slice(0, 10) }]);
+    const tops = topScores().concat([{ real: youReal, mood: MOODS[set.mood].name + (set.changing ? " start" : ""), years: g.k, date: new Date().toISOString().slice(0, 10) }]);
     store("investor.top5", JSON.stringify(tops.sort((a, b) => b.real - a.real).slice(0, 5)));
     confetti();
   }
   $("gameEnd").classList.remove("hidden");
   if (!reduceMotion()) $("gameEnd").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+// The project's safe rule, re-applied each year using what was known then: last year's market (or the start).
+function adaptiveSafe(g) {
+  return k => {
+    const known = k === 0 ? (g.set.hidden ? "normal" : g.set.mood) : g.years[k - 1].regime, f = safeFor(known, g.set).fOpt;
+    return [f, 0, 0, 1 - f];
+  };
 }
 $("gameStart").addEventListener("click", () => newGame(false));
 $("gPlay").addEventListener("click", playYear);
