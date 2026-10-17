@@ -16,6 +16,7 @@ Implemented in **Python** (with tests) and ported 1:1 to **MATLAB**.
 | 3 | Random walk → Geometric Brownian Motion | distribution converges as Δt → 0 | Why do we model stock prices with GBM? |
 | 4 | **Risk optimization** | g'(f) as a limit, IVT on VaR(f) − L | How much should I invest in stocks? |
 | 4b | Fat tails: rare crashes | Binomial(n, λ/n) → Poisson(λ), IVT twice | What if the market sometimes crashes? |
+| 5 | More assets: stocks, gold, bonds, bank | one IVT + bisection per mix | What is the best mix of several assets? |
 
 ## Results
 
@@ -86,13 +87,30 @@ With crashes the same rule gives **f_crash = 0.617, i.e. 61.7% in stocks** inste
 
 ![fat tails](figures/fig5_fat_tails.png)
 
+### 5. More assets: stocks, gold and bonds
+Now gold (4.9% a year, σ = 15%) and bonds (4.4%, σ = 6%) are available too; the
+numbers are illustrative. **Key idea:** any fixed mix of stocks, gold and bonds
+behaves like one fund, so Module 4 (IVT + bisection) gives the best share for
+that fund. Trying every mix in 1% steps (5,151 bisections) and keeping the
+fastest-growing one gives the best mix, with no borrowing and no short selling.
+
+| choice | allocation | growth per year |
+|---|---|---|
+| stocks + bank (Module 4) | 70.5% stocks | 6.94% |
+| **best mix (Module 5)** | **73% stocks, 4% gold, 23% bonds** | **7.47%** |
+
+Same 15% bad-year risk, **+0.53% growth a year**. Bonds replace the bank because
+they pay a bit more and tend to move against stocks.
+
+![best mix](figures/fig6_best_mix.png)
+
 ## Run it
 
 ### Python
 ```bash
 pip install -r requirements.txt
 python main.py          # prints all tables, writes figures/*.png
-python -m pytest        # 19 tests
+python -m pytest        # 24 tests
 ```
 
 ### MATLAB
@@ -109,30 +127,25 @@ generators are different.
 ### Web pages (no install, work offline)
 Open these files in a browser:
 - `web/index.html`: interactive explainer. Move a slider and watch each discrete model turn into its continuous limit.
-- `web/investor.html`: **The Investor**, the real-life version of Module 4. It has four tabs.
-  1. **Your situation: every input in one place.**
-     - Your savings, loss limit and market numbers, typed by hand or estimated from an uploaded CSV of prices
-       (`web/sample_prices.csv` is a simulated example).
-     - Your plan: yearly saving, a goal and the number of years.
-     - The real-life surprises you want: markets that change over time, rare crashes and life events.
-  2. **Your answer: how much to put in stocks,** found with the same IVT + bisection method. Then the answer is
-     **played year by year in a simulated future** and compared, on exactly the same years, with bank only, all
-     stocks, an equal 25% mix and all gold. A table over 500 possible futures shows whether the answer keeps its
-     promise ("a year over your limit at most 1 in 20").
-     - With no surprises, the futures follow exactly your market numbers, and the promise holds.
-     - With crashes and crises switched on, you see what the bell-curve math leaves out.
-     - It also shows the crash-aware answer (Module 4b).
-  3. **Check with history:** the answer against real one-year returns from your data (historical VaR and a backtest).
-  4. **Play:** you split your savings each year yourself, between stocks, gold, bonds and a savings account, using
-     the settings from tab 1.
-     - Each year plays out month by month, with life events (emergencies, bonuses, raises).
-     - What counts is your money in today's money. Three years that lose more than your limit get you fired.
-     - A risk meter uses the same VaR idea. It includes the uncertain next market state and crash years, and its
-       quantile is found by bisection.
+- `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one simple page.
+  1. **Your situation:** the money you have, the money you add each year, the savings account interest rate,
+     inflation, how the market is right now (calm, normal, crisis or high inflation) and how much you can lose
+     in a bad year. Everything else is in a closed **More settings** section: years, goal, the stock numbers,
+     surprises, and an optional CSV of real prices (`web/sample_prices.csv` is a simulated example).
+  2. **Your plan:** the best split between stocks, gold, bonds and the savings account (Module 5), with the money
+     in each, the typical growth, the bad-year loss and the typical result after the chosen years. If rare
+     crashes are switched on, it also shows a safer crash-aware mix.
+  3. **Your plan in real life:** the plan is played year by year in a simulated future and compared, on exactly
+     the same years, with stocks + savings only (Module 4), savings only, all stocks, an equal 25% mix and all gold.
+     A table over 500 possible futures shows whether the plan keeps its promise ("a year over your limit at most
+     1 in 20"). With no surprises the promise holds; with crises and crashes you see what the bell-curve math leaves out.
+  4. **How we found your plan:** closed sections with the math: each asset alone vs the mix, the bell curve,
+     the IVT + bisection, rare crashes (Module 4b) and the check against real history.
 
-  **The simulated market.** "Normal" years are exactly your market numbers. Calm, crisis and high-inflation years
-  are better or worse versions of it, and they follow each other through a Markov chain, so crises tend to last a
-  while. Gold, bonds and inflation use illustrative values, roughly like long-run history in developed markets.
+  **The simulated market.** The interest rate and inflation you type belong to the market you pick. The stock
+  numbers are for a normal market, and calm, crisis and high-inflation markets are better or worse versions of
+  them. With "markets change over time" on, they follow each other through a Markov chain, so crises tend to last
+  a while. Gold, bonds and inflation use illustrative values, roughly like long-run history in developed markets.
   None of this is a forecast. If you uploaded prices, the stock years come from your real data.
 
   The uploaded file is read only inside the page and is never sent anywhere. `investor.html` uses no external libraries.
@@ -145,12 +158,13 @@ src/                Python modules
   compounding.py    Module 1
   option_pricing.py Module 2
   gbm.py            Module 3
-  risk.py           Module 4
+  risk.py           Module 4 and 4b
+  portfolio.py      Module 5 (more assets)
 main.py             runs everything, saves figures
 tests/              pytest checks against known values
 matlab/             one .m file per Python function + main.m, run_tests.m
 report/report.md    full write-up with derivations
-web/                interactive explainer (index.html) and The Investor tool and game (investor.html)
+web/                interactive explainer (index.html) and The Investor tool (investor.html)
 ```
 
 ## Limitations
@@ -160,6 +174,8 @@ markets have fat tails, so a normal VaR underestimates extreme losses. Module 4b
 adds rare crashes to fix part of this, but its crash size and frequency are
 assumptions, not estimates. The point of the
 project is the mathematics (limits and continuity), not investment advice.
-The game in `investor.html` breaks these assumptions on purpose (changing
-markets, crash years, gold and bonds), so the project's rule can lose there:
-the game shows where the simple model stops being enough.
+The gold and bond numbers of Module 5 are assumptions too, and real average
+returns are hard to estimate, so the best mix can change a lot with small input
+changes. The real-life test in `investor.html` breaks the assumptions on purpose
+(changing markets, crash years), so the plan can break its promise there: it
+shows where the simple model stops being enough.

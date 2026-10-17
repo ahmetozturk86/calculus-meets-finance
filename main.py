@@ -1,4 +1,4 @@
-"""Limits in Finance - runs all four modules, prints the results and saves the figures.
+"""Limits in Finance - runs all modules, prints the results and saves the figures.
 
     python main.py
 """
@@ -14,6 +14,8 @@ from src.compounding import compound, compounding_error, continuous, error_estim
 from src.gbm import (gbm_log_return_cdf, ks_distance_to_gbm, simulate_walk_paths,
                      walk_log_return_distribution)
 from src.option_pricing import binomial_price, black_scholes
+from src.portfolio import (best_mix_under_var, fund_fraction, mix_grid, portfolio_growth, portfolio_var,
+                           simulate_wealth_mix)
 from src.risk import (binomial_pmf, difference_quotient, empirical_var, growth_rate, kelly_fraction,
                       jump_log_wealth_cdf, max_fraction_under_var, max_fraction_under_var_jump, numerical_kelly_fraction,
                       optimal_fraction, poisson_pmf, simulate_wealth, simulate_wealth_jump, value_at_risk,
@@ -31,6 +33,12 @@ MU, SIGMA, R, T = 0.10, 0.20, 0.03, 1.0
 ALPHA, LOSS_LIMIT, F_MAX = 0.95, 0.15, 2.0
 # Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
 CRASH_RATE, CRASH_SIZE = 0.10, -0.25
+# Module 5: more assets. Stocks as above; gold and bonds are illustrative long-run numbers (5% and 4.5% a year as
+# simple rates, so ln(1.05) and ln(1.045) as continuous rates), not data. Same numbers as the "Normal" market on the website.
+ASSET_NAMES = ["stocks", "gold", "bonds"]
+MU_ASSETS = np.array([MU, np.log(1.05), np.log(1.045)])
+SIGMA_ASSETS = np.array([SIGMA, 0.15, 0.06])
+RHO_ASSETS = np.array([[1.0, 0.0, -0.2], [0.0, 1.0, 0.3], [-0.2, 0.3, 1.0]])
 
 
 def header(title):
@@ -271,9 +279,71 @@ def module4b_crashes():
     save(fig, "fig5_fat_tails.png")
 
 
+def module5_portfolio():
+    header("Module 5 - More assets: the best mix of stocks, gold, bonds and the bank")
+    for name, m, sd in zip(ASSET_NAMES, MU_ASSETS, SIGMA_ASSETS):
+        print(f"  {name:>7}: mu = {m:.2%}, sigma = {sd:.0%}")
+    print(f"  bank r = {R:.0%};  rule: with {ALPHA:.0%} confidence lose at most {LOSS_LIMIT:.0%} in one year; no borrowing")
+    print("  correlations (stocks, gold, bonds):", RHO_ASSETS.tolist())
+
+    print("\n  One risky asset + bank (Module 4 for each asset, f <= 1):")
+    print(f"  {'asset':>7} {'f':>10} {'growth':>10}")
+    for i, name in enumerate(ASSET_NAMES):
+        f, g, _ = fund_fraction(np.eye(3)[i], LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)
+        print(f"  {name:>7} {f:10.6f} {g:10.4%}")
+
+    grid = mix_grid(3)
+    w, f, d = best_mix_under_var(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)
+    g, sd = portfolio_growth(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R)
+    print(f"\n  Every mix d of the risky assets is one fund; Module 4 (IVT + bisection) gives each fund's f.")
+    print(f"  Tried {len(grid):,} funds (1% steps). Fastest-growing one under the limit:")
+    print("  " + ", ".join(f"{name} {x:.0%}" for name, x in zip(ASSET_NAMES, w)) + f", bank {1 - w.sum():.0%}")
+    print(f"  growth {g:.4%}/yr, VaR {portfolio_var(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA):.4%}")
+    f4, g4, _ = fund_fraction(np.eye(3)[0], LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)
+    print(f"  vs stocks + bank (Module 4): growth {g4:.4%}/yr  ->  +{g - g4:.2%} a year for the same risk")
+
+    rng = np.random.default_rng(SEED)
+    print("\n  Monte Carlo check (40,000 one-year paths, rebalanced daily): VaR of the best mix")
+    W = simulate_wealth_mix(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, 252, 40_000, rng)
+    print(f"       daily: VaR = {empirical_var(W[:, -1], 1.0, ALPHA):.2%}  (analytic {portfolio_var(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA):.2%})")
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    ax = axes[0]
+    colors = ["C0", "#c08a00", "C2", "0.6"]
+    plans = [("stocks + bank\n(Module 4)", np.array([f4, 0, 0])), ("best mix\n(Module 5)", w)]
+    for k, (label, wk) in enumerate(plans):
+        left = 0.0
+        for i, part in enumerate(list(wk) + [1 - wk.sum()]):
+            ax.barh(k, part * 100, left=left, color=colors[i], label=(ASSET_NAMES + ["bank"])[i] if k == 1 else None)
+            if part >= 0.06:
+                ax.text(left + part * 50, k, f"{part:.0%}", ha="center", va="center", color="white", fontsize=10)
+            left += part * 100
+        gk = portfolio_growth(wk, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R)[0]
+        ax.text(101, k, f"growth {gk:.2%}", va="center", fontsize=10)
+    ax.set_yticks([0, 1], [p[0] for p in plans])
+    ax.set(xlim=(0, 130), ylim=(-0.6, 1.9), xlabel="share of the money (%)", title=f"Same risk (VaR = {LOSS_LIMIT:.0%}), more growth")
+    ax.legend(loc="upper center", ncol=4, fontsize=9)
+
+    ax = axes[1]
+    sample = rng.dirichlet(np.ones(4), 3000)[:, :3]                  # random mixes of the 3 assets + bank
+    pts = np.array([[portfolio_var(x, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA),
+                     portfolio_growth(x, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R)[0]] for x in sample])
+    ok = pts[:, 0] <= LOSS_LIMIT
+    ax.scatter(pts[~ok, 0], pts[~ok, 1], s=6, color="0.75", label="breaks the limit")
+    ax.scatter(pts[ok, 0], pts[ok, 1], s=6, color="C2", alpha=0.6, label="within the limit")
+    ax.axvline(LOSS_LIMIT, color="k", ls=":", label=f"limit L = {LOSS_LIMIT:.0%}")
+    ax.scatter([LOSS_LIMIT], [g4], marker="^", s=90, color="C0", zorder=3, label="stocks + bank")
+    ax.scatter([portfolio_var(w, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA)], [g], marker="*", s=220,
+               color="C3", zorder=3, label="best mix")
+    ax.set(xlabel="bad-year loss (1-year VaR)", ylabel="growth rate g", title="Random mixes: the best is the highest green one")
+    ax.legend(fontsize=9)
+    save(fig, "fig6_best_mix.png")
+
+
 if __name__ == "__main__":
     module1_compounding()
     module2_options()
     module3_random_walk()
     module4_risk()
     module4b_crashes()
+    module5_portfolio()

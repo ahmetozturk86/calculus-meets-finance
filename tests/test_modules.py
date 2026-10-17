@@ -9,12 +9,17 @@ from src.compounding import compound, compounding_error, continuous, error_estim
 from src.gbm import ks_distance_to_gbm, walk_log_return_distribution
 from src.normal import norm_cdf, norm_ppf
 from src.option_pricing import binomial_price, black_scholes
+from src.portfolio import (best_mix_under_var, fund_fraction, mix_grid, portfolio_growth, portfolio_var,
+                           simulate_wealth_mix)
 from src.risk import (binomial_pmf, empirical_var, growth_rate, kelly_fraction, max_fraction_under_var,
                       max_fraction_under_var_jump, numerical_kelly_fraction, optimal_fraction, poisson_pmf,
                       simulate_wealth, simulate_wealth_jump, value_at_risk, value_at_risk_jump)
 
 MU, SIGMA, R, T, ALPHA, L = 0.10, 0.20, 0.03, 1.0, 0.95, 0.15
 LAM, J = 0.10, -0.25
+MU3 = np.array([MU, math.log(1.05), math.log(1.045)])
+SIG3 = np.array([SIGMA, 0.15, 0.06])
+RHO3 = np.array([[1.0, 0.0, -0.2], [0.0, 1.0, 0.3], [-0.2, 0.3, 1.0]])
 
 
 # --- bisection / normal -------------------------------------------------------
@@ -147,3 +152,43 @@ def test_monte_carlo_var_with_crashes_matches_formula():
     W = simulate_wealth_jump(f, MU, SIGMA, R, T, LAM, J, 252, 50_000, rng)
     assert empirical_var(W[:, -1], 1.0, ALPHA) == pytest.approx(
         value_at_risk_jump(f, MU, SIGMA, R, T, LAM, J, ALPHA), abs=0.01)
+
+
+# --- module 5: more assets ------------------------------------------------------
+
+def test_one_asset_mix_is_module4():
+    for f in [0.0, 0.3, 0.705, 1.0]:
+        assert portfolio_var([f, 0, 0], MU3, SIG3, RHO3, R, T, ALPHA) == pytest.approx(
+            float(value_at_risk(f, MU, SIGMA, R, T, ALPHA)), abs=1e-12)
+    f, _, _ = fund_fraction([1, 0, 0], L, MU3, SIG3, RHO3, R, T, ALPHA)
+    assert f == pytest.approx(max_fraction_under_var(L, MU, SIGMA, R, T, ALPHA, 1.0)[0], abs=1e-12)
+
+
+def test_mix_grid_covers_the_triangle():
+    grid = mix_grid(3, 100)
+    assert len(grid) == 5151 and np.allclose(grid.sum(axis=1), 1) and grid.min() >= 0
+
+
+def test_best_mix_respects_the_limit_and_beats_stocks_only():
+    w, f, d = best_mix_under_var(L, MU3, SIG3, RHO3, R, T, ALPHA)
+    assert np.allclose(w, f * d) and w.min() >= 0 and w.sum() <= 1 + 1e-12
+    assert portfolio_var(w, MU3, SIG3, RHO3, R, T, ALPHA) <= L + 1e-9
+    g_best = portfolio_growth(w, MU3, SIG3, RHO3, R)[0]
+    for i in range(3):                                  # better than any single asset + bank
+        assert g_best >= fund_fraction(np.eye(3)[i], L, MU3, SIG3, RHO3, R, T, ALPHA)[1]
+    rng = np.random.default_rng(1)                      # and no random mix within the limit does better
+    for x in rng.dirichlet(np.ones(4), 2000)[:, :3]:
+        if portfolio_var(x, MU3, SIG3, RHO3, R, T, ALPHA) <= L:
+            assert portfolio_growth(x, MU3, SIG3, RHO3, R)[0] <= g_best + 2e-4
+
+
+def test_best_mix_is_stocks_only_when_others_do_not_pay():
+    mu = np.array([MU, R, R])                           # gold and bonds earn only the bank rate
+    w, f, _ = best_mix_under_var(L, mu, SIG3, np.eye(3), R, T, ALPHA)
+    assert np.allclose(w, [f, 0, 0]) and f == pytest.approx(0.705014, abs=1e-6)
+
+
+def test_monte_carlo_mix_var():
+    w = np.array([0.5, 0.1, 0.3])
+    W = simulate_wealth_mix(w, MU3, SIG3, RHO3, R, T, 52, 50_000, np.random.default_rng(0))
+    assert empirical_var(W[:, -1], 1.0, ALPHA) == pytest.approx(portfolio_var(w, MU3, SIG3, RHO3, R, T, ALPHA), abs=0.01)

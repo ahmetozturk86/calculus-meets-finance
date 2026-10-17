@@ -70,4 +70,30 @@ W = simulate_wealth_jump(0.7, MU, SIGMA, R, T, LAM, J, 252, 50000);
 assert(close_to(empirical_var(W(:, end), 1, ALPHA), value_at_risk_jump(0.7, MU, SIGMA, R, T, LAM, J, ALPHA), 0.01), ...
     'Monte Carlo VaR with crashes');
 
+% module 5: more assets
+MU3 = [MU, log(1.05), log(1.045)]; SIG3 = [SIGMA, 0.15, 0.06]; RHO3 = [1 0 -0.2; 0 1 0.3; -0.2 0.3 1];
+for f = [0 0.3 0.705 1]
+    assert(close_to(portfolio_var([f 0 0], MU3, SIG3, RHO3, R, T, ALPHA), value_at_risk(f, MU, SIGMA, R, T, ALPHA), 1e-12), ...
+        'one-asset mix is Module 4');
+end
+assert(close_to(fund_fraction([1 0 0], L, MU3, SIG3, RHO3, R, T, ALPHA), max_fraction_under_var(L, MU, SIGMA, R, T, ALPHA, 1), 1e-12), ...
+    'stocks-only fund is Module 4');
+grid5 = mix_grid(3, 100);
+assert(size(grid5, 1) == 5151 && all(abs(sum(grid5, 2) - 1) < 1e-12) && min(grid5(:)) >= 0, 'mix grid');
+[w5, f5, d5] = best_mix_under_var(L, MU3, SIG3, RHO3, R, T, ALPHA);
+assert(all(abs(w5 - f5 * d5) < 1e-12) && min(w5) >= 0 && sum(w5) <= 1 + 1e-12, 'best mix weights');
+assert(portfolio_var(w5, MU3, SIG3, RHO3, R, T, ALPHA) <= L + 1e-9, 'best mix respects the limit');
+g5 = portfolio_growth(w5, MU3, SIG3, RHO3, R);
+E = eye(3);
+for i = 1:3
+    [~, gi] = fund_fraction(E(i, :), L, MU3, SIG3, RHO3, R, T, ALPHA);
+    assert(g5 >= gi, 'best mix beats one asset + bank');
+end
+[w1, f1] = best_mix_under_var(L, [MU R R], SIG3, eye(3), R, T, ALPHA);
+assert(all(abs(w1 - [f1 0 0]) < 1e-12) && close_to(f1, 0.705014, 1e-6), 'stocks only when the others do not pay');
+rng(0);
+W = simulate_wealth_mix([0.5 0.1 0.3], MU3, SIG3, RHO3, R, T, 52, 50000);
+assert(close_to(empirical_var(W(:, end), 1, ALPHA), portfolio_var([0.5 0.1 0.3], MU3, SIG3, RHO3, R, T, ALPHA), 0.01), ...
+    'Monte Carlo VaR of a mix');
+
 fprintf('All MATLAB tests passed.\n');

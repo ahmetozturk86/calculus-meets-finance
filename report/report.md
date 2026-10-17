@@ -225,6 +225,54 @@ with crash coin-flips at every step gives a VaR of 14.5% (yearly steps), 15.0%
 (monthly), 15.0% (weekly) and 15.0% (daily) at $f_{crash}$, converging to 15%.
 This is the binomial → Poisson limit at work. See Figure 5.
 
+### 5.7 More assets: stocks, gold, bonds and the bank
+
+So far the only choice was stocks or the bank. Now the investor can also hold
+gold and bonds. The numbers are illustrative long-run values, not data:
+
+| asset | μ (continuous) | σ |
+|---|---|---|
+| stocks | 10% | 20% |
+| gold | ln 1.05 = 4.88% | 15% |
+| bonds | ln 1.045 = 4.40% | 6% |
+
+The correlations are 0 (stocks–gold), −0.2 (stocks–bonds) and 0.3 (gold–bonds).
+With weights $w$ in the three risky assets, $1 - \sum w_i$ in the bank,
+no borrowing ($\sum w_i \le 1$) and no short selling ($w_i \ge 0$), continuous
+rebalancing gives a normal log-wealth with
+
+$$g(w) = r + w\cdot(\mu - r) - \tfrac12 w^\top C w, \qquad \mathrm{sd}(w) = \sqrt{w^\top C w},$$
+
+where $C_{ij} = \rho_{ij}\sigma_i\sigma_j$. The VaR has the same form as in
+Section 5.3, with $f\sigma$ replaced by $\mathrm{sd}(w)$.
+
+**One mix = one fund.** Fix a mix $d$ of the risky assets ($d_i \ge 0$,
+$\sum d_i = 1$) and put a share $f$ of the money in it, so $w = f d$. Then
+
+$$g(fd) = r + f(\mu_d - r) - \tfrac12 f^2\sigma_d^2, \qquad \mu_d = r + d\cdot(\mu - r), \quad \sigma_d = \sqrt{d^\top C d}.$$
+
+This is exactly Module 4 with one "stock" $(\mu_d, \sigma_d)$. So for every
+fund, VaR is continuous in $f$, the IVT guarantees the root $f_{VaR}(d)$, and
+bisection finds it; the fund's best share is $\min(f^*_d, f_{VaR}(d), 1)$.
+Trying every mix on a 1% grid (5,151 funds, so 5,151 bisections) and keeping
+the fastest-growing one gives the best mix.
+
+**Result.** With the 15% / 95% rule:
+
+| choice | allocation | growth g |
+|---|---|---|
+| bonds + bank | 100% bonds | 4.22% |
+| gold + bank | 81.2% gold | 3.78% |
+| stocks + bank (Module 4) | 70.5% stocks | 6.94% |
+| **best mix** | **73% stocks, 4% gold, 23% bonds** | **7.47%** |
+
+The best mix uses all the money (nothing in the bank) and has a VaR of 15.0%,
+so it gets **0.53% more growth per year for the same risk**. Bonds replace the
+bank because they pay a bit more and tend to move against stocks. A Monte Carlo
+check with daily rebalancing gives a VaR of 14.95%. See Figure 6. With gold and
+bonds paying only the bank rate, the method returns exactly the Module 4 answer
+(70.5% stocks), which is tested.
+
 ---
 
 ## 6. Conclusion
@@ -236,24 +284,29 @@ This is the binomial → Poisson limit at work. See Figure 5.
 | Derivative as a limit | g'(f) from difference quotients → Kelly fraction |
 | Continuity + IVT | existence of $f_{VaR}$ and $z_{0.95}$; bisection computes them |
 | Poisson limit + IVT twice | crash coin-flips → Poisson; quantile of a mixture and $f_{crash}$ by bisection |
+| IVT for every fund | best mix of stocks, gold and bonds: one bisection per mix |
 
 Limits turn messy discrete models into continuous formulas, and continuity
 guarantees the answer exists, so it can be found reliably. The result is a
 concrete recommendation: **70.5% in stocks** under a "max 15% loss at 95%
 confidence" rule. If rare crashes are taken into account, the same method gives
-**61.7%**.
+**61.7%**. With gold and bonds available, the best mix is **73% stocks, 4% gold
+and 23% bonds**, which grows 0.53% a year faster for the same risk.
 
 **Limitations.** Constant μ and σ, no transaction costs, and borrowing at r. Fat
 tails are handled only by the simple crash model of Section 5.6, with an
 assumed crash size and frequency. Extensions: estimate μ and σ (and the crash
-rate) from real price data, use historical or Student-t VaR, or add several
-stocks (an efficient frontier).
+rate) from real price data, or use historical or Student-t VaR. The gold and
+bond numbers of Section 5.7 are assumptions, and real average returns are very
+hard to estimate, so the best mix can change a lot with small changes in the
+inputs.
 
-The game in `web/investor.html` breaks these assumptions on purpose: markets
-change from year to year, crash years happen, and gold and bonds are available.
-There the 70.5% rule can lose to other strategies. This does not contradict the
-result above; it shows what the assumptions leave out. The simple rule is a
-starting point, and the game shows where it stops being enough.
+The real-life test in `web/investor.html` breaks these assumptions on purpose:
+markets change from year to year and crash years happen. There the plan can
+break its "1 year in 20" promise more often (about 1 year in 13 with the default
+surprises) and can lose to other strategies in some futures. This does not
+contradict the result above; it shows what the assumptions leave out. The
+simple rule is a starting point, and the test shows where it stops being enough.
 
 ## References
 1. Hull, J. C. *Options, Futures, and Other Derivatives.*

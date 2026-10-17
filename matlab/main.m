@@ -1,5 +1,5 @@
 %% Limits in Finance - MATLAB version of main.py
-% Runs all four modules, prints the results and saves the figures to
+% Runs all modules, prints the results and saves the figures to
 % matlab/figures/. Run from this folder:  >> main
 clear; clc; close all;
 here = fileparts(mfilename('fullpath'));
@@ -16,6 +16,12 @@ MU = 0.10; SIGMA = 0.20; R = 0.03; T = 1;
 ALPHA = 0.95; LOSS_LIMIT = 0.15; F_MAX = 2;
 % Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
 CRASH_RATE = 0.10; CRASH_SIZE = -0.25;
+% Module 5: more assets. Stocks as above; gold and bonds are illustrative long-run numbers (5% and 4.5% a year as
+% simple rates, so log(1.05) and log(1.045) as continuous rates), not data. Same numbers as the "Normal" market on the website.
+ASSET_NAMES = {'stocks', 'gold', 'bonds'};
+MU_ASSETS = [MU, log(1.05), log(1.045)];
+SIGMA_ASSETS = [SIGMA, 0.15, 0.06];
+RHO_ASSETS = [1 0 -0.2; 0 1 0.3; -0.2 0.3 1];
 
 RED = [0.84 0.15 0.16]; GREEN = [0.17 0.63 0.17];
 
@@ -275,6 +281,68 @@ xlabel('fraction in stock f'); ylabel('1-year VaR'); title('Crashes move the IVT
 legend('bell curve only', 'with rare crashes', sprintf('limit L = %.0f%%', 100 * LOSS_LIMIT), ...
     sprintf('f_{VaR} = %.3f', f_var), sprintf('f_{crash} = %.3f', f_crash), 'Location', 'northwest');
 save_fig(fig, fig_dir, 'fig5_fat_tails.png');
+
+%% Module 5 - More assets: the best mix of stocks, gold, bonds and the bank
+header('Module 5 - More assets: the best mix of stocks, gold, bonds and the bank');
+for i = 1:3
+    fprintf('  %7s: mu = %.2f%%, sigma = %.0f%%\n', ASSET_NAMES{i}, 100 * MU_ASSETS(i), 100 * SIGMA_ASSETS(i));
+end
+fprintf('  bank r = %.0f%%;  rule: with %.0f%% confidence lose at most %.0f%% in one year; no borrowing\n', ...
+    100 * R, 100 * ALPHA, 100 * LOSS_LIMIT);
+
+fprintf('\n  One risky asset + bank (Module 4 for each asset, f <= 1):\n');
+fprintf('  %7s %10s %10s\n', 'asset', 'f', 'growth');
+E = eye(3);
+for i = 1:3
+    [fi, gi] = fund_fraction(E(i, :), LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA);
+    fprintf('  %7s %10.6f %9.4f%%\n', ASSET_NAMES{i}, fi, 100 * gi);
+end
+
+[w5, f5, d5] = best_mix_under_var(LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA);
+g5 = portfolio_growth(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R);
+fprintf('\n  Every mix d of the risky assets is one fund; Module 4 (IVT + bisection) gives each fund''s f.\n');
+fprintf('  Tried %d funds (1%% steps). Fastest-growing one under the limit:\n', size(mix_grid(3), 1));
+fprintf('  stocks %.0f%%, gold %.0f%%, bonds %.0f%%, bank %.0f%%\n', 100 * w5, 100 * (1 - sum(w5)));
+fprintf('  growth %.4f%%/yr, VaR %.4f%%\n', 100 * g5, 100 * portfolio_var(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA));
+[f4, g4] = fund_fraction([1 0 0], LOSS_LIMIT, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA);
+fprintf('  vs stocks + bank (Module 4): growth %.4f%%/yr  ->  +%.2f%% a year for the same risk\n', 100 * g4, 100 * (g5 - g4));
+
+fprintf('\n  Monte Carlo check (40,000 one-year paths, rebalanced daily): VaR of the best mix\n');
+W = simulate_wealth_mix(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, 252, 40000);
+fprintf('       daily: VaR = %.2f%%  (analytic %.2f%%)\n', 100 * empirical_var(W(:, end), 1, ALPHA), ...
+    100 * portfolio_var(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA));
+
+fig = figure('Position', [100 100 1100 420]);
+subplot(1, 2, 1);
+plans = [f4 0 0 1 - f4; w5 1 - sum(w5)];
+b = barh(100 * plans, 'stacked');
+colors = [0.12 0.47 0.71; 0.75 0.54 0; GREEN; 0.6 0.6 0.6];
+for i = 1:4, b(i).FaceColor = colors(i, :); end
+set(gca, 'YTickLabel', {'stocks + bank (Module 4)', 'best mix (Module 5)'});
+text(101, 1, sprintf('growth %.2f%%', 100 * g4)); text(101, 2, sprintf('growth %.2f%%', 100 * g5));
+xlim([0 130]); xlabel('share of the money (%)');
+title(sprintf('Same risk (VaR = %.0f%%), more growth', 100 * LOSS_LIMIT));
+legend('stocks', 'gold', 'bonds', 'bank', 'Location', 'northoutside', 'Orientation', 'horizontal');
+
+subplot(1, 2, 2);
+x = -log(rand(3000, 4)); x = x ./ sum(x, 2); x = x(:, 1:3);   % random mixes of the 3 assets + bank (Dirichlet)
+pts = zeros(3000, 2);
+for k = 1:3000
+    pts(k, :) = [portfolio_var(x(k, :), MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA), ...
+                 portfolio_growth(x(k, :), MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R)];
+end
+ok = pts(:, 1) <= LOSS_LIMIT;
+scatter(pts(~ok, 1), pts(~ok, 2), 6, [0.75 0.75 0.75], 'filled'); hold on;
+scatter(pts(ok, 1), pts(ok, 2), 6, GREEN, 'filled');
+xline(LOSS_LIMIT, 'k:');
+plot(LOSS_LIMIT, g4, '^', 'MarkerSize', 9, 'MarkerFaceColor', [0.12 0.47 0.71], 'MarkerEdgeColor', 'none');
+plot(portfolio_var(w5, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R, T, ALPHA), g5, 'p', 'MarkerSize', 16, ...
+    'MarkerFaceColor', RED, 'MarkerEdgeColor', 'none');
+xlabel('bad-year loss (1-year VaR)'); ylabel('growth rate g');
+title('Random mixes: the best is the highest green one');
+legend('breaks the limit', 'within the limit', sprintf('limit L = %.0f%%', 100 * LOSS_LIMIT), 'stocks + bank', ...
+    'best mix', 'Location', 'northwest');
+save_fig(fig, fig_dir, 'fig6_best_mix.png');
 
 %% Local functions
 function header(title_text)
