@@ -91,14 +91,15 @@ Open these files in a browser:
   - estimates μ and σ from the prices;
   - computes how much to put in stocks with the same IVT + bisection method;
   - checks the answer against historical one-year returns (historical VaR and a backtest);
-  - includes a game where you split your savings each year between stocks, gold, US dollars and a TL deposit.
+  - includes a game where you split your savings each year between stocks, gold, bonds and a savings account.
     - Each year plays out month by month, with life events (emergencies, bonuses, raises).
     - You choose a starting market: calm, normal, crisis or high inflation. Like real life, the market then changes
       from year to year through a Markov chain, and crises tend to last a while. You only learn what kind of year it
-      was after it happens. The settings are illustrative and simulated, not forecasts. If you uploaded prices, the
+      was after it happens. The settings are illustrative and simulated (roughly like long-run history in developed
+      markets: a normal stock year is between about −20% and +40%), not forecasts. If you uploaded prices, the
       stock years come from your real data.
     - What counts is your money in today's money. Three years that lose more than your limit get you fired.
-    - A risk meter uses the same VaR idea. It includes the uncertain next market state and TL-crash years, and its
+    - A risk meter uses the same VaR idea. It includes the uncertain next market state and market-crash years, and its
       quantile is found by bisection.
     - At the end you are compared with fixed strategies on exactly the same years.
 

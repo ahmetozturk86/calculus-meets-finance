@@ -9,7 +9,7 @@
     --bg: #f6f7f9; --card: #ffffff; --text: #1f2328; --muted: #5b6470; --line: #d9dde3; --soft: #eef2f7;
     --blue: #2563eb; --blue-soft: rgba(37,99,235,0.18); --red: #dc2626; --red-soft: rgba(220,38,38,0.30);
     --green: #15803d; --green-soft: rgba(21,128,61,0.15); --amber: #d97706; --ink: #111827; --gray: #9ca3af;
-    --goldc: #c08a00; --usd: #0f766e; --dep: #64748b;
+    --goldc: #c08a00; --bond: #0f766e; --dep: #64748b;
     --band-calm: rgba(21,128,61,0.09); --band-crisis: rgba(220,38,38,0.11); --band-infl: rgba(217,119,6,0.14);
   }
   @media (prefers-color-scheme: dark) {
@@ -17,7 +17,7 @@
       --bg: #0f1216; --card: #171b21; --text: #e6e8eb; --muted: #9aa3ae; --line: #2c333c; --soft: #1e242c;
       --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.22); --red: #f87171; --red-soft: rgba(248,113,113,0.32);
       --green: #4ade80; --green-soft: rgba(74,222,128,0.15); --amber: #fbbf24; --ink: #e6e8eb; --gray: #6b7280;
-      --goldc: #fbbf24; --usd: #2dd4bf; --dep: #94a3b8;
+      --goldc: #fbbf24; --bond: #2dd4bf; --dep: #94a3b8;
       --band-calm: rgba(74,222,128,0.09); --band-crisis: rgba(248,113,113,0.13); --band-infl: rgba(251,191,36,0.13);
     }
   }
@@ -232,7 +232,7 @@
 <section id="tab-play" class="hidden">
   <div class="card" id="gameSetup">
     <h2>The Investor: grow your savings in a real-life market</h2>
-    <p>Every round is one year. Split your money between <b>stocks</b>, <b>gold</b>, <b>US dollars</b> and a <b>TL deposit</b>,
+    <p>Every round is one year. Split your money between <b>stocks</b>, <b>gold</b>, <b>bonds</b> and a <b>savings account</b>,
     then watch the year happen month by month. Life happens too: emergencies, bonuses, raises. Prices rise with inflation,
     so what really counts is your money <b>in today's money</b>.</p>
     <p>Your boss's rule (from tab 1): a year that loses more than <b id="gsL"></b> is a <b>strike</b>. <b>Three strikes and you are fired.</b></p>
@@ -257,6 +257,7 @@
     </div>
     <details style="margin-top:10px"><summary class="muted">Market settings (illustrative simulated values, not forecasts)</summary>
       <div style="overflow-x:auto"><table id="moodTable"></table></div>
+      <p class="hint" id="crashNote"></p>
       <h3>How the market changes from one year to the next</h3>
       <div style="overflow-x:auto"><table id="transTable"></table></div>
       <p class="hint" id="transNote"></p></details>
@@ -281,10 +282,10 @@
         <input id="mixStock" type="range" min="0" max="100" step="5" value="30"></div>
       <div class="param"><label for="mixGold"><i class="dot" style="background:var(--goldc)"></i>Gold <b id="mixGold_v"></b></label>
         <input id="mixGold" type="range" min="0" max="100" step="5" value="10"></div>
-      <div class="param"><label for="mixUsd"><i class="dot" style="background:var(--usd)"></i>US dollar <b id="mixUsd_v"></b></label>
-        <input id="mixUsd" type="range" min="0" max="100" step="5" value="10"></div>
-      <div class="param"><label><i class="dot" style="background:var(--dep)"></i>TL deposit (the rest) <b id="mixDep_v"></b></label>
-        <div class="hint">Earns the deposit rate and never loses TL, but inflation can eat it.</div></div>
+      <div class="param"><label for="mixBond"><i class="dot" style="background:var(--bond)"></i>Bonds <b id="mixBond_v"></b></label>
+        <input id="mixBond" type="range" min="0" max="100" step="5" value="10"></div>
+      <div class="param"><label><i class="dot" style="background:var(--dep)"></i>Savings account (the rest) <b id="mixDep_v"></b></label>
+        <div class="hint">Earns interest and never falls, but inflation can eat it.</div></div>
     </div>
     <div class="risk">
       <div class="risk-track"><div id="riskFill"></div><div id="riskLimit"></div></div>
@@ -773,41 +774,40 @@ function renderHistory(p, sol) {
 }
 
 // =====================================================================
-// Game: "The Investor" (stocks, gold, US dollar, TL deposit; market moods; life events)
+// Game: "The Investor" (stocks, gold, bonds, savings account; market moods; life events)
 // =====================================================================
 const ASSETS = [
   { key: "stock", name: "Stocks", color: "var(--blue)" },
   { key: "gold", name: "Gold", color: "var(--goldc)" },
-  { key: "usd", name: "US dollar", color: "var(--usd)" },
-  { key: "dep", name: "TL deposit", color: "var(--dep)" }];
-// Illustrative simulated settings (simple yearly rates, in TL). They are not forecasts.
-// mu / sig: expected yearly return and volatility of [stocks, gold, US dollar]; r: deposit rate; shock: chance of a TL-crash year.
+  { key: "bond", name: "Bonds", color: "var(--bond)" },
+  { key: "dep", name: "Savings account", short: "Savings", color: "var(--dep)" }];
+// Illustrative simulated settings (simple yearly rates, roughly like long-run history in developed markets). Not forecasts.
+// mu / sig: expected yearly return and volatility of [stocks, gold, bonds]; r: savings account rate; shock: chance of a market-crash year.
 const MOODS = {
-  calm:      { name: "Calm",           infl: 0.08, r: 0.10, mu: [0.18, 0.09, 0.07], sig: [0.20, 0.14, 0.08], shock: 0.00,
-               text: "Low inflation, steady markets." },
-  normal:    { name: "Normal",         infl: 0.25, r: 0.27, mu: [0.38, 0.28, 0.25], sig: [0.30, 0.18, 0.14], shock: 0.08,
-               text: "High inflation and the odd currency shock." },
-  crisis:    { name: "Crisis",         infl: 0.45, r: 0.42, mu: [0.45, 0.55, 0.50], sig: [0.40, 0.22, 0.20], shock: 0.25,
-               text: "Frequent TL crashes: stocks fall, gold and dollars jump." },
-  inflation: { name: "High inflation", infl: 0.60, r: 0.45, mu: [0.70, 0.65, 0.58], sig: [0.38, 0.20, 0.16], shock: 0.10,
-               text: "The deposit pays less than inflation, so cash quietly shrinks." }};
+  calm:      { name: "Calm",           infl: 0.02, r: 0.025, mu: [0.10, 0.03, 0.04], sig: [0.13, 0.12, 0.04], shock: 0.02,
+               text: "Low inflation, steady growth." },
+  normal:    { name: "Normal",         infl: 0.03, r: 0.04, mu: [0.08, 0.05, 0.045], sig: [0.16, 0.15, 0.06], shock: 0.05,
+               text: "Stocks usually beat the bank, with the odd crash." },
+  crisis:    { name: "Crisis",         infl: 0.01, r: 0.02, mu: [-0.05, 0.08, 0.07], sig: [0.20, 0.15, 0.07], shock: 0.15,
+               text: "Recession: stocks fall and crashes are common; bonds and gold hold up." },
+  inflation: { name: "High inflation", infl: 0.08, r: 0.06, mu: [0.04, 0.12, 0.01], sig: [0.18, 0.16, 0.08], shock: 0.08,
+               text: "Prices rise fast: cash and bonds lose value, gold shines." }};
 // The model works with continuous rates (Module 1): a simple rate x becomes ln(1 + x), so e^(rate) = 1 + x.
 for (const m of Object.values(MOODS)) { m.rc = Math.log(1 + m.r); m.muc = m.mu.map(x => Math.log(1 + x)); }
 // Markets change over time (a Markov chain): row = this year's market, column = next year's (illustrative).
 const REGIME_KEYS = ["calm", "normal", "crisis", "inflation"];
 const TRANSITION = { calm:      [0.70, 0.25, 0.03, 0.02],
-                     normal:    [0.15, 0.65, 0.12, 0.08],
-                     crisis:    [0.00, 0.35, 0.45, 0.20],
-                     inflation: [0.00, 0.25, 0.15, 0.60] };
+                     normal:    [0.20, 0.64, 0.10, 0.06],
+                     crisis:    [0.05, 0.60, 0.30, 0.05],
+                     inflation: [0.02, 0.28, 0.10, 0.60] };
 const REGIME_BAND = { calm: "var(--band-calm)", normal: null, crisis: "var(--band-crisis)", inflation: "var(--band-infl)" };
 function nextRegime(rng, from) {
   let u = rng(), i = 0;
   for (; i < 3; i++) { u -= TRANSITION[from][i]; if (u < 0) break; }
   return REGIME_KEYS[i];
 }
-const RHO = [[1, -0.1, -0.3], [-0.1, 1, 0.6], [-0.3, 0.6, 1]];   // correlations of stocks, gold, US dollar
-const SHOCK = [0.75, 1.25, 1.35];                                  // what a TL-crash year does to stocks, gold, US dollar
-const SHOCK_INFL = 0.15;                                           // extra inflation in a crash year
+const RHO = [[1, 0, -0.2], [0, 1, 0.3], [-0.2, 0.3, 1]];         // correlations of stocks, gold, bonds
+const SHOCK = [0.75, 1.05, 1.03];                                  // what a market crash does to stocks, gold, bonds
 const EMERGENCIES = ["car repair", "health bill", "home repair", "family help"];
 const MAX_STRIKES = 3;
 let game = null;
@@ -841,7 +841,7 @@ function portfolioVar(w, mood, alpha) {
   return 1 - Math.exp(g - 0.5 * v - normPpf(alpha) * Math.sqrt(v));
 }
 // Risk meter: the same VaR, but next year's market is uncertain. `mix` lists the possible market states with their
-// probabilities (or is one state), and each state may also bring a TL-crash year (probability mood.shock) that multiplies
+// probabilities (or is one state), and each state may also bring a market-crash year (probability mood.shock) that multiplies
 // the mix by s = sum w_i SHOCK_i. Log-wealth is then a mixture of bell curves and its quantile has no formula.
 // The mixture CDF is continuous and increasing, so by the IVT it hits 1 - alpha exactly once, and bisection finds it.
 function riskEstimate(w, mix, alpha) {
@@ -893,7 +893,7 @@ function generateYears(set, seed) {
     const event = u < 0.12 ? { type: "emergency", size: 0.10 + 0.15 * size, what }
                 : u < 0.20 ? { type: "bonus", size: 0.05 + 0.10 * size }
                 : u < 0.26 ? { type: "raise", size: 0.20 } : null;
-    years.push({ months: logs.map(l => l.map(Math.exp)), shock, infl: mood.infl + (shock ? SHOCK_INFL : 0), event,
+    years.push({ months: logs.map(l => l.map(Math.exp)), shock, infl: mood.infl, event,
                  regime, label: real ? real[k].label : null });
   }
   return years;
@@ -901,7 +901,7 @@ function generateYears(set, seed) {
 
 // ---- one year for one strategy (the player and every comparison use this, so all face identical years) ----
 const newState = set => ({ money: set.S, strikes: 0, fired: 0, price: 1, save: set.save, path: [{ x: 0, y: set.S }] });
-// w = [stocks, gold, US dollar, deposit] (sums to 1), or null for "just keep up with inflation".
+// w = [stocks, gold, bonds, savings account] (sums to 1), or null for "just keep up with inflation".
 function stepYear(st, w, year, k, set) {
   const out = { start: st.money, factor: 1, strike: false, eventText: "", end: st.money };
   const price0 = st.price, infl = year.infl, priceAt = m => price0 * Math.pow(1 + infl, m / 12);
@@ -928,8 +928,8 @@ function stepYear(st, w, year, k, set) {
     const fromDep = Math.min(need, depHold), sold = need - fromDep, cost = 0.01 * sold;
     cash -= need + cost;
     out.eventText = `Emergency (${ev.what}): ${money(need)} needed. ` + (sold > 0
-      ? `Your deposit covered ${money(fromDep)}, so you had to sell ${money(sold)} of investments (cost ${money(cost)}).`
-      : `Paid from your TL deposit.`);
+      ? `Your savings account covered ${money(fromDep)}, so you had to sell ${money(sold)} of investments (cost ${money(cost)}).`
+      : `Paid from your savings account.`);
     out.sold = sold;
   }
   out.saved = st.save;
@@ -961,7 +961,7 @@ function animate(ms, frame) {
 function flash(el, cls) { if (reduceMotion()) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function confetti() {
   if (reduceMotion()) return;
-  const c = $("confetti"), ctx = c.getContext("2d"), colors = ["--blue", "--goldc", "--usd", "--green", "--red"].map(css);
+  const c = $("confetti"), ctx = c.getContext("2d"), colors = ["--blue", "--goldc", "--bond", "--green", "--red"].map(css);
   c.width = innerWidth; c.height = innerHeight;
   const parts = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -Math.random() * c.height * 0.6, vx: (Math.random() - 0.5) * 3,
     vy: 2 + Math.random() * 3, s: 5 + Math.random() * 5, a: Math.random() * 6, c: colors[Math.floor(Math.random() * colors.length)] }));
@@ -987,12 +987,14 @@ for (const [key, m] of Object.entries(MOODS).concat([["surprise", { name: "Surpr
 }
 $("gsSave").addEventListener("input", () => { setup.saveTouched = true; });
 $("moodTable").innerHTML = "<tr><th></th>" + Object.values(MOODS).map(m => `<th>${m.name}</th>`).join("") + "</tr>" +
-  [["Inflation", m => pct(m.infl, 0)], ["TL deposit rate", m => pct(m.r, 0)],
-   ...[0, 1, 2].map(i => [`${ASSETS[i].name}: average / risk`, m => `${pct(m.mu[i], 0)} / ${pct(m.sig[i], 0)}`]),
-   ["Chance of a TL-crash year", m => pct(m.shock, 0)]]
+  [["Inflation", m => pct(m.infl, 0)], ["Savings account rate", m => pct(m.r, 1)],
+   ...[0, 1, 2].map(i => [`${ASSETS[i].name}: average / risk`, m => `${pct(m.mu[i], 1)} / ${pct(m.sig[i], 0)}`]),
+   ["Chance of a market-crash year", m => pct(m.shock, 0)]]
   .map(([name, f]) => `<tr><td>${name}</td>${Object.values(MOODS).map(m => `<td>${f(m)}</td>`).join("")}</tr>`).join("");
 $("transTable").innerHTML = "<tr><th>This year ↓ / next year →</th>" + REGIME_KEYS.map(k => `<th>${MOODS[k].name}</th>`).join("") + "</tr>" +
   REGIME_KEYS.map(k => `<tr><td>${MOODS[k].name}</td>${TRANSITION[k].map(p => `<td>${pct(p, 0)}</td>`).join("")}</tr>`).join("");
+$("crashNote").textContent = "A market-crash year: " + ASSETS.slice(0, 3).map((a, i) => `${a.name.toLowerCase()} ${SHOCK[i] < 1 ? "−" : "+"}${pct(Math.abs(SHOCK[i] - 1), 0)}`).join(", ") +
+  " on top of the normal ups and downs (all in one month).";
 $("transNote").textContent = "Typical length: " + REGIME_KEYS.map((k, i) => `${MOODS[k].name.toLowerCase()} about ${(1 / (1 - TRANSITION[k][i])).toFixed(1)} years`).join(", ") + ".";
 
 function topScores() { try { return JSON.parse(store("investor.top5") || "[]"); } catch (e) { return []; } }
@@ -1003,7 +1005,7 @@ function renderGameIntro(p) {
   const nData = data ? data.years.length : 0;
   $("gsData").innerHTML = nData >= 5
     ? `Stock years come from <b>your uploaded data</b> (${nData} real years, shuffled; the dates are shown after each year).
-       Gold, dollar, deposit and inflation follow the market.${nData < +$("gsLen").value ? ` Your data has ${nData} years, so the game lasts ${nData} years.` : ""}`
+       Gold, bonds, savings account and inflation follow the market.${nData < +$("gsLen").value ? ` Your data has ${nData} years, so the game lasts ${nData} years.` : ""}`
     : "All years are simulated from the market settings. Upload stock prices in tab 1 to replay real stock years.";
   const tops = topScores();
   $("topScores").innerHTML = tops.length ? `<h3>Your best games</h3><table><tr><th>Mood</th><th>Years</th><th>Final, in today's money</th><th>Date</th></tr>` +
@@ -1017,7 +1019,7 @@ function gameSettings() {
 }
 
 // ---- playing ----
-const MIX_IDS = ["mixStock", "mixGold", "mixUsd"];
+const MIX_IDS = ["mixStock", "mixGold", "mixBond"];
 function getMix() { const w = MIX_IDS.map(id => +$(id).value / 100); return [...w, Math.max(0, 1 - w[0] - w[1] - w[2])]; }
 function setMix(w) { MIX_IDS.forEach((id, i) => { $(id).value = Math.round(w[i] * 100); }); renderMix(); }
 for (const id of MIX_IDS) $(id).addEventListener("input", () => {
@@ -1046,14 +1048,14 @@ function renderHint() {
   const like = fc.first ? `The market starts <b>${m.name}</b>.` : `Last year was <b>${m.name}</b>.`;
   const odds = fc.mix.length > 1 ? ` Next year could be ${fc.mix.filter(([, p]) => p > 0).map(([mm, p]) => `${mm.name.toLowerCase()} (${pct(p, 0)})`).join(", ")}.` : "";
   $("gHint").innerHTML = `Hint: ${like}${odds} ` + (safe.reason === "noPremium"
-    ? `In a ${m.name.toLowerCase()} market stocks are not expected to beat the deposit (${pct(m.mu[0], 0)} vs ${pct(m.r, 0)}), so the project's math puts <b>0%</b> in stocks; gold and dollars may still protect you from inflation.`
-    : `If next year is like that, the project's math (stocks + deposit only, ignoring crash years) says about <b>${pct(safe.fOpt, 0)}</b> in stocks.`);
+    ? `In a ${m.name.toLowerCase()} market stocks are not expected to beat the savings account (${pct(m.mu[0], 1)} vs ${pct(m.r, 1)}), so the project's math puts <b>0%</b> in stocks; gold or bonds may still help.`
+    : `If next year is like that, the project's math (stocks + savings account only, ignoring crash years) says about <b>${pct(safe.fOpt, 0)}</b> in stocks.`);
 }
 function renderMix() {
   if (!game) return;
   const w = getMix(), m = game.st.money;
-  $("mixBar").innerHTML = w.map((wi, i) => `<div style="width:${wi * 100}%;background:${ASSETS[i].color}">${wi >= 0.12 ? ASSETS[i].name + " " + pct(wi, 0) : ""}</div>`).join("");
-  ["mixStock_v", "mixGold_v", "mixUsd_v", "mixDep_v"].forEach((id, i) => { $(id).textContent = `${pct(w[i], 0)} = ${money(m * w[i])}`; });
+  $("mixBar").innerHTML = w.map((wi, i) => `<div style="width:${wi * 100}%;background:${ASSETS[i].color}">${wi >= 0.12 ? (ASSETS[i].short || ASSETS[i].name) + " " + pct(wi, 0) : ""}</div>`).join("");
+  ["mixStock_v", "mixGold_v", "mixBond_v", "mixDep_v"].forEach((id, i) => { $(id).textContent = `${pct(w[i], 0)} = ${money(m * w[i])}`; });
   const v = riskEstimate(w, forecast(game).mix, game.set.alpha), L = game.set.L, scale = Math.max(2 * L, 0.01);
   const color = v > L ? "var(--red)" : v > 0.8 * L ? "var(--amber)" : "var(--green)";
   $("riskFill").style.width = `${clamp(v / scale, 0, 1) * 100}%`;
@@ -1062,7 +1064,7 @@ function renderMix() {
   const every = Math.round(1 / (1 - game.set.alpha));
   $("riskText").innerHTML = (v > 0 ? `Risk meter: in a bad year (1 in ${every}) this mix loses about <b>${pct(v)}</b>` : `Risk meter: even a bad year (1 in ${every}) is a gain of <b>${pct(-v)}</b>`) +
     ` (limit ${pct(L, 0)}, black line) → ` + (v > L ? `<span class="bad">risky</span>` : v > 0.8 * L ? `<span class="warn">close to your limit</span>` : `<span class="ok">safe</span>`) +
-    `. Model estimate that includes what next year's market might be and the chance of a TL crash.`;
+    `. Model estimate that includes what next year's market might be and the chance of a market crash.`;
 }
 
 function newGame(replay) {
@@ -1144,7 +1146,7 @@ async function playYear() {
   }).join("");
   const change = res.factor - 1, now = MOODS[year.regime].name, prev = k > 0 ? MOODS[g.years[k - 1].regime].name : null;
   const marketText = `This was a <b>${now}</b> year${prev && prev !== now ? ` (the market turned: ${prev} → ${now})` : ""}. `;
-  $("gReveal").innerHTML = (year.label ? `<b>${year.label}</b> (real stock year). ` : "") + marketText + (year.shock ? `<span class="bad">TL crash!</span> ` : "") +
+  $("gReveal").innerHTML = (year.label ? `<b>${year.label}</b> (real stock year). ` : "") + marketText + (year.shock ? `<span class="bad">Market crash!</span> ` : "") +
     `Your mix ${change >= 0 ? "grew" : "fell"} <b>${pct(Math.abs(change))}</b>. ` +
     (res.strike ? `<span class="bad">Strike! You lost more than ${pct(g.set.L, 0)}.</span> ` : change < 0 ? `<span class="warn">A loss, but within your limit.</span> ` : `<span class="ok">Good year.</span> `) +
     `Prices rose ${pct(year.infl, 0)}. You saved ${money(res.saved)} from your salary. ${res.eventText}`;
@@ -1160,7 +1162,7 @@ function endGame() {
   g.over = true; $("gPlay").disabled = true; drawBoard();
   const rows = [
     { name: "You", st: g.st, color: "var(--blue)", width: 3.2 },
-    { name: "Bank only (TL deposit)", st: runStrategy([0, 0, 0, 1], years, set), color: "var(--dep)" },
+    { name: "Bank only (savings account)", st: runStrategy([0, 0, 0, 1], years, set), color: "var(--dep)" },
     { name: "Project's safe rule, adapting to last year's market", st: runStrategy(adaptiveSafe(g), years, set), color: "var(--green)" },
     { name: "Equal mix: 25% each", st: runStrategy([0.25, 0.25, 0.25, 0.25], years, set), color: "var(--goldc)" },
     { name: "All stocks", st: runStrategy([1, 0, 0, 0], years, set), color: "var(--red)" }];
@@ -1181,8 +1183,8 @@ function endGame() {
       <div class="stat"><b>${money(youReal)}</b><span>in today's money (started with ${money(set.S)})</span></div>
       <div class="stat"><b>${you.strikes} of ${MAX_STRIKES}</b><span>strikes</span></div>
       ${set.goal ? `<div class="stat"><b>${reached ? "✓ reached" : pct(youReal / target, 0)}</b><span>of your goal</span></div>` : ""}</div>`;
-  $("gEndText").innerHTML = `On average you held <b>${pct(avg[0], 0)}</b> stocks, <b>${pct(avg[1], 0)}</b> gold, <b>${pct(avg[2], 0)}</b> dollars and
-    <b>${pct(avg[3], 0)}</b> deposit.${set.changing ? ` The market went: ${seq.join(" → ")}.` : ""}
+  $("gEndText").innerHTML = `On average you held <b>${pct(avg[0], 0)}</b> stocks, <b>${pct(avg[1], 0)}</b> gold, <b>${pct(avg[2], 0)}</b> bonds and
+    <b>${pct(avg[3], 0)}</b> in the savings account.${set.changing ? ` The market went: ${seq.join(" → ")}.` : ""}
     Here is how other strategies did on <b>exactly the same years and life events</b>:`;
   $("gEndTable").innerHTML = "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Strikes</th><th>Result</th></tr>" +
     rows.map(r => `<tr><td><i class="dot" style="background:${r.color}"></i>${r.name}</td><td>${money(r.st.money)}</td><td>${money(real(r.st))}</td>

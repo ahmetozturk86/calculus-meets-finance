@@ -37,10 +37,10 @@ MATLAB (from the `matlab/` folder): `run_tests` then `main` (figures go to `matl
 `web/index.html` (explainer, uses Chart.js from a CDN) and `web/investor.html` (real-life tool + game, no external libraries, SVG charts) re-implement the deterministic formulas in JavaScript: `bisection`, `normPpf`, `growthRate`, `kellyFraction`, `valueAtRisk`, `maxFractionUnderVar` and `quantileLinear` mirror `src/bisection.py`, `src/normal.py` and `src/risk.py`. Keep them in sync when the Python changes. The JS numbers must match Python, for example f_VaR = 0.705014 with the default parameters and f_max = 2. Uploaded CSVs are parsed client-side only, so never add network calls. There is no JS test runner; verify by opening the page in headless Edge with an isolated `--user-data-dir` and an injected test script.
 
 The game in `investor.html` (tab 4) is separate from the project's math, which covers only stocks and deposit:
-- **Moods:** the `MOODS` values are illustrative, simulated simple yearly rates, not data. They are converted to continuous rates (`rc`, `muc` = ln(1 + x)) before use.
+- **Moods:** the `MOODS` values are illustrative, simulated simple yearly rates for universal assets (stocks, gold, bonds, savings account), roughly like long-run developed-market history, not data or any one country. They are converted to continuous rates (`rc`, `muc` = ln(1 + x)) before use.
 - **`portfolioVar`:** the multi-asset generalisation of `value_at_risk`. With only stocks it must equal `valueAtRisk`.
 - **Markets change over time:** each year's state (`regime`) follows the illustrative Markov chain `TRANSITION` over `REGIME_KEYS`. It is drawn in `generateYears` from the seeded rng.
-- **`riskEstimate(w, mix, alpha)`:** takes either one mood or a list of [mood, probability]. It mixes the possible states, each with or without a TL crash, and finds the quantile of the mixture by bisection.
+- **`riskEstimate(w, mix, alpha)`:** takes either one mood or a list of [mood, probability]. It mixes the possible states, each with or without a market crash (`SHOCK`), and finds the quantile of the mixture by bisection.
 - **`forecast(g)`:** what the player knows: last year's state plus its transition row.
 - **`adaptiveSafe`:** the project's rule, re-applied each year for last year's state.
 - **Fair comparisons:** every strategy goes through `stepYear` on the same pre-generated, seeded `years`, so comparisons and "replay" are fair. Keep it that way.
