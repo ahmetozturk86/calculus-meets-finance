@@ -128,12 +128,14 @@ generators are different.
 Open these files in a browser:
 - `web/index.html`: interactive explainer. Move a slider and watch each discrete model turn into its continuous limit.
 - `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page.
-  1. **Your situation:** the money you have, the money you add each year, the savings account interest rate,
-     inflation, how the market is right now (calm, normal, crisis or high inflation) and how much you can lose
-     in a bad year. Everything else is in a closed **More settings** section: years, **your own guess** of how to
-     split the money (optional), the stock numbers, surprises, and an optional CSV of real prices
-     (`web/sample_prices.csv` is a simulated example). Nothing is calculated until you press **Calculate my plan**.
-  2. **Your plan:** the best split between stocks, gold, bonds and the savings account (Module 5), with the money
+  1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
+     year, the bank interest rate, inflation, how the market is right now (calm, normal, crisis or high
+     inflation) and how much you can lose in a bad year. Everything else is in a closed **More settings**
+     section: years, **your own guess** of how to split the money (optional), the stock numbers, surprises, and
+     an optional CSV of real prices (`web/sample_prices.csv` is a simulated example). Nothing is calculated until
+     you press **Calculate my plan**.
+  2. **Your plan:** one plain sentence in money (how much to put where, a typical year's gain and the bad-year
+     loss), then the best split between stocks, gold, bonds and the savings account (Module 5), with the money
      in each, the typical growth, the bad-year loss and the typical result after the chosen years. If you made a
      guess, **your guess vs the math** shows whether your split keeps your limit and how much slower it grows. If
      rare crashes are switched on, it also shows a safer crash-aware mix.
