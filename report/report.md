@@ -165,6 +165,66 @@ These are all within Monte Carlo noise of the analytic 15%. Figure 4 shows the
 growth curve, the VaR curve crossing the limit, the wealth bands (much narrower
 for $f_{opt}$ than for Kelly), and the simulated loss distribution.
 
+### 5.6 Fat tails: adding rare crashes
+
+The bell curve makes big losses almost impossible, but real markets sometimes
+crash. Following Merton's jump-diffusion model, the stock now also falls by
+J = −25% on rare days. These crashes arrive at an average rate of λ = 0.1 per
+year, i.e. about once every 10 years. The drift is lowered by λJ, so the
+stock's **average return is still μ**: only the shape of the distribution
+changes, with a fatter left tail.
+
+**A new limit: crash coin-flips → Poisson.** Split the year into n steps and
+let a crash happen in each step with probability λ/n. The number of crashes is
+Binomial(n, λ/n). As n → ∞ it converges to the Poisson law,
+$P(N=k) = e^{-\lambda}\lambda^k/k!$. The largest difference between the two
+probability tables is $9.5\cdot10^{-3}$ for n = 1, $3.4\cdot10^{-5}$ for n = 252
+and $8.6\cdot10^{-7}$ for n = 10,000.
+
+**Wealth.** With continuous rebalancing, a crash multiplies the portfolio by
+$(1+fJ)$, so with $N \sim \text{Poisson}(\lambda T)$ crashes
+
+$$\ln\frac{W_T}{W_0} = \big(g(f) - \lambda J f\big)T + N\ln(1+fJ) + f\sigma\sqrt{T}\,Z .$$
+
+Its CDF is a **mixture of bell curves**, one for each number of crashes k:
+
+$$F(x) = \sum_{k\ge 0} P(N=k)\,\Phi\!\left(\frac{x - (g(f)-\lambda J f)T - k\ln(1+fJ)}{f\sigma\sqrt{T}}\right).$$
+
+**Two uses of the IVT.**
+
+1. The mixture has no inverse formula, but F is continuous and increasing from
+   0 to 1. So F(x) = 0.05 has exactly one solution, and bisection finds it.
+   This gives $\text{VaR}_{crash}(f) = 1 - e^{x}$.
+2. $h(f) = \text{VaR}_{crash}(f) - L$ is continuous, with $h(0) = -0.180 < 0$
+   and $h(2) = 0.361 > 0$. So again a root exists, and bisection finds it in
+   41 steps:
+
+| k | a | b | mid | h(mid) |
+|---|---|---|---|---|
+| 1 | 0 | 2 | 1 | +0.1060 |
+| 2 | 0 | 1 | 0.5 | −0.0335 |
+| 3 | 0.5 | 1 | 0.75 | +0.0373 |
+| 4 | 0.5 | 0.75 | 0.625 | +0.0021 |
+| … | | | | |
+| 41 | 0.617447 | 0.617447 | **0.617447** | 6e−14 |
+
+With λ = 0 every formula reduces exactly to Section 5.3.
+
+**Result.** Crashes matter most for the biggest losses:
+
+| at f = 0.705 | bell curve only | with rare crashes |
+|---|---|---|
+| 95% VaR | 15.00% | 17.47% |
+| 99% VaR | 22.79% | 27.29% |
+| years losing more than 15% | 1 in 20 | 1 in 14 |
+| P(lose more than 30%) | 0.1% | 0.6% |
+
+The 70.5% answer therefore breaks the rule in a world with crashes. The
+crash-aware answer is **$f_{crash}$ = 61.7% in stocks**. A Monte Carlo check
+with crash coin-flips at every step gives a VaR of 14.5% (yearly steps), 15.0%
+(monthly), 15.0% (weekly) and 15.0% (daily) at $f_{crash}$, converging to 15%.
+This is the binomial → Poisson limit at work. See Figure 5.
+
 ---
 
 ## 6. Conclusion
@@ -175,16 +235,25 @@ for $f_{opt}$ than for Kelly), and the simulated loss distribution.
 | Limit of distributions | random walk → GBM as Δt → 0, measured by the KS distance |
 | Derivative as a limit | g'(f) from difference quotients → Kelly fraction |
 | Continuity + IVT | existence of $f_{VaR}$ and $z_{0.95}$; bisection computes them |
+| Poisson limit + IVT twice | crash coin-flips → Poisson; quantile of a mixture and $f_{crash}$ by bisection |
 
 Limits turn messy discrete models into continuous formulas, and continuity
 guarantees the answer exists, so it can be found reliably. The result is a
 concrete recommendation: **70.5% in stocks** under a "max 15% loss at 95%
-confidence" rule.
+confidence" rule. If rare crashes are taken into account, the same method gives
+**61.7%**.
 
-**Limitations.** Constant μ and σ, normal log-returns (real returns have fat
-tails, so the true VaR is higher), no transaction costs, and borrowing at r.
-Extensions: estimate μ, σ from real price data, use historical or Student-t
-VaR, or add several stocks (an efficient frontier).
+**Limitations.** Constant μ and σ, no transaction costs, and borrowing at r. Fat
+tails are handled only by the simple crash model of Section 5.6, with an
+assumed crash size and frequency. Extensions: estimate μ and σ (and the crash
+rate) from real price data, use historical or Student-t VaR, or add several
+stocks (an efficient frontier).
+
+The game in `web/investor.html` breaks these assumptions on purpose: markets
+change from year to year, crash years happen, and gold and bonds are available.
+There the 70.5% rule can lose to other strategies. This does not contradict the
+result above; it shows what the assumptions leave out. The simple rule is a
+starting point, and the game shows where it stops being enough.
 
 ## References
 1. Hull, J. C. *Options, Futures, and Other Derivatives.*
@@ -192,3 +261,4 @@ VaR, or add several stocks (an efficient frontier).
 3. Merton, R. C. (1969). Lifetime portfolio selection under uncertainty. *Rev. Economics and Statistics* 51, 247–257.
 4. Kelly, J. L. (1956). A new interpretation of information rate. *Bell System Technical Journal* 35, 917–926.
 5. Stewart, J. *Calculus* — Intermediate Value Theorem and limits.
+6. Merton, R. C. (1976). Option pricing when underlying stock returns are discontinuous. *J. Financial Economics* 3, 125–144.

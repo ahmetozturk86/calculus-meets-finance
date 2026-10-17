@@ -51,4 +51,23 @@ rng(0);
 W = simulate_wealth(0.7, MU, SIGMA, R, T, 52, 50000);
 assert(close_to(empirical_var(W(:, end), 1, ALPHA), value_at_risk(0.7, MU, SIGMA, R, T, ALPHA), 0.01), 'Monte Carlo VaR');
 
+% module 4b: fat tails (rare crashes)
+LAM = 0.10; J = -0.25;
+for f = [0 0.3 0.705 1.5]
+    for a = [0.9 0.95 0.99]
+        assert(close_to(value_at_risk_jump(f, MU, SIGMA, R, T, 0, J, a), value_at_risk(f, MU, SIGMA, R, T, a), 1e-10), ...
+            'no crashes gives the normal VaR');
+    end
+end
+errs = arrayfun(@(n) max(arrayfun(@(k) abs(binomial_pmf(k, n, LAM / n) - poisson_pmf(k, LAM)), 0:30)), [10 1000 100000]);
+assert(errs(1) > errs(2) && errs(2) > errs(3) && errs(3) < 1e-6, 'binomial crash count converges to Poisson');
+f_crash = max_fraction_under_var_jump(L, MU, SIGMA, R, T, LAM, J, ALPHA);
+assert(abs(value_at_risk_jump(f_crash, MU, SIGMA, R, T, LAM, J, ALPHA) - L) < 1e-9, 'crash root hits limit');
+assert(f_crash < f_var, 'crashes lower the stock fraction');
+assert(value_at_risk_jump(f_var, MU, SIGMA, R, T, LAM, J, ALPHA) > L, 'crash VaR above the normal VaR');
+rng(0);
+W = simulate_wealth_jump(0.7, MU, SIGMA, R, T, LAM, J, 252, 50000);
+assert(close_to(empirical_var(W(:, end), 1, ALPHA), value_at_risk_jump(0.7, MU, SIGMA, R, T, LAM, J, ALPHA), 0.01), ...
+    'Monte Carlo VaR with crashes');
+
 fprintf('All MATLAB tests passed.\n');

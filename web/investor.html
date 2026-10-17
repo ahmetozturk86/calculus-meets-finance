@@ -198,6 +198,20 @@
     <div class="chart" id="bellChart"></div>
   </div>
   <div class="card">
+    <h2>What if rare crashes happen? (fat tails)</h2>
+    <p class="muted">The bell curve says a really bad year is almost impossible, but real markets sometimes crash. Here the stock's
+    <b>average return stays the same</b>, but now and then it suddenly falls. The crash-aware VaR still grows with f without jumps,
+    so the same <b>Intermediate Value Theorem + bisection</b> finds the new answer.</p>
+    <div class="grid">
+      <div class="param"><label for="crashEvery">A crash about once every <b id="crashEvery_v"></b></label>
+        <input id="crashEvery" type="range" min="0" max="4" step="1" value="2"></div>
+      <div class="param"><label for="crashSize">Crash size: the stock falls <b id="crashSize_v"></b></label>
+        <input id="crashSize" type="range" min="0.1" max="0.45" step="0.05" value="0.25"></div>
+    </div>
+    <div class="stats" id="crashStats"></div>
+    <div class="chart" id="crashChart"></div>
+  </div>
+  <div class="card">
     <h2>How the answer is found</h2>
     <p class="muted">VaR(f) grows with the stock fraction f, without jumps. At f = 0 it is below your limit, at the top it is above,
     so by the <b>Intermediate Value Theorem</b> it crosses your limit somewhere. <b>Bisection</b> finds that point by halving the interval again and again:</p>
@@ -303,6 +317,8 @@
     <p id="gEndText"></p>
     <div style="overflow-x:auto"><table id="gEndTable"></table></div>
     <div class="chart" id="gameEndChart"></div>
+    <p class="hint">Why the project's rule can lose here: the game breaks the model's assumptions on purpose (markets that change,
+    crash years, gold and bonds). The simple rule is a starting point; the game shows where it stops being enough.</p>
     <p><button class="btn" id="gReplay">Replay the same years</button> <button class="btn ghost" id="gAgain">New game</button></p>
   </div>
   <canvas id="confetti" aria-hidden="true"></canvas>
@@ -352,6 +368,28 @@ function maxFractionUnderVar(varFun, L, fMax) {
   if (h(fMax) <= 0) return { f: fMax, history: [], status: "notBinding" };
   const [f, history] = bisection(h, 0, fMax);
   return { f, history, status: "binding" };
+}
+// Fat tails (src/risk.py): the bell curve plus rare crashes. A crash multiplies the stock by (1 + J) and happens on
+// average lam times a year; the drift is compensated so the average return is still mu. Log-wealth is a mixture of
+// bell curves (one per number of crashes k, Poisson weights); its quantile is found by bisection.
+function poissonPmf(k, m) {
+  if (m === 0) return k === 0 ? 1 : 0;
+  let logFact = 0; for (let i = 2; i <= k; i++) logFact += Math.log(i);
+  return Math.exp(-m + k * Math.log(m) - logFact);
+}
+function jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax = 30) {
+  const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T), jump = Math.log(1 + f * J);
+  let s = 0;
+  for (let k = 0; k <= kMax; k++) s += poissonPmf(k, lam * T) * normCdf((x - m - k * jump) / sd);
+  return s;
+}
+function valueAtRiskJump(f, mu, sig, r, T, lam, J, alpha, kMax = 30) {
+  if (f === 0) return 1 - Math.exp(r * T);
+  if (1 + f * J <= 0) throw new Error("a crash would wipe out the portfolio: need 1 + f J > 0");
+  const m = (growthRate(f, mu, sig, r) - lam * J * f) * T, sd = Math.abs(f) * sig * Math.sqrt(T);
+  const lo = m + kMax * Math.min(0, Math.log(1 + f * J)) - 12 * sd, hi = m + Math.max(0, kMax * Math.log(1 + f * J)) + 12 * sd;
+  const [x] = bisection(x => jumpLogWealthCdf(x, f, mu, sig, r, T, lam, J, kMax) - (1 - alpha), lo, hi, 1e-12);
+  return 1 - Math.exp(x);
 }
 // numpy.quantile default (linear interpolation); `sorted` must be ascending.
 function quantileLinear(sorted, q) {
@@ -676,8 +714,41 @@ function renderAnswer(p, sol) {
     (vt <= p.L + 1e-9 ? `<span class="ok">✓ within your limit</span>` : `<span class="bad">✗ breaks your limit of ${pct(p.L)}</span>`);
   drawBell(p, ft);
   drawVar(p, sol, ft);
+  renderCrash(p, sol);
 }
 $("fTry").addEventListener("input", () => { $("fTry").dataset.touched = "1"; renderAll(); });
+
+// ---- Fat tails: the same question when rare crashes can happen ----
+const CRASH_EVERY = [0, 5, 10, 20, 50];             // years between crashes on average (0 = never)
+for (const id of ["crashEvery", "crashSize"]) $(id).addEventListener("input", renderAll);
+function renderCrash(p, sol) {
+  const every = CRASH_EVERY[+$("crashEvery").value], lam = every ? 1 / every : 0, J = -+$("crashSize").value;
+  $("crashEvery_v").textContent = every ? `${every} years` : "never (bell curve only)";
+  $("crashSize_v").textContent = pct(-J, 0);
+  const varFun = f => valueAtRiskJump(f, p.mu, p.sig, p.r, p.T, lam, J, p.alpha);
+  const c = maxFractionUnderVar(varFun, p.L, p.fMax), worst = Math.round(1 / (1 - p.alpha));
+  const fC = c.status === "impossible" ? 0 : c.f, fB = Number.isFinite(sol.fVar) ? sol.fVar : 0;
+  const chance = (f, l) => f > 0 ? jumpLogWealthCdf(Math.log(1 - p.L), f, p.mu, p.sig, p.r, p.T, l, J) : 0;
+  const oneIn = q => q > 0 ? `1 year in ${q > 0.5 ? (1 / q).toFixed(1) : Math.round(1 / q)}` : "never";
+  const pB = chance(fB, 0), pC = chance(fB, lam);
+  $("crashStats").innerHTML = [
+    [`${pct(fB)} → ${pct(fC)}`, "most stock your limit allows: bell curve → with crashes"],
+    [`${pct(sol.varFun(fB))} → ${pct(varFun(fB))}`, `bad-year loss (VaR ${pct(p.alpha, 0)}) at ${pct(fB)} in stocks`],
+    [`${oneIn(pB)} → ${oneIn(pC)}`, `how often ${pct(fB)} in stocks loses more than your ${pct(p.L, 0)} limit (promised: 1 in ${worst})`]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  const ptsB = [], ptsC = [];
+  for (let i = 0; i <= 80; i++) { const f = p.fMax * i / 80; ptsB.push({ x: f, y: sol.varFun(f) }); ptsC.push({ x: f, y: varFun(f) }); }
+  const ys = ptsB.concat(ptsC).map(q => q.y).concat([p.L]), lo = Math.min(...ys), hi = Math.max(...ys), pad = 0.08 * (hi - lo || 0.1);
+  const dots = [];
+  if (sol.status === "binding") dots.push({ x: fB, y: p.L, color: "var(--blue)" });
+  if (c.status === "binding" && lam > 0) dots.push({ x: fC, y: p.L, color: "var(--red)" });
+  drawChart($("crashChart"), { x: [0, p.fMax], y: [lo - pad, hi + pad], xFmt: v => pct(v, 0), yFmt: v => pct(v, 0),
+    xLabel: "share of savings in stocks (f)", yLabel: "VaR (loss)", aria: "VaR with and without crashes",
+    series: [{ pts: ptsB, color: "var(--blue)" }, ...(lam > 0 ? [{ pts: ptsC, color: "var(--red)" }] : [])],
+    hlines: [{ y: p.L, color: "var(--ink)", dash: "6 4" }], dots,
+    legend: [{ color: "var(--blue)", label: "bell curve only" }, ...(lam > 0 ? [{ color: "var(--red)", label: "with rare crashes" }] : []),
+             { color: "var(--ink)", label: "your limit L", dash: true }] });
+}
 
 function drawBell(p, f) {
   // W_T / W_0 = exp(g(f) + f sigma Z): a lognormal bell. Fixed x-range (from f_max) so moving f changes the shape.

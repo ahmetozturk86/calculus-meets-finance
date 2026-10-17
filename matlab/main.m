@@ -14,6 +14,8 @@ S0 = 100; K = 100; R_OPT = 0.05; SIGMA_OPT = 0.20; T_OPT = 1;
 % Modules 3-4: stock market and risk-free asset (annual numbers)
 MU = 0.10; SIGMA = 0.20; R = 0.03; T = 1;
 ALPHA = 0.95; LOSS_LIMIT = 0.15; F_MAX = 2;
+% Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
+CRASH_RATE = 0.10; CRASH_SIZE = -0.25;
 
 RED = [0.84 0.15 0.16]; GREEN = [0.17 0.63 0.17];
 
@@ -208,6 +210,71 @@ title(sprintf('Loss distribution at f_{opt} = %.2f', f_opt));
 legend('simulated losses', sprintf('analytic VaR = %.1f%%', 100 * LOSS_LIMIT), ...
     sprintf('simulated VaR = %.1f%%', 100 * sim_var), 'Location', 'northwest');
 save_fig(fig, fig_dir, 'fig4_risk_optimization.png');
+
+%% Module 4b - Fat tails: the bell curve plus rare crashes
+header('Module 4b - Fat tails: the bell curve plus rare crashes');
+lam = CRASH_RATE; J = CRASH_SIZE;
+fprintf(['  a crash makes the stock fall %.0f%%; it happens on average %g times a year' ...
+    ' (once every %.0f years); the stock''s average return is still %.0f%%\n'], -100 * J, lam, 1 / lam, 100 * MU);
+
+fprintf('\n  Limit: crash coin-flips every dt = 1/n year -> Poisson law of the number of crashes\n');
+fprintf('  %14s %40s\n', 'flips/year n', 'max |Binomial(n, lam/n) - Poisson(lam)|');
+for n = [1 12 52 252 10000]
+    err = max(arrayfun(@(k) abs(binomial_pmf(k, n, lam / n) - poisson_pmf(k, lam)), 0:30));
+    fprintf('  %14d %40.2e\n', n, err);
+end
+
+fprintf('\n  Value-at-Risk at the normal answer f_VaR = %.6f:\n', f_var);
+fprintf('  %12s %16s %14s\n', 'confidence', 'bell curve only', 'with crashes');
+for a = [0.95 0.99]
+    fprintf('  %11.0f%% %15.2f%% %13.2f%%\n', 100 * a, 100 * value_at_risk(f_var, MU, SIGMA, R, T, a), ...
+        100 * value_at_risk_jump(f_var, MU, SIGMA, R, T, lam, J, a));
+end
+
+[f_crash, hist] = max_fraction_under_var_jump(LOSS_LIMIT, MU, SIGMA, R, T, lam, J, ALPHA, F_MAX);
+fprintf('\n  IVT + bisection on h(f) = VaR_crash(f) - L (each VaR_crash is itself a bisection on the CDF):\n');
+fprintf('  %4s %10s %10s %10s %12s\n', 'k', 'a', 'b', 'mid', 'h(mid)');
+for k = 1:size(hist, 1)
+    if k <= 5 || k == size(hist, 1)
+        fprintf('  %4d %10.6f %10.6f %10.6f %12.2e\n', k, hist(k, 1), hist(k, 2), hist(k, 3), hist(k, 4));
+    elseif k == 6
+        fprintf('  %4s\n', '...');
+    end
+end
+fprintf('\n  f_crash = %.6f  ->  with crashes, invest %.1f%% in the stock instead of %.1f%%\n', ...
+    f_crash, 100 * f_crash, 100 * f_var);
+
+fprintf('\n  Monte Carlo check (40,000 paths, crash coin-flips each step): VaR at f_crash -> %.2f%%\n', 100 * LOSS_LIMIT);
+freq_labels = {'yearly', 'monthly', 'weekly', 'daily'};
+freq_steps = [1 12 52 252];
+for i = 1:numel(freq_steps)
+    W = simulate_wealth_jump(f_crash, MU, SIGMA, R, T, lam, J, freq_steps(i), 40000);
+    fprintf('  %10s: VaR = %.2f%%\n', freq_labels{i}, 100 * empirical_var(W(:, end), 1, ALPHA));
+end
+
+fig = figure('Position', [100 100 1100 420]);
+subplot(1, 2, 1);
+losses = [0.10 0.20 0.30];          % chance of losing more than this in one year, at f_VaR
+p_bell = arrayfun(@(l) jump_log_wealth_cdf(log(1 - l), f_var, MU, SIGMA, R, T, 0, J), losses);
+p_crash = arrayfun(@(l) jump_log_wealth_cdf(log(1 - l), f_var, MU, SIGMA, R, T, lam, J), losses);
+b = bar(100 * [p_bell; p_crash]');
+b(1).FaceColor = [0.12 0.47 0.71]; b(2).FaceColor = RED;
+set(gca, 'XTickLabel', arrayfun(@(l) sprintf('lose more than %.0f%%', 100 * l), losses, 'UniformOutput', false));
+ylabel('chance in one year (%)');
+title(sprintf('Same average return, more big losses (f = %.2f)', f_var));
+legend('bell curve only', 'with rare crashes');
+
+subplot(1, 2, 2);
+f_grid = linspace(0, 1.5, 61);
+plot(f_grid, value_at_risk(f_grid, MU, SIGMA, R, T, ALPHA), 'LineWidth', 2, 'Color', [0.12 0.47 0.71]); hold on;
+plot(f_grid, arrayfun(@(v) value_at_risk_jump(v, MU, SIGMA, R, T, lam, J, ALPHA), f_grid), 'LineWidth', 2, 'Color', RED);
+yline(LOSS_LIMIT, 'k:');
+xline(f_var, '--', 'Color', [0.12 0.47 0.71]);
+xline(f_crash, '--', 'Color', RED);
+xlabel('fraction in stock f'); ylabel('1-year VaR'); title('Crashes move the IVT root to the left');
+legend('bell curve only', 'with rare crashes', sprintf('limit L = %.0f%%', 100 * LOSS_LIMIT), ...
+    sprintf('f_{VaR} = %.3f', f_var), sprintf('f_{crash} = %.3f', f_crash), 'Location', 'northwest');
+save_fig(fig, fig_dir, 'fig5_fat_tails.png');
 
 %% Local functions
 function header(title_text)

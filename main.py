@@ -14,9 +14,10 @@ from src.compounding import compound, compounding_error, continuous, error_estim
 from src.gbm import (gbm_log_return_cdf, ks_distance_to_gbm, simulate_walk_paths,
                      walk_log_return_distribution)
 from src.option_pricing import binomial_price, black_scholes
-from src.risk import (difference_quotient, empirical_var, growth_rate, kelly_fraction,
-                      max_fraction_under_var, numerical_kelly_fraction, optimal_fraction,
-                      simulate_wealth, value_at_risk)
+from src.risk import (binomial_pmf, difference_quotient, empirical_var, growth_rate, kelly_fraction,
+                      jump_log_wealth_cdf, max_fraction_under_var, max_fraction_under_var_jump, numerical_kelly_fraction,
+                      optimal_fraction, poisson_pmf, simulate_wealth, simulate_wealth_jump, value_at_risk,
+                      value_at_risk_jump)
 
 FIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures")
 SEED = 42
@@ -28,6 +29,8 @@ S0, K, R_OPT, SIGMA_OPT, T_OPT = 100.0, 100.0, 0.05, 0.20, 1.0
 # Modules 3-4: stock market and risk-free asset (annual numbers)
 MU, SIGMA, R, T = 0.10, 0.20, 0.03, 1.0
 ALPHA, LOSS_LIMIT, F_MAX = 0.95, 0.15, 2.0
+# Module 4b: rare crashes (fat tails): the stock drops 25%, on average once every 10 years
+CRASH_RATE, CRASH_SIZE = 0.10, -0.25
 
 
 def header(title):
@@ -207,8 +210,70 @@ def module4_risk():
     save(fig, "fig4_risk_optimization.png")
 
 
+def module4b_crashes():
+    header("Module 4b - Fat tails: the bell curve plus rare crashes")
+    lam, J = CRASH_RATE, CRASH_SIZE
+    print(f"  a crash makes the stock fall {-J:.0%}; it happens on average {lam:g} times a year"
+          f" (once every {1 / lam:.0f} years); the stock's average return is still {MU:.0%}")
+
+    print(f"\n  Limit: crash coin-flips every dt = 1/n year -> Poisson law of the number of crashes")
+    print(f"  {'flips/year n':>14} {'max |Binomial(n, lam/n) - Poisson(lam)|':>40}")
+    for n in [1, 12, 52, 252, 10_000]:
+        err = max(abs(binomial_pmf(k, n, lam / n) - poisson_pmf(k, lam)) for k in range(31))
+        print(f"  {n:>14,} {err:40.2e}")
+
+    f_var, _ = max_fraction_under_var(LOSS_LIMIT, MU, SIGMA, R, T, ALPHA, F_MAX)
+    print(f"\n  Value-at-Risk at the normal answer f_VaR = {f_var:.6f}:")
+    print(f"  {'confidence':>12} {'bell curve only':>16} {'with crashes':>14}")
+    for a in [0.95, 0.99]:
+        print(f"  {a:>12.0%} {float(value_at_risk(f_var, MU, SIGMA, R, T, a)):16.2%}"
+              f" {value_at_risk_jump(f_var, MU, SIGMA, R, T, lam, J, a):14.2%}")
+
+    f_crash, hist = max_fraction_under_var_jump(LOSS_LIMIT, MU, SIGMA, R, T, lam, J, ALPHA, F_MAX)
+    print(f"\n  IVT + bisection on h(f) = VaR_crash(f) - L (each VaR_crash is itself a bisection on the CDF):")
+    print(f"  {'k':>4} {'a':>10} {'b':>10} {'mid':>10} {'h(mid)':>12}")
+    for k, (a, b, mid, hm) in enumerate(hist):
+        if k < 5 or k == len(hist) - 1:
+            print(f"  {k + 1:>4} {a:10.6f} {b:10.6f} {mid:10.6f} {hm:12.2e}")
+        elif k == 5:
+            print(f"  {'...':>4}")
+    print(f"\n  f_crash = {f_crash:.6f}  ->  with crashes, invest {f_crash:.1%} in the stock instead of {f_var:.1%}")
+
+    rng = np.random.default_rng(SEED)
+    print(f"\n  Monte Carlo check (40,000 paths, crash coin-flips each step): VaR at f_crash -> {LOSS_LIMIT:.2%}")
+    for label, n in [("yearly", 1), ("monthly", 12), ("weekly", 52), ("daily", 252)]:
+        W = simulate_wealth_jump(f_crash, MU, SIGMA, R, T, lam, J, n, 40_000, rng)
+        print(f"  {label:>10}: VaR = {empirical_var(W[:, -1], 1.0, ALPHA):.2%}")
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    ax = axes[0]
+    losses = np.array([0.10, 0.20, 0.30])           # chance of losing more than this in one year, at f_VaR
+    p_bell = [jump_log_wealth_cdf(np.log(1 - l), f_var, MU, SIGMA, R, T, 0.0, J) for l in losses]
+    p_crash = [jump_log_wealth_cdf(np.log(1 - l), f_var, MU, SIGMA, R, T, lam, J) for l in losses]
+    pos = np.arange(len(losses))
+    for shift, p, color, name in [(-0.2, p_bell, "C0", "bell curve only"), (0.2, p_crash, "C3", "with rare crashes")]:
+        bars = ax.bar(pos + shift, np.array(p) * 100, width=0.4, color=color, label=name)
+        ax.bar_label(bars, labels=[f"{v:.1%}" for v in p], fontsize=9)
+    ax.set_xticks(pos, [f"lose more than {l:.0%}" for l in losses])
+    ax.set(ylabel="chance in one year (%)", title=f"Same average return, more big losses (f = {f_var:.2f})")
+    ax.legend()
+
+    ax = axes[1]
+    f_grid = np.linspace(0, 1.5, 61)
+    ax.plot(f_grid, value_at_risk(f_grid, MU, SIGMA, R, T, ALPHA), color="C0", lw=2, label="bell curve only")
+    ax.plot(f_grid, [value_at_risk_jump(v, MU, SIGMA, R, T, lam, J, ALPHA) for v in f_grid], color="C3", lw=2,
+            label="with rare crashes")
+    ax.axhline(LOSS_LIMIT, color="k", ls=":", label=f"limit L = {LOSS_LIMIT:.0%}")
+    ax.axvline(f_var, color="C0", ls="--", label=f"$f_{{VaR}}$ = {f_var:.3f}")
+    ax.axvline(f_crash, color="C3", ls="--", label=f"$f_{{crash}}$ = {f_crash:.3f}")
+    ax.set(xlabel="fraction in stock $f$", ylabel="1-year VaR", title="Crashes move the IVT root to the left")
+    ax.legend()
+    save(fig, "fig5_fat_tails.png")
+
+
 if __name__ == "__main__":
     module1_compounding()
     module2_options()
     module3_random_walk()
     module4_risk()
+    module4b_crashes()

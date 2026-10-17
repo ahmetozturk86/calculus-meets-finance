@@ -15,6 +15,7 @@ Implemented in **Python** (with tests) and ported 1:1 to **MATLAB**.
 | 2 | Binomial tree → Black–Scholes | lim_{N→∞} C_N = C_BS | What is a fair price for a stock option? |
 | 3 | Random walk → Geometric Brownian Motion | distribution converges as Δt → 0 | Why do we model stock prices with GBM? |
 | 4 | **Risk optimization** | g'(f) as a limit, IVT on VaR(f) − L | How much should I invest in stocks? |
+| 4b | Fat tails: rare crashes | Binomial(n, λ/n) → Poisson(λ), IVT twice | What if the market sometimes crashes? |
 
 ## Results
 
@@ -62,13 +63,36 @@ fraction f in the stock gives the growth rate
 
 ![risk](figures/fig4_risk_optimization.png)
 
+### 4b. Fat tails: rare crashes
+The bell curve makes big losses almost impossible, but real markets sometimes crash.
+Here the stock also falls **25% about once every 10 years** (a Merton jump-diffusion).
+The average return stays 10%, so only the left tail gets fatter.
+
+* **New limit:** crash coin-flips with probability λ/n in each of n steps become the
+  Poisson law as n → ∞. The largest table difference falls from 9.5·10⁻³ (n = 1) to
+  8.6·10⁻⁷ (n = 10,000).
+* **IVT twice:** the loss distribution is now a mixture of bell curves with no inverse
+  formula. Bisection finds its 5% quantile (the VaR), and a second bisection finds
+  where VaR(f) hits the limit.
+
+| at f = 0.705 | bell curve only | with rare crashes |
+|---|---|---|
+| 95% VaR | 15.00% | 17.47% |
+| 99% VaR | 22.79% | 27.29% |
+| years losing more than 15% | 1 in 20 | 1 in 14 |
+
+With crashes the same rule gives **f_crash = 0.617, i.e. 61.7% in stocks** instead of
+70.5%. A Monte Carlo check with daily crash coin-flips gives VaR = 15.0% at f_crash.
+
+![fat tails](figures/fig5_fat_tails.png)
+
 ## Run it
 
 ### Python
 ```bash
 pip install -r requirements.txt
 python main.py          # prints all tables, writes figures/*.png
-python -m pytest        # 15 tests
+python -m pytest        # 19 tests
 ```
 
 ### MATLAB
@@ -90,6 +114,7 @@ Open these files in a browser:
   It then:
   - estimates μ and σ from the prices;
   - computes how much to put in stocks with the same IVT + bisection method;
+  - shows how the answer changes if rare crashes can happen (you choose how often and how big);
   - checks the answer against historical one-year returns (historical VaR and a backtest);
   - includes a game where you split your savings each year between stocks, gold, bonds and a savings account.
     - Each year plays out month by month, with life events (emergencies, bonuses, raises).
@@ -122,7 +147,12 @@ web/                interactive explainer (index.html) and The Investor tool and
 ```
 
 ## Limitations
-The model assumes constant μ and σ, normally distributed log-returns, free
-continuous rebalancing, and borrowing at the risk-free rate. Real markets have
-fat tails, so a normal VaR underestimates extreme losses. The point of the
+The model assumes constant μ and σ, free continuous rebalancing, and borrowing at
+the risk-free rate. Module 4 assumes normally distributed log-returns. Real
+markets have fat tails, so a normal VaR underestimates extreme losses. Module 4b
+adds rare crashes to fix part of this, but its crash size and frequency are
+assumptions, not estimates. The point of the
 project is the mathematics (limits and continuity), not investment advice.
+The game in `investor.html` breaks these assumptions on purpose (changing
+markets, crash years, gold and bonds), so the project's rule can lose there:
+the game shows where the simple model stops being enough.
