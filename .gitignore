@@ -5,3 +5,5 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 *.asv
+.claude/settings.local.json
+.~lock.*#

@@ -32,4 +32,8 @@ MATLAB (from the `matlab/` folder): `run_tests` then `main` (figures go to `matl
 - `quantile_linear.m` reimplements `numpy.quantile` (linear interpolation) to avoid the Statistics Toolbox.
 - Keep Python code MATLAB-portable: plain functions, numpy arrays only, no classes/pandas/scipy.
 
+## Web pages
+
+`web/index.html` (explainer, uses Chart.js from a CDN) and `web/investor.html` (real-life tool + game, no external libraries, SVG charts) re-implement the deterministic formulas in JavaScript: `bisection`, `normPpf`, `growthRate`, `kellyFraction`, `valueAtRisk`, `maxFractionUnderVar` and `quantileLinear` mirror `src/bisection.py`, `src/normal.py` and `src/risk.py`. Keep them in sync when the Python changes. The JS numbers must match Python, for example f_VaR = 0.705014 with the default parameters and f_max = 2. Uploaded CSVs are parsed client-side only, so never add network calls. There is no JS test runner; verify by opening the page in headless Edge with an isolated `--user-data-dir` and an injected test script.
+
 The numbers quoted in `README.md` and `report/report.md` (e.g. f* = 1.75, f_VaR = 0.705014, C_BS = 10.4506) come from `python main.py` output; update both docs if parameters change.

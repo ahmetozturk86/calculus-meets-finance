@@ -82,6 +82,19 @@ written by hand, so no Statistics Toolbox is required. Deterministic numbers
 match Python exactly. Monte Carlo numbers differ slightly because the random
 generators are different.
 
+### Web pages (no install, work offline)
+Open these files in a browser:
+- `web/index.html`: interactive explainer. Move a slider and watch each discrete model turn into its continuous limit.
+- `web/investor.html`: **The Investor**, the real-life version of Module 4. You enter your savings, loss limit and
+  market numbers by hand, or upload a CSV of prices (`web/sample_prices.csv` is a simulated example).
+  It then:
+  - estimates μ and σ from the prices;
+  - computes how much to put in stocks with the same IVT + bisection method;
+  - checks the answer against historical one-year returns (historical VaR and a backtest);
+  - includes a game where you manage the money year by year and are compared with the safe and greedy strategies.
+
+  The uploaded file is read only inside the page and is never sent anywhere. `investor.html` uses no external libraries.
+
 ## Project layout
 ```
 src/                Python modules
@@ -95,6 +108,7 @@ main.py             runs everything, saves figures
 tests/              pytest checks against known values
 matlab/             one .m file per Python function + main.m, run_tests.m
 report/report.md    full write-up with derivations
+web/                interactive explainer (index.html) and The Investor tool and game (investor.html)
 ```
 
 ## Limitations

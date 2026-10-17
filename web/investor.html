@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Investor</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1f2328; --muted: #5b6470; --line: #d9dde3; --soft: #eef2f7;
+    --blue: #2563eb; --blue-soft: rgba(37,99,235,0.18); --red: #dc2626; --red-soft: rgba(220,38,38,0.30);
+    --green: #15803d; --green-soft: rgba(21,128,61,0.15); --amber: #d97706; --ink: #111827; --gray: #9ca3af;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1216; --card: #171b21; --text: #e6e8eb; --muted: #9aa3ae; --line: #2c333c; --soft: #1e242c;
+      --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.22); --red: #f87171; --red-soft: rgba(248,113,113,0.32);
+      --green: #4ade80; --green-soft: rgba(74,222,128,0.15); --amber: #fbbf24; --ink: #e6e8eb; --gray: #6b7280;
+    }
+  }
+  * { box-sizing: border-box; }
+  a { color: var(--blue); }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5; }
+  header { max-width: 920px; margin: 0 auto; padding: 20px 16px 4px; }
+  header h1 { margin: 0; font-size: 28px; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  nav { max-width: 920px; margin: 12px auto 0; padding: 0 16px; display: flex; gap: 6px; flex-wrap: wrap; }
+  nav button { flex: 1 1 140px; padding: 10px 12px; border: 1px solid var(--line); background: var(--card); color: var(--text);
+    border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 600; }
+  nav button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  main { max-width: 920px; margin: 0 auto; padding: 12px 16px 40px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 19px; }
+  .card h3 { margin: 14px 0 6px; font-size: 16px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px 22px; }
+  .param label { display: block; font-size: 14px; font-weight: 600; }
+  .param .row { display: flex; gap: 8px; align-items: center; }
+  .param input[type=range] { flex: 1; min-width: 0; }
+  .param input[type=number] { width: 84px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); }
+  .param .hint { font-size: 12px; color: var(--muted); }
+  select, input[type=number].wide { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); font-size: 15px; }
+  .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--blue); background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--blue); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; }
+  .drop.over { border-color: var(--blue); background: var(--soft); }
+  .status { margin-top: 8px; font-size: 14px; }
+  .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; } .warn { color: var(--amber); font-weight: 700; }
+  .big { font-size: 22px; font-weight: 700; margin: 4px 0 8px; }
+  .split { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin: 8px 0; border: 1px solid var(--line); }
+  .split div { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin: 10px 0; }
+  .stat { background: var(--soft); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .note { background: var(--soft); border-left: 4px solid var(--amber); padding: 8px 12px; border-radius: 4px; font-size: 14px; margin-top: 10px; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .hud { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .hud .stat { flex: 1 1 130px; }
+  .strike { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--red); margin-right: 3px; vertical-align: middle; }
+  .strike.on { background: var(--red); }
+  .reveal { padding: 10px 12px; border-radius: 8px; background: var(--soft); margin: 10px 0; min-height: 48px; }
+  .hidden { display: none !important; }
+  code { background: var(--soft); padding: 1px 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>The Investor</h1>
+  <p>How much of your savings can go into stocks if you never want to lose more than a set amount in one year?
+  Same math as the <a href="index.html">Limits in Finance</a> project: continuous limits, the Intermediate Value Theorem and bisection.</p>
+</header>
+<nav>
+  <button data-tab="situation" class="active">1. Your situation</button>
+  <button data-tab="answer">2. Your answer</button>
+  <button data-tab="history">3. Check with history</button>
+  <button data-tab="play">4. Play</button>
+</nav>
+<main>
+
+<!-- ============ TAB 1 ============ -->
+<section id="tab-situation">
+  <div class="card">
+    <h2>Your savings and your rule</h2>
+    <div class="grid">
+      <div class="param"><label for="S">Savings</label>
+        <div class="row"><input id="S" type="number" class="wide" min="1" step="100" value="10000"></div>
+        <div class="hint">Any currency; the answer is split in the same currency.</div></div>
+      <div class="param"><label for="L">Most you accept to lose in one year (L)</label>
+        <div class="row"><input id="L" type="range" min="0.01" max="0.6" step="0.01" value="0.15"><input id="L_n" type="number" step="0.01"></div>
+        <div class="hint">0.15 = 15% of your savings.</div></div>
+      <div class="param"><label for="alpha">How sure must you be?</label>
+        <div class="row"><select id="alpha">
+          <option value="0.90">90% (break the rule 1 year in 10)</option>
+          <option value="0.95" selected>95% (1 year in 20)</option>
+          <option value="0.99">99% (1 year in 100)</option></select></div></div>
+      <div class="param"><label><input id="borrow" type="checkbox"> Allow borrowing to buy more stock</label>
+        <div class="hint">Off: at most 100% of savings in stocks. On: up to 200%.</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The market</h2>
+    <p class="muted">Type the numbers yourself, or upload price data below and they are estimated for you. Rates are per year.</p>
+    <div class="grid">
+      <div class="param"><label for="mu">Stock expected return (μ)</label>
+        <div class="row"><input id="mu" type="range" min="-0.2" max="0.8" step="0.001" value="0.10"><input id="mu_n" type="number" step="0.001"></div>
+        <div class="hint">0.10 = 10% per year on average.</div></div>
+      <div class="param"><label for="sig">Stock risk / volatility (σ)</label>
+        <div class="row"><input id="sig" type="range" min="0.01" max="0.8" step="0.001" value="0.20"><input id="sig_n" type="number" step="0.001"></div>
+        <div class="hint">How much a typical year swings around the average.</div></div>
+      <div class="param"><label for="r">Bank / deposit rate (r)</label>
+        <div class="row"><input id="r" type="range" min="0" max="0.8" step="0.001" value="0.03"><input id="r_n" type="number" step="0.001"></div>
+        <div class="hint">The safe rate you get on the rest.</div></div>
+    </div>
+    <p><button class="btn ghost" id="resetParams">Reset to example values</button></p>
+  </div>
+
+  <div class="card">
+    <h2>Optional: use real price data</h2>
+    <p class="muted">Upload a CSV with a date column and a price column (for example an index exported from investing.com or Yahoo Finance).
+    <b>Your file is read only inside this page. It is never uploaded anywhere.</b>
+    No data? Try <code>sample_prices.csv</code> from the same folder (simulated prices with one crash).</p>
+    <div class="drop" id="drop">
+      <input id="file" type="file" accept=".csv,.txt,text/csv">
+      <div class="muted">or drag a file here</div>
+    </div>
+    <div class="status" id="dataStatus"></div>
+    <div id="dataSummary" class="hidden">
+      <div class="stats" id="dataStats"></div>
+      <div class="chart" id="priceChart"></div>
+      <p><button class="btn ghost" id="useEstimates">Put the estimated μ and σ back in</button>
+         <button class="btn ghost" id="clearData">Remove data</button></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 2 ============ -->
+<section id="tab-answer" class="hidden">
+  <div class="card">
+    <h2>Your answer</h2>
+    <div class="big" id="ansHeadline"></div>
+    <div class="split" id="ansSplit"></div>
+    <div id="ansText"></div>
+    <div class="stats" id="ansStats"></div>
+    <div class="note" id="ansHistoryNote"></div>
+  </div>
+  <div class="card">
+    <h2>What could happen in one year</h2>
+    <p class="muted">The curve shows where your money can be after one year. The red tail is the worst years
+    (5% of them at 95%). Where the tail starts is the <b>Value-at-Risk</b>. It must stay right of your loss limit (dashed line).</p>
+    <div class="param"><label for="fTry">Try another amount in stocks</label>
+      <div class="row"><input id="fTry" type="range" min="0" max="1" step="any" value="0"><span id="fTryLabel"></span></div></div>
+    <div class="status" id="tryStatus"></div>
+    <div class="chart" id="bellChart"></div>
+  </div>
+  <div class="card">
+    <h2>How the answer is found</h2>
+    <p class="muted">VaR(f) grows with the stock fraction f, without jumps. At f = 0 it is below your limit, at the top it is above,
+    so by the <b>Intermediate Value Theorem</b> it crosses your limit somewhere. <b>Bisection</b> finds that point by halving the interval again and again:</p>
+    <div class="chart" id="varChart"></div>
+    <table id="bisectTable"></table>
+  </div>
+</section>
+
+<!-- ============ TAB 3 ============ -->
+<section id="tab-history" class="hidden">
+  <div class="card" id="histEmpty">
+    <h2>Check with history</h2>
+    <p>The answer in tab 2 assumes returns follow a bell curve. Real markets have more extreme years ("fat tails").
+    Upload price data in tab 1 to test the answer against what really happened.</p>
+  </div>
+  <div id="histBody" class="hidden">
+    <div class="card">
+      <h2>Real one-year returns vs the bell curve</h2>
+      <p class="muted" id="histIntro"></p>
+      <div class="chart" id="histChart"></div>
+    </div>
+    <div class="card">
+      <h2>Two answers</h2>
+      <div class="stats" id="histStats"></div>
+      <div id="histText"></div>
+      <div class="note">One-year periods start at every data point, so they overlap and are not independent. Treat the history check as a rough guide, not a guarantee.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 4 ============ -->
+<section id="tab-play" class="hidden">
+  <div class="card" id="gameIntro">
+    <h2>The Investor: can you keep your job?</h2>
+    <p>You manage the savings from tab 1. Every round is one year: choose how much goes into stocks, then the year happens.</p>
+    <p>Your boss's rule: a year that loses more than your limit L is a <b>strike</b>. <b>Three strikes and you are fired.</b>
+    Finish with the most money.</p>
+    <p class="muted" id="gameSource"></p>
+    <p><button class="btn" id="gameStart">Start</button></p>
+    <p class="muted" id="bestScore"></p>
+  </div>
+  <div class="card hidden" id="gameBoard">
+    <div class="hud">
+      <div class="stat"><span>Year</span><b id="gYear"></b></div>
+      <div class="stat"><span>Money</span><b id="gMoney"></b></div>
+      <div class="stat"><span>Strikes</span><b id="gStrikes"></b></div>
+    </div>
+    <div class="param"><label for="gF">How much in stocks this year?</label>
+      <div class="row"><input id="gF" type="range" min="0" max="1" step="0.01" value="0.5"><b id="gFLabel"></b></div>
+      <div class="hint" id="gHint"></div></div>
+    <p><button class="btn" id="gPlay">Play this year ▶</button></p>
+    <div class="reveal" id="gReveal">Choose your amount and press play.</div>
+    <div class="chart" id="gameChart"></div>
+  </div>
+  <div class="card hidden" id="gameEnd">
+    <h2 id="gEndTitle"></h2>
+    <p id="gEndText"></p>
+    <table id="gEndTable"></table>
+    <div class="chart" id="gameEndChart"></div>
+    <p><button class="btn" id="gAgain">Play again</button></p>
+  </div>
+</section>
+</main>
+
+<script>
+// =====================================================================
+// Shared math: mirrors src/bisection.py, src/normal.py and src/risk.py
+// =====================================================================
+function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
+  const s = Math.sign(x); x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return s * y;
+}
+const normCdf = x => 0.5 * (1 + erf(x / Math.SQRT2));
+const normPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
+  let fa = fun(a); const fb = fun(b);
+  if (fa === 0) return [a, []];
+  if (fb === 0) return [b, []];
+  if (fa * fb > 0) throw new Error("IVT condition fails: fun(a) and fun(b) must have opposite signs");
+  const history = [];
+  let mid = 0.5 * (a + b);
+  for (let i = 0; i < maxIter; i++) {
+    mid = 0.5 * (a + b);
+    const fm = fun(mid);
+    history.push([a, b, mid, fm]);
+    if (fm === 0 || 0.5 * (b - a) < tol) break;
+    if (fa * fm < 0) b = mid; else { a = mid; fa = fm; }
+  }
+  return [mid, history];
+}
+const normPpf = q => bisection(x => normCdf(x) - q, -10, 10, 1e-13)[0];
+
+const growthRate = (f, mu, sig, r) => r + f * (mu - r) - 0.5 * f * f * sig * sig;
+const kellyFraction = (mu, sig, r) => (mu - r) / (sig * sig);
+function valueAtRisk(f, mu, sig, r, T, alpha) {
+  const z = normPpf(alpha);
+  return 1 - Math.exp(growthRate(f, mu, sig, r) * T - z * Math.abs(f) * sig * Math.sqrt(T));
+}
+// Largest f in [0, fMax] with VaR(f) <= L. Returns {f, history, status}.
+function maxFractionUnderVar(varFun, L, fMax) {
+  const h = f => varFun(f) - L;
+  if (h(0) > 0) return { f: NaN, history: [], status: "impossible" };
+  if (h(fMax) <= 0) return { f: fMax, history: [], status: "notBinding" };
+  const [f, history] = bisection(h, 0, fMax);
+  return { f, history, status: "binding" };
+}
+// numpy.quantile default (linear interpolation); `sorted` must be ascending.
+function quantileLinear(sorted, q) {
+  const pos = q * (sorted.length - 1), lo = Math.floor(pos), hi = Math.min(lo + 1, sorted.length - 1);
+  return sorted[lo] + (pos - lo) * (sorted[hi] - sorted[lo]);
+}
+
+// =====================================================================
+// Small helpers
+// =====================================================================
+const $ = id => document.getElementById(id);
+const pct = (x, d = 1) => (100 * x).toFixed(d) + "%";
+const money = x => Math.round(x).toLocaleString("en-US");
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+function store(key, val) { try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch (e) { return null; } }
+
+// ---- SVG charts (no libraries) ----
+function niceTicks(min, max, count = 5) {
+  const span = max - min;
+  if (!(span > 0)) return [min];
+  const raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw))), e = raw / mag;
+  const step = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag, out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-9 * step; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+let clipId = 0;
+function drawChart(el, o) {
+  const W = window.innerWidth < 560 ? 420 : 640, H = (o.height || 280) * (W < 640 ? 0.85 : 1), ml = o.hideY ? 16 : 62, mr = 14, mt = 12, mb = 44;
+  const [x0, x1] = o.x, [y0, y1] = o.y, pw = W - ml - mr, ph = H - mt - mb;
+  const sx = x => ml + (x - x0) / (x1 - x0) * pw, sy = y => mt + (1 - (y - y0) / (y1 - y0)) * ph;
+  const cid = "clip" + (++clipId), parts = [];
+  parts.push(`<defs><clipPath id="${cid}"><rect x="${ml}" y="${mt}" width="${pw}" height="${ph}"/></clipPath></defs>`);
+  for (const t of niceTicks(x0, x1, o.xTicks || 6)) {
+    parts.push(`<line x1="${sx(t)}" x2="${sx(t)}" y1="${mt}" y2="${mt + ph}" stroke="var(--line)"/>`,
+      `<text x="${sx(t)}" y="${mt + ph + 16}" font-size="12" text-anchor="middle" fill="var(--muted)">${(o.xFmt || String)(t)}</text>`);
+  }
+  if (!o.hideY) for (const t of niceTicks(y0, y1, 5)) {
+    parts.push(`<line x1="${ml}" x2="${ml + pw}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--line)"/>`,
+      `<text x="${ml - 6}" y="${sy(t) + 4}" font-size="12" text-anchor="end" fill="var(--muted)">${(o.yFmt || String)(t)}</text>`);
+  }
+  parts.push(`<line x1="${ml}" x2="${ml + pw}" y1="${mt + ph}" y2="${mt + ph}" stroke="var(--muted)"/>`);
+  const g = [];
+  for (const b of o.bars || [])
+    g.push(`<rect x="${sx(b.x0)}" y="${sy(b.y)}" width="${Math.max(0, sx(b.x1) - sx(b.x0))}" height="${Math.max(0, sy(y0) - sy(b.y))}" fill="${b.color}" stroke="var(--card)" stroke-width="0.5"/>`);
+  for (const s of o.series || []) {
+    if (!s.pts.length) continue;
+    const d = s.pts.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join("");
+    if (s.fill) g.push(`<path d="${d}L${sx(s.pts[s.pts.length - 1].x).toFixed(1)},${sy(y0)}L${sx(s.pts[0].x).toFixed(1)},${sy(y0)}Z" fill="${s.fill}" stroke="none"/>`);
+    if (s.color) g.push(`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2.2}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`);
+  }
+  for (const v of o.vlines || [])
+    g.push(`<line x1="${sx(v.x)}" x2="${sx(v.x)}" y1="${mt}" y2="${mt + ph}" stroke="${v.color}" stroke-width="2" ${v.dash ? `stroke-dasharray="${v.dash}"` : ""}/>`);
+  for (const h of o.hlines || [])
+    g.push(`<line x1="${ml}" x2="${ml + pw}" y1="${sy(h.y)}" y2="${sy(h.y)}" stroke="${h.color}" stroke-width="2" ${h.dash ? `stroke-dasharray="${h.dash}"` : ""}/>`);
+  for (const d of o.dots || [])
+    g.push(`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="${d.r || 6}" fill="${d.color}" stroke="var(--card)" stroke-width="2"/>`);
+  parts.push(`<g clip-path="url(#${cid})">${g.join("")}</g>`);
+  if (o.xLabel) parts.push(`<text x="${ml + pw / 2}" y="${H - 6}" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.xLabel}</text>`);
+  if (o.yLabel && !o.hideY) parts.push(`<text transform="translate(13,${mt + ph / 2}) rotate(-90)" font-size="12.5" text-anchor="middle" fill="var(--muted)">${o.yLabel}</text>`);
+  const legend = (o.legend || []).map(l =>
+    `<span><i style="background:${l.color};${l.dash ? `background:repeating-linear-gradient(90deg,${l.color} 0 5px,transparent 5px 8px)` : ""}"></i>${l.label}</span>`).join("");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria || "chart"}">${parts.join("")}</svg><div class="legend">${legend}</div>`;
+}
+
+// =====================================================================
+// Tabs and parameters
+// =====================================================================
+for (const b of document.querySelectorAll("nav button")) b.addEventListener("click", () => showTab(b.dataset.tab));
+function showTab(name) {
+  for (const b of document.querySelectorAll("nav button")) b.classList.toggle("active", b.dataset.tab === name);
+  for (const s of document.querySelectorAll("main > section")) s.classList.toggle("hidden", s.id !== "tab-" + name);
+  store("investor.tab", name);
+  renderAll();
+}
+
+const DEFAULTS = { mu: 0.10, sig: 0.20, r: 0.03, L: 0.15 };
+for (const id of ["mu", "sig", "r", "L"]) {          // keep each slider and its number box in sync
+  const range = $(id), box = $(id + "_n");
+  box.min = range.min; box.max = range.max;
+  box.value = range.value;
+  range.addEventListener("input", () => { box.value = range.value; renderAll(); });
+  box.addEventListener("input", () => { const v = parseFloat(box.value); if (Number.isFinite(v)) { range.value = clamp(v, +range.min, +range.max); renderAll(); } });
+  box.addEventListener("change", () => { box.value = range.value; });
+}
+function setParam(id, v) { $(id).value = v; $(id + "_n").value = $(id).value; }
+for (const id of ["S", "alpha", "borrow"]) $(id).addEventListener("input", renderAll);
+$("resetParams").addEventListener("click", () => { for (const [k, v] of Object.entries(DEFAULTS)) setParam(k, v); renderAll(); });
+
+function params() {
+  return { S: Math.max(0, parseFloat($("S").value) || 0), mu: +$("mu").value, sig: +$("sig").value, r: +$("r").value,
+           L: +$("L").value, alpha: +$("alpha").value, fMax: $("borrow").checked ? 2 : 1, T: 1 };
+}
+
+// The model answer: f* (Kelly), f_VaR (bisection) and f_opt = max(0, min(f*, f_VaR, f_max)).
+function solve(p) {
+  const fStar = kellyFraction(p.mu, p.sig, p.r);
+  const varFun = f => valueAtRisk(f, p.mu, p.sig, p.r, p.T, p.alpha);
+  const v = maxFractionUnderVar(varFun, p.L, p.fMax);
+  let fOpt, reason;
+  if (v.status === "impossible") { fOpt = 0; reason = "impossible"; }
+  else if (fStar <= 0) { fOpt = 0; reason = "noPremium"; }
+  else {
+    fOpt = Math.max(0, Math.min(fStar, v.f, p.fMax));
+    reason = fOpt === v.f && v.status === "binding" ? "limit" : fOpt === fStar ? "kelly" : "fMax";
+  }
+  return { fStar, fVar: v.f, history: v.history, status: v.status, fOpt, reason, varFun };
+}
+
+// =====================================================================
+// CSV upload (read locally with FileReader; nothing leaves the page)
+// =====================================================================
+let data = null;
+function splitCsvLine(line, delim) {
+  const out = []; let cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+    else if (c === delim && !q) { out.push(cur); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out.map(s => s.trim());
+}
+function parseNumber(s, delim) {
+  s = String(s).replace(/["'\s ]/g, "").replace(/%$/, "");
+  if (!s) return NaN;
+  const lastDot = s.lastIndexOf("."), lastComma = s.lastIndexOf(",");
+  if (lastDot >= 0 && lastComma >= 0) {                       // both: the last one is the decimal mark
+    s = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma >= 0) {
+    const groups = s.split(",");
+    const thousands = groups.length > 2 || (delim !== ";" && groups[1].length === 3);
+    s = thousands ? s.replace(/,/g, "") : s.replace(",", ".");
+  } else if ((s.match(/\./g) || []).length > 1) {
+    s = s.replace(/\./g, "");                                  // 1.234.567 (Turkish thousands)
+  }
+  return /^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(s) ? parseFloat(s) : NaN;
+}
+function parseDateParts(s, slashOrder) {
+  s = s.replace(/"/g, "").trim();
+  let m;
+  if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/))) return [+m[1], +m[2], +m[3]];
+  if ((m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/))) return [+m[3], +m[2], +m[1]];
+  if ((m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)))
+    return slashOrder === "dmy" ? [+m[3], +m[2], +m[1]] : [+m[3], +m[1], +m[2]];
+  const t = Date.parse(s);
+  if (!Number.isNaN(t)) { const d = new Date(t); return [d.getFullYear(), d.getMonth() + 1, d.getDate()]; }
+  return null;
+}
+function toTime([y, mo, d]) {
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return NaN;
+  return Date.UTC(y, mo - 1, d);
+}
+const norm = s => s.toLowerCase().replace(/["\s]/g, "").replace(/ı/g, "i").replace(/ş/g, "s").replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o");
+
+function parsePriceCsv(text) {
+  text = text.replace(/^﻿/, "");
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) throw new Error("The file has fewer than 2 lines.");
+  const head = lines[0];
+  const delim = (head.match(/;/g) || []).length > 0 ? ";" : head.includes("\t") ? "\t" : ",";
+  let rows = lines.map(l => splitCsvLine(l, delim));
+  let header = rows[0];
+  const hasHeader = header.some(h => /[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(h) && parseDateParts(h, "mdy") === null);
+  if (hasHeader) rows = rows.slice(1); else header = header.map((_, i) => "col" + i);
+  const names = header.map(norm);
+  let dateCol = names.findIndex(n => n.includes("date") || n.includes("tarih"));
+  if (dateCol < 0) dateCol = 0;
+  const wanted = ["adjclose", "close", "price", "simdi", "kapanis", "son", "value"];
+  let priceCol = -1;
+  for (const w of wanted) { priceCol = names.findIndex((n, i) => i !== dateCol && n.replace(/[^a-z]/g, "") === w); if (priceCol >= 0) break; }
+  if (priceCol < 0) for (const w of wanted) { priceCol = names.findIndex((n, i) => i !== dateCol && n.includes(w)); if (priceCol >= 0) break; }
+  if (priceCol < 0) {                                          // last column that is mostly numbers
+    for (let c = header.length - 1; c >= 0 && priceCol < 0; c--) {
+      if (c === dateCol) continue;
+      const ok = rows.slice(0, 50).filter(r => Number.isFinite(parseNumber(r[c], delim))).length;
+      if (ok >= Math.min(25, rows.length * 0.8)) priceCol = c;
+    }
+  }
+  if (priceCol < 0) throw new Error("Could not find a price column. Use a column named Close or Price.");
+  // dd/mm/yyyy vs mm/dd/yyyy: if any first number is above 12 it must be the day.
+  const slashOrder = rows.some(r => { const m = (r[dateCol] || "").match(/^"?(\d{1,2})[/-](\d{1,2})[/-]\d{4}/); return m && +m[1] > 12; }) ? "dmy" : "mdy";
+  const pts = []; let skipped = 0;
+  for (const r of rows) {
+    const parts = r[dateCol] !== undefined ? parseDateParts(r[dateCol], slashOrder) : null;
+    const t = parts ? toTime(parts) : NaN, p = parseNumber(r[priceCol], delim);
+    if (Number.isFinite(t) && Number.isFinite(p)) pts.push({ t, p }); else skipped++;
+  }
+  if (pts.some(x => x.p <= 0)) throw new Error("Prices must be positive. Check that you picked a price column, not a change column.");
+  pts.sort((a, b) => a.t - b.t);
+  const uniq = pts.filter((x, i) => i === 0 || x.t !== pts[i - 1].t);
+  if (uniq.length < 30) throw new Error(`Only ${uniq.length} usable rows were found; at least 30 prices are needed.`);
+  return { pts: uniq, skipped, priceName: hasHeader ? header[priceCol].replace(/"/g, "") : "column " + (priceCol + 1) };
+}
+
+// Estimate GBM parameters: sigma = sd(log returns)/sqrt(dt), mu = mean(log returns)/dt + sigma^2/2.
+function estimate(pts) {
+  const n = pts.length, YEAR = 365.25 * 864e5;
+  const spanYears = (pts[n - 1].t - pts[0].t) / YEAR, dt = spanYears / (n - 1);
+  const lr = []; for (let i = 1; i < n; i++) lr.push(Math.log(pts[i].p / pts[i - 1].p));
+  const m = lr.reduce((a, b) => a + b, 0) / lr.length;
+  const s = Math.sqrt(lr.reduce((a, b) => a + (b - m) ** 2, 0) / (lr.length - 1));
+  const sig = s / Math.sqrt(dt), mu = m / dt + 0.5 * sig * sig;
+  const gaps = []; for (let i = 1; i < n; i++) gaps.push((pts[i].t - pts[i - 1].t) / 864e5);
+  gaps.sort((a, b) => a - b);
+  const med = gaps[Math.floor(gaps.length / 2)];
+  const freq = med <= 4 ? "daily" : med <= 10 ? "weekly" : med <= 45 ? "monthly" : `every ~${Math.round(med)} days`;
+  // One-year returns: k steps ahead from every start point (overlapping), and non-overlapping years for the game.
+  const k = Math.max(1, Math.round(1 / dt)), windows = [], years = [];
+  for (let i = 0; i + k < n; i++) windows.push(pts[i + k].p / pts[i].p - 1);
+  for (let i = 0; i + k < n; i += k) years.push({ R: pts[i + k].p / pts[i].p - 1, label: `${fmtDate(pts[i].t)} – ${fmtDate(pts[i + k].t)}` });
+  return { n, spanYears, dt, mu, sig, freq, k, windows, years };
+}
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function fmtDate(t) { const d = new Date(t); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
+
+function loadCsvText(text, name) {
+  try {
+    const parsed = parsePriceCsv(text), est = estimate(parsed.pts);
+    data = { name, ...parsed, ...est };
+    setParam("mu", clamp(est.mu, -0.2, 0.8)); setParam("sig", clamp(est.sig, 0.01, 0.8));
+    const warn = parsed.skipped ? ` <span class="warn">${parsed.skipped} row(s) could not be read and were skipped.</span>` : "";
+    $("dataStatus").innerHTML = `<span class="ok">✓ Loaded ${name}</span> using the “${parsed.priceName}” column.${warn}` +
+      (est.windows.length < 10 ? ` <span class="warn">Less than ~2 years of data: the history check needs more.</span>` : "");
+  } catch (e) {
+    data = null;
+    $("dataStatus").innerHTML = `<span class="bad">✗ ${e.message}</span>`;
+  }
+  renderAll();
+}
+function readFile(file) {
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { $("dataStatus").innerHTML = `<span class="bad">✗ The file is larger than 10 MB.</span>`; return; }
+  const reader = new FileReader();
+  reader.onload = () => loadCsvText(String(reader.result), file.name);
+  reader.onerror = () => { $("dataStatus").innerHTML = `<span class="bad">✗ Could not read the file.</span>`; };
+  reader.readAsText(file);
+}
+$("file").addEventListener("change", e => readFile(e.target.files[0]));
+const drop = $("drop");
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFile(e.dataTransfer.files[0]); });
+$("useEstimates").addEventListener("click", () => { if (data) { setParam("mu", data.mu); setParam("sig", data.sig); renderAll(); } });
+$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; $("dataStatus").innerHTML = ""; renderAll(); });
+
+// =====================================================================
+// Rendering
+// =====================================================================
+function renderAll() {
+  const p = params(), sol = solve(p);
+  renderData();
+  renderAnswer(p, sol);
+  renderHistory(p, sol);
+  renderGameIntro(p, sol);
+}
+
+function renderData() {
+  $("dataSummary").classList.toggle("hidden", !data);
+  if (!data) return;
+  $("dataStats").innerHTML = [
+    [`${fmtDate(data.pts[0].t)} – ${fmtDate(data.pts[data.n - 1].t)}`, `${data.spanYears.toFixed(1)} years of ${data.freq} prices (${data.n} points)`],
+    [pct(data.mu), "estimated return μ per year"], [pct(data.sig), "estimated volatility σ per year"],
+    [pct(data.pts[data.n - 1].p / data.pts[0].p - 1, 0), "total price change"]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  const YEAR = 365.25 * 864e5, yr = t => 1970 + t / YEAR;
+  const pts = data.pts.map(x => ({ x: yr(x.t), y: x.p })), ps = data.pts.map(x => x.p);
+  const lo = Math.min(...ps), hi = Math.max(...ps);
+  drawChart($("priceChart"), { x: [pts[0].x, pts[pts.length - 1].x], y: [Math.max(0, lo - 0.05 * (hi - lo)), hi + 0.05 * (hi - lo)],
+    series: [{ pts, color: "var(--blue)", width: 1.6 }], xFmt: t => Math.floor(t), yFmt: v => v.toLocaleString("en-US"),
+    xLabel: "year", yLabel: "price", aria: "price history" });
+}
+
+function renderAnswer(p, sol) {
+  const f = sol.fOpt, inStock = p.S * f, inBank = p.S * (1 - f), worst = Math.round(1 / (1 - p.alpha));
+  let head, text;
+  if (sol.reason === "impossible") {
+    head = "Keep everything in the bank";
+    text = `<p>Your limit (lose at most ${pct(p.L)}) cannot be met even with no stocks at all.</p>`;
+  } else if (sol.reason === "noPremium") {
+    head = "Keep everything in the bank";
+    text = `<p>The stock is not expected to earn more than the bank (μ = ${pct(p.mu)} ≤ r = ${pct(p.r)}), so taking its risk does not pay.</p>`;
+  } else {
+    head = `Put ${money(inStock)} (${pct(f)}) in stocks`;
+    const why = {
+      limit: `This is the most your loss limit allows. More stock would make a bad year cost more than ${pct(p.L)}.`,
+      kelly: `This is the amount with the fastest long-run growth (the Kelly fraction). Your loss limit would allow more, but more stock would <i>not</i> grow your money faster.`,
+      fMax: `This is all of your savings. Your loss limit and growth would allow more only by borrowing, which is switched off.`
+    }[sol.reason];
+    text = `<p>${inBank >= 0 ? `Keep ${money(inBank)} in the bank.` : `Borrow ${money(-inBank)} at the bank rate to buy the extra stock.`}
+      In the worst 1 year out of ${worst} you would lose at most <b>${pct(sol.varFun(f))}</b>.</p><p class="muted">${why}</p>`;
+  }
+  $("ansHeadline").textContent = head;
+  $("ansText").innerHTML = text;
+  const sw = clamp(f / Math.max(1, f), 0, 1) * 100;
+  $("ansSplit").innerHTML = `<div style="width:${sw}%;background:var(--blue)">${sw >= 12 ? "stocks " + pct(f, 0) : ""}</div>` +
+    `<div style="width:${100 - sw}%;background:var(--green)">${100 - sw >= 12 ? "bank " + pct(Math.max(0, 1 - f), 0) : ""}</div>`;
+  const g = growthRate(f, p.mu, p.sig, p.r);
+  $("ansStats").innerHTML = [
+    [pct(Math.exp(g) - 1), "typical (median) growth per year"],
+    [pct(sol.varFun(f)), `Value-at-Risk (${pct(p.alpha, 0)})`],
+    [Number.isFinite(sol.fVar) ? pct(sol.fVar) : "–", "most stock your limit allows"],
+    [pct(Math.max(0, sol.fStar)), "fastest-growth amount (Kelly)"]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  let hn = "";
+  if (data && data.windows.length >= 10) {
+    const hs = solveHistory(p);
+    hn = hs.f < f - 0.005
+      ? `<span class="warn">History check:</span> in your data, real bad years were worse than the bell curve predicts. History suggests at most <b>${pct(hs.f)}</b> in stocks (see tab 3).`
+      : `<span class="ok">History check passed:</span> your data supports this answer (history allows ${pct(hs.f)}; see tab 3).`;
+  } else hn = "This answer assumes a bell-curve market. Upload real prices in tab 1 to check it against history in tab 3.";
+  $("ansHistoryNote").innerHTML = hn;
+
+  // "Try another f" slider
+  const tr = $("fTry");
+  tr.max = p.fMax;
+  if (!tr.dataset.touched) tr.value = f;
+  const ft = +tr.value, vt = sol.varFun(ft);
+  $("fTryLabel").textContent = `${pct(ft)} = ${money(p.S * ft)}`;
+  $("tryStatus").innerHTML = `With ${pct(ft)} in stocks the worst 1 year in ${worst} loses <b>${pct(vt)}</b> → ` +
+    (vt <= p.L + 1e-9 ? `<span class="ok">✓ within your limit</span>` : `<span class="bad">✗ breaks your limit of ${pct(p.L)}</span>`);
+  drawBell(p, ft);
+  drawVar(p, sol, ft);
+}
+$("fTry").addEventListener("input", () => { $("fTry").dataset.touched = "1"; renderAll(); });
+
+function drawBell(p, f) {
+  // W_T / W_0 = exp(g(f) + f sigma Z): a lognormal bell. Fixed x-range (from f_max) so moving f changes the shape.
+  const S = p.S || 1, z = normPpf(p.alpha), m = growthRate(f, p.mu, p.sig, p.r), sd = f * p.sig;
+  const gM = growthRate(p.fMax, p.mu, p.sig, p.r), sM = p.fMax * p.sig;
+  const limitX = 1 - p.L, q = Math.exp(m - z * sd);
+  const x0 = Math.max(0, Math.min(Math.exp(gM - 3.2 * sM), limitX - 0.05)), x1 = Math.min(Math.exp(gM + 3.2 * sM), Math.exp(gM) * 3);
+  const legend = [{ color: "var(--blue)", label: "where your money can be" }, { color: "var(--red)", label: `worst ${pct(1 - p.alpha, 0)} of years` },
+                  { color: "var(--ink)", label: `your limit: ${money(S * limitX)}`, dash: true }];
+  const fmt = v => money(S * v);
+  if (sd < 1e-9) {                                             // all in the bank: no risk, one certain outcome
+    drawChart($("bellChart"), { x: [x0, x1], y: [0, 1], hideY: true, xFmt: fmt, xLabel: "money after 1 year",
+      vlines: [{ x: Math.exp(p.r), color: "var(--blue)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: "outcome" });
+    return;
+  }
+  const dens = x => normPdf((Math.log(x) - m) / sd) / (x * sd);
+  const lo = Math.max(x0, Math.exp(m - 5 * sd)), hi = Math.min(x1, Math.exp(m + 5 * sd));
+  const curve = [{ x: x0, y: 0 }, { x: lo, y: 0 }], tail = [];
+  let peak = 0;
+  for (let i = 0; i <= 400; i++) {
+    const x = lo + (hi - lo) * i / 400, y = dens(x);
+    curve.push({ x, y }); peak = Math.max(peak, y);
+    if (x <= q) tail.push({ x, y });
+  }
+  curve.push({ x: hi, y: 0 }, { x: x1, y: 0 });
+  if (tail.length) tail.push({ x: q, y: dens(q) });
+  drawChart($("bellChart"), { x: [x0, x1], y: [0, peak * 1.1], hideY: true, xFmt: fmt, xLabel: "money after 1 year",
+    series: [{ pts: tail, fill: "var(--red-soft)" }, { pts: curve, color: "var(--blue)" }],
+    vlines: [{ x: q, color: "var(--red)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: "outcome distribution" });
+}
+
+function drawVar(p, sol, fNow) {
+  const pts = []; for (let i = 0; i <= 120; i++) { const f = p.fMax * i / 120; pts.push({ x: f, y: sol.varFun(f) }); }
+  const ys = pts.map(q => q.y).concat([p.L]), lo = Math.min(...ys), hi = Math.max(...ys), pad = 0.08 * (hi - lo || 0.1);
+  const dots = [{ x: fNow, y: sol.varFun(fNow), color: sol.varFun(fNow) <= p.L + 1e-9 ? "var(--green)" : "var(--red)" }];
+  drawChart($("varChart"), { x: [0, p.fMax], y: [lo - pad, hi + pad], xFmt: v => pct(v, 0), yFmt: v => pct(v, 0),
+    xLabel: "share of savings in stocks (f)", yLabel: "VaR (loss)", series: [{ pts, color: "var(--blue)" }],
+    hlines: [{ y: p.L, color: "var(--ink)", dash: "6 4" }], dots, aria: "VaR versus stock share",
+    legend: [{ color: "var(--blue)", label: "VaR(f)" }, { color: "var(--ink)", label: "your limit L", dash: true }] });
+  const rows = sol.history.slice(0, 10);
+  $("bisectTable").innerHTML = rows.length
+    ? "<tr><th>step</th><th>a</th><th>b</th><th>middle f</th><th>VaR − L</th></tr>" +
+      rows.map((r, k) => `<tr><td>${k + 1}</td>${r.map(x => `<td>${x.toFixed(4)}</td>`).join("")}</tr>`).join("") +
+      `<tr><td colspan="5" class="muted">… ${sol.history.length} steps in total → f = ${sol.fVar.toFixed(6)}</td></tr>`
+    : `<tr><td class="muted">${sol.status === "notBinding" ? "Your limit is never reached in this range, so there is no crossing to find." : "No crossing: the limit cannot be met."}</td></tr>`;
+}
+
+// ---- History check ----
+function histPortfolio(p, f) {         // one-year portfolio growth factors from the real windows
+  const bank = Math.exp(p.r) - 1;
+  return data.windows.map(R => 1 + f * R + (1 - f) * bank);
+}
+function historicalVar(p, f) {
+  const w = histPortfolio(p, f).sort((a, b) => a - b);
+  return 1 - quantileLinear(w, 1 - p.alpha);
+}
+function solveHistory(p) {
+  const v = maxFractionUnderVar(f => historicalVar(p, f), p.L, p.fMax);
+  return { f: v.status === "impossible" ? 0 : v.f, status: v.status };
+}
+function renderHistory(p, sol) {
+  const ok = data && data.windows.length >= 10;
+  $("histEmpty").classList.toggle("hidden", !!ok);
+  $("histBody").classList.toggle("hidden", !ok);
+  if (!ok) return;
+  const R = data.windows, sorted = [...R].sort((a, b) => a - b);
+  $("histIntro").innerHTML = `Bars: the stock's real return over every one-year period in your data (${R.length} periods).
+    Red curve: what the bell-curve model with μ = ${pct(p.mu)}, σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`;
+  const lo = Math.min(sorted[0], -0.5), hi = Math.max(sorted[sorted.length - 1], 0.6), nb = 24, w = (hi - lo) / nb, counts = Array(nb).fill(0);
+  for (const x of R) counts[Math.min(nb - 1, Math.floor((x - lo) / w))]++;
+  const bars = counts.map((c, i) => ({ x0: lo + i * w, x1: lo + (i + 1) * w, y: c / (R.length * w), color: "var(--blue-soft)" }));
+  // Model density of the 1-year stock return R = exp(mu - sigma^2/2 + sigma Z) - 1
+  const m = p.mu - 0.5 * p.sig * p.sig, curve = [];
+  for (let i = 0; i <= 300; i++) { const x = lo + (hi - lo) * i / 300; if (x > -1) curve.push({ x, y: normPdf((Math.log(1 + x) - m) / p.sig) / ((1 + x) * p.sig) }); }
+  const ymax = Math.max(...bars.map(b => b.y), ...curve.map(c => c.y)) * 1.1;
+  const qHist = quantileLinear(sorted, 1 - p.alpha), qModel = Math.exp(m - normPpf(p.alpha) * p.sig) - 1;
+  drawChart($("histChart"), { x: [lo, hi], y: [0, ymax], hideY: true, bars, xFmt: v => pct(v, 0), xLabel: "stock return over one year",
+    series: [{ pts: curve, color: "var(--red)", dash: "6 4" }],
+    vlines: [{ x: qHist, color: "var(--blue)" }, { x: qModel, color: "var(--red)" }], aria: "histogram of one-year returns",
+    legend: [{ color: "var(--blue-soft)", label: "real one-year returns" }, { color: "var(--red)", label: "bell-curve model", dash: true },
+             { color: "var(--blue)", label: `real worst ${pct(1 - p.alpha, 0)}: ${pct(qHist)}` }, { color: "var(--red)", label: `model worst ${pct(1 - p.alpha, 0)}: ${pct(qModel)}` }] });
+  const hs = solveHistory(p), fModel = sol.fOpt, fRec = Math.min(fModel, hs.f);
+  const breaks = histPortfolio(p, fModel).filter(x => 1 - x > p.L + 1e-12).length;
+  $("histStats").innerHTML = [
+    [pct(fModel), "bell-curve model says (tab 2)"], [pct(hs.f), "real history allows"],
+    [pct(fRec), "recommended: the smaller one"], [`${breaks} of ${R.length}`, `past one-year periods where ${pct(fModel)} in stocks broke your limit`]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  const share = breaks / R.length, promised = 1 - p.alpha;
+  $("histText").innerHTML = `<p>The model promises that your limit breaks in about ${pct(promised, 0)} of years. In your data it broke in
+    <b>${pct(share)}</b> of one-year periods → ${share <= promised * 1.25 ? `<span class="ok">consistent with the model</span>` : `<span class="bad">more often than promised</span>`}.</p>
+    <p class="muted">The history answer uses the same method as the model: the historical VaR changes without jumps as f grows,
+    so the Intermediate Value Theorem guarantees a crossing with your limit, and bisection finds it.</p>`;
+  return hs;
+}
+
+// =====================================================================
+// Game: "The Investor"
+// =====================================================================
+let game = null;
+const MAX_STRIKES = 3;
+function renderGameIntro(p, sol) {
+  const useData = data && data.years.length >= 5;
+  $("gameSource").innerHTML = useData
+    ? `Years come from <b>your data</b> (${Math.min(20, data.years.length)} real years, shuffled). The real dates are shown after each round.`
+    : `Years are drawn at random from the model in tab 1 (μ = ${pct(p.mu)}, σ = ${pct(p.sig)}, bank ${pct(p.r)}). Upload data to replay real years instead.`;
+  const best = store("investor.best");
+  $("bestScore").textContent = best ? `Your best so far: ${money(+best)} from ${money(p.S)}.` : "";
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gaussian() { let u = 0; while (!u) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random()); }
+
+function newGame() {
+  const p = params(), sol = solve(p), useData = data && data.years.length >= 5;
+  // Each year is a function f -> growth factor, so every strategy faces exactly the same years.
+  let years;
+  if (useData) {
+    years = shuffle([...data.years]).slice(0, 20).map(y => ({ label: y.label, stock: y.R, grow: f => 1 + f * y.R + (1 - f) * (Math.exp(p.r) - 1) }));
+  } else {
+    years = Array.from({ length: 20 }, (_, i) => {
+      const Z = gaussian();
+      return { label: null, stock: Math.exp(p.mu - 0.5 * p.sig ** 2 + p.sig * Z) - 1,
+               grow: f => Math.exp(growthRate(f, p.mu, p.sig, p.r) + f * p.sig * Z) };
+    });
+  }
+  game = { p, sol, years, k: 0, money: p.S, strikes: 0, path: [{ x: 0, y: p.S }], choices: [], over: false };
+  $("gF").max = p.fMax;
+  $("gHint").textContent = `Hint: the math says about ${pct(sol.fOpt)} keeps a bad year within your limit.`;
+  $("gameIntro").classList.add("hidden"); $("gameEnd").classList.add("hidden"); $("gameBoard").classList.remove("hidden");
+  $("gReveal").textContent = "Choose your amount and press play.";
+  $("gPlay").disabled = false;
+  updateBoard();
+}
+function updateBoard() {
+  const g = game;
+  $("gYear").textContent = `${g.over ? g.k : Math.min(g.k + 1, g.years.length)} of ${g.years.length}`;
+  $("gMoney").textContent = money(g.money);
+  $("gStrikes").innerHTML = Array.from({ length: MAX_STRIKES }, (_, i) => `<span class="strike ${i < g.strikes ? "on" : ""}"></span>`).join("");
+  $("gFLabel").textContent = `${pct(+$("gF").value, 0)} = ${money(g.money * +$("gF").value)}`;
+  const ys = g.path.map(q => q.y);
+  drawChart($("gameChart"), { x: [0, g.years.length], y: [0, Math.max(...ys, g.p.S) * 1.15], xFmt: v => v, yFmt: v => money(v),
+    xLabel: "year", yLabel: "money", series: [{ pts: g.path, color: "var(--blue)" }], dots: [{ ...g.path[g.path.length - 1], color: "var(--blue)", r: 5 }],
+    hlines: [{ y: g.p.S, color: "var(--gray)", dash: "4 4" }], aria: "your money" });
+}
+$("gF").addEventListener("input", () => game && updateBoard());
+function playYear() {
+  const g = game;
+  if (!g || g.over) return;
+  const f = +$("gF").value, y = g.years[g.k], factor = Math.max(0, y.grow(f)), before = g.money;
+  g.money = before * factor;
+  g.choices.push(f);
+  const loss = 1 - factor, strike = loss > g.p.L + 1e-12;
+  if (strike) g.strikes++;
+  g.k++;
+  g.path.push({ x: g.k, y: g.money });
+  $("gReveal").innerHTML = `${y.label ? `<b>${y.label}</b>: ` : ""}the stock ${y.stock >= 0 ? "rose" : "fell"} <b>${pct(Math.abs(y.stock))}</b>.
+    With ${pct(f, 0)} in stocks your money ${factor >= 1 ? "grew" : "fell"} <b>${pct(Math.abs(factor - 1))}</b> to ${money(g.money)}. ` +
+    (strike ? `<span class="bad">Strike! You lost more than ${pct(g.p.L, 0)}.</span>` : factor < 1 ? `<span class="warn">A loss, but within your limit.</span>` : `<span class="ok">Good year.</span>`);
+  updateBoard();
+  if (g.strikes >= MAX_STRIKES || g.money <= 0 || g.k >= g.years.length) endGame();
+}
+// Replay the same years with a fixed share f (3 strikes rule included).
+function strategy(f) {
+  const g = game; let m = g.p.S, strikes = 0, fired = 0; const path = [{ x: 0, y: m }];
+  for (let k = 0; k < g.years.length; k++) {
+    if (!fired) {
+      const factor = Math.max(0, g.years[k].grow(f));
+      m *= factor;
+      if (1 - factor > g.p.L + 1e-12) strikes++;
+      if (strikes >= MAX_STRIKES || m <= 0) fired = k + 1;
+    }
+    path.push({ x: k + 1, y: m });
+  }
+  return { m, strikes, fired, path };
+}
+function endGame() {
+  const g = game; g.over = true; $("gPlay").disabled = true; updateBoard();
+  const fired = g.strikes >= MAX_STRIKES || g.money <= 0, played = g.k;
+  const greedyF = Math.min(Math.max(0, g.sol.fStar), g.p.fMax);
+  const rows = [
+    { name: "You", m: g.money, strikes: g.strikes, fired: fired ? played : 0, color: "var(--blue)", path: g.path },
+    { name: `Safe: always ${pct(g.sol.fOpt, 0)} in stocks`, ...strategy(g.sol.fOpt), color: "var(--green)" },
+    { name: `Greedy: always ${pct(greedyF, 0)} in stocks`, ...strategy(greedyF), color: "var(--red)" },
+    { name: "Bank only", ...strategy(0), color: "var(--gray)" }];
+  $("gEndTitle").textContent = fired ? `Fired after ${played} year${played === 1 ? "" : "s"}!` : `You survived all ${played} years!`;
+  const avgF = g.choices.reduce((a, b) => a + b, 0) / g.choices.length;
+  $("gEndText").innerHTML = `You put on average <b>${pct(avgF, 0)}</b> in stocks. The math (tab 2) says <b>${pct(g.sol.fOpt, 0)}</b> keeps a bad year
+    within your limit except about 1 year in ${Math.round(1 / (1 - g.p.alpha))}. Here is how fixed strategies did on <b>exactly the same years</b>:`;
+  $("gEndTable").innerHTML = "<tr><th>Strategy</th><th>Final money</th><th>Strikes</th><th>Result</th></tr>" +
+    rows.map(r => `<tr><td><span class="legend"><i style="background:${r.color}"></i></span>${r.name}</td><td>${money(r.m)}</td><td>${r.strikes}</td>
+      <td>${r.fired ? `<span class="bad">fired in year ${r.fired}</span>` : `<span class="ok">kept the job</span>`}</td></tr>`).join("");
+  const ys = rows.flatMap(r => r.path.map(q => q.y));
+  drawChart($("gameEndChart"), { x: [0, g.years.length], y: [0, Math.max(...ys) * 1.1], xFmt: v => v, yFmt: v => money(v), xLabel: "year", yLabel: "money",
+    series: rows.slice().reverse().map(r => ({ pts: r.path, color: r.color, width: r.name === "You" ? 3 : 2 })), aria: "strategies compared",
+    legend: rows.map(r => ({ color: r.color, label: r.name })) });
+  if (!fired) { const best = +(store("investor.best") || 0); if (g.money > best) store("investor.best", String(g.money)); }
+  $("gameEnd").classList.remove("hidden");
+}
+$("gameStart").addEventListener("click", newGame);
+$("gPlay").addEventListener("click", playYear);
+$("gAgain").addEventListener("click", () => { $("gameBoard").classList.add("hidden"); newGame(); });
+
+// ---- start ----
+renderAll();
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderAll(); if (game) updateBoard(); }, 150); });
+const lastTab = store("investor.tab");
+if (lastTab && $("tab-" + lastTab)) showTab(lastTab);
+</script>
+</body>
+</html>

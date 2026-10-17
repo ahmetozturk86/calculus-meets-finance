@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Limits in Finance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; background: #fafafa; color: #222; line-height: 1.45; }
+  section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+  h2 { margin-top: 0; }
+  .main { display: block; margin: 10px 0; padding: 10px; background: #eff6ff; border-radius: 6px; font-weight: 600; }
+  .main input { width: 60%; vertical-align: middle; }
+  .small label { display: inline-block; margin: 2px 14px 2px 0; font-size: 14px; color: #555; }
+  input[type=range] { vertical-align: middle; }
+  .result { font-size: 15px; margin: 8px 0; padding: 8px 10px; background: #f1f5f9; border-radius: 4px; }
+  .note { background: #fffbe6; border-left: 4px solid #f59e0b; padding: 8px 12px; margin-top: 12px; }
+  .ok { color: #15803d; font-weight: 700; } .bad { color: #b91c1c; font-weight: 700; }
+  button { font-size: 15px; padding: 6px 12px; cursor: pointer; }
+  table { border-collapse: collapse; font-family: monospace; font-size: 13px; margin-top: 8px; }
+  td, th { border: 1px solid #ddd; padding: 2px 8px; text-align: right; }
+  tr.now { background: #fde68a; }
+</style>
+</head>
+<body>
+<h1>Limits in Finance</h1>
+<p><b>Use it for your own savings:</b> <a href="investor.html">The Investor</a>: your numbers or your own price data, a history check, and a game.</p>
+<p>Each section has one <b>big slider</b>. Move it and watch a step-by-step model turn into a smooth formula (the limit).
+The small sliders change the problem itself.</p>
+
+<section>
+  <h2>1. Compounding interest: stairs become a smooth curve</h2>
+  <p>The bank adds interest n times a year, so your money grows in <b>steps</b> (blue stairs).
+  If interest is added every instant, money grows on the smooth <b style="color:#dc2626">red curve</b> P·e<sup>rt</sup>.</p>
+  <label class="main">Interest added: <input id="n1" type="range" min="0" max="5" step="1" value="0"> <span></span></label>
+  <div class="small">
+    <label>Money P <input id="P" type="range" min="1000" max="50000" step="1000" value="10000"> <span></span></label>
+    <label>Rate r <input id="r1" type="range" min="0.01" max="0.30" step="0.01" value="0.10"> <span></span></label>
+    <label>Years t <input id="t1" type="range" min="1" max="30" step="1" value="10"> <span></span></label>
+  </div>
+  <div class="result" id="out1"></div>
+  <canvas id="c1"></canvas>
+  <div class="note">Look at: with yearly interest the stairs are big and end well below the red curve.
+  Move to monthly, then daily: the steps get tiny and the stairs lie on the curve. That is the limit (1 + r/n)<sup>nt</sup> → e<sup>rt</sup>.</div>
+</section>
+
+<section>
+  <h2>2. Option price: tree bars become a bell curve</h2>
+  <p>The binomial tree lets the stock go only up or down, N times. The <b>blue bars</b> show where the stock can end
+  and how likely each place is. The option pays S<sub>T</sub> − K only to the right of K (green).
+  Its price is that payoff averaged over the bars. Black–Scholes uses the smooth <b style="color:#dc2626">red curve</b> instead.</p>
+  <label class="main">Tree steps N: <input id="N2" type="range" min="1" max="200" step="1" value="2"> <span></span></label>
+  <div class="small">
+    <label>Strike K <input id="K" type="range" min="60" max="140" step="1" value="100"> <span></span></label>
+    <label>Volatility σ <input id="s2" type="range" min="0.05" max="0.6" step="0.01" value="0.20"> <span></span></label>
+    <span style="font-size:14px;color:#555">(stock S = 100, rate r = 0.05, T = 1 year)</span>
+  </div>
+  <div class="result" id="out2"></div>
+  <canvas id="c2"></canvas>
+  <div class="note">Look at: with N = 1 or 2 there are only a few fat bars. Slide N up: the bars get thinner and fill the red curve exactly,
+  so the tree price becomes the Black–Scholes price. (This is also Module 3: a random walk of up/down steps becomes the smooth GBM.)</div>
+</section>
+
+<section>
+  <h2>4. How much to put in the stock?</h2>
+  <p>You put a fraction f of your money in a stock (return μ = 10%, risk σ = 20%) and the rest in the bank (3%).
+  The bell shows where your money can be after one year. The <b style="color:#dc2626">red tail</b> is the worst 5% of years;
+  where it starts is the <b>Value-at-Risk</b>. Rule: VaR must not go past the loss limit L (black dashed line).</p>
+  <label class="main">Fraction in stock f: <input id="f4" type="range" min="0.05" max="2" step="any" value="0.3"> <span></span></label>
+  <div class="small">
+    <label>Loss limit L <input id="L" type="range" min="0.05" max="0.40" step="0.01" value="0.15"> <span></span></label>
+  </div>
+  <div class="result" id="out4"></div>
+  <canvas id="c4"></canvas>
+  <h3>Finding the largest safe f</h3>
+  <p>Below, every f is one point: its VaR. At small f the VaR is under L, at f = 2 it is over L, and the line has no jumps,
+  so it <b>must</b> cross L (Intermediate Value Theorem). Bisection finds the crossing by halving [0, 2] again and again.</p>
+  <button id="run">▶ Find it with bisection</button>
+  <canvas id="c5"></canvas>
+  <table id="hist"></table>
+</section>
+
+<script>
+// ---- shared math (mirrors src/normal.py and src/bisection.py) ----
+function erf(x) {  // Abramowitz & Stegun 7.1.26, |error| < 1.5e-7
+  const s = Math.sign(x); x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return s * y;
+}
+const normCdf = x => 0.5 * (1 + erf(x / Math.SQRT2));
+const normPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+function bisection(fun, a, b, tol = 1e-12, maxIter = 200) {
+  let fa = fun(a); const fb = fun(b), history = [];
+  if (fa * fb > 0) throw new Error("IVT condition fails");
+  let mid = 0.5 * (a + b);
+  for (let i = 0; i < maxIter; i++) {
+    mid = 0.5 * (a + b);
+    const fm = fun(mid);
+    history.push([a, b, mid, fm]);
+    if (fm === 0 || 0.5 * (b - a) < tol) break;
+    if (fa * fm < 0) b = mid; else { a = mid; fa = fm; }
+  }
+  return [mid, history];
+}
+const normPpf = p => bisection(x => normCdf(x) - p, -10, 10)[0];
+
+// ---- chart helpers ----
+const v = id => parseFloat(document.getElementById(id).value);
+const money = x => x.toLocaleString("en-US", { maximumFractionDigits: 2 });
+const pct = x => (100 * x).toFixed(2) + "%";
+const BLUE = "#2563eb", RED = "#dc2626", GREEN = "#16a34a";
+const charts = {};
+function draw(id, datasets, scales) {
+  if (charts[id]) {
+    charts[id].data.datasets = datasets;
+    charts[id].options.scales = scales;
+    charts[id].update("none");
+    return;
+  }
+  charts[id] = new Chart(document.getElementById(id), {
+    type: "line", data: { datasets },
+    options: { animation: false, parsing: false, scales,
+      plugins: { legend: { labels: { filter: item => !item.text.startsWith("_") } } } }
+  });
+}
+const line = (label, data, color, extra = {}) =>
+  ({ label, data, borderColor: color, backgroundColor: color, pointRadius: 0, borderWidth: 2, ...extra });
+const vline = (label, x, y0, y1, color, dash = []) => line(label, [{ x, y: y0 }, { x, y: y1 }], color, { borderDash: dash });
+const axis = (text, extra = {}) => ({ type: "linear", title: { display: true, text }, ...extra });
+
+// ---- Module 1: compounding ----
+const N_CHOICES = [[1, "once a year"], [2, "twice a year"], [4, "every quarter"], [12, "every month"], [52, "every week"], [365, "every day"]];
+function module1() {
+  const P = v("P"), r = v("r1"), t = v("t1"), [n, name] = N_CHOICES[v("n1")];
+  const stairs = [], smooth = [];
+  for (let k = 0; k <= n * t; k++) stairs.push({ x: k / n, y: P * Math.pow(1 + r / n, k) });
+  for (let i = 0; i <= 300; i++) { const x = t * i / 300; smooth.push({ x, y: P * Math.exp(r * x) }); }
+  const An = P * Math.pow(1 + r / n, n * t), A = P * Math.exp(r * t);
+  document.getElementById("out1").innerHTML =
+    `Interest ${name} (n = ${n}): after ${t} years you have <b>${money(An)}</b>. ` +
+    `Continuous: <b>${money(A)}</b>. Missing: <b>${money(A - An)}</b>`;
+  draw("c1", [line(`stairs: interest ${name}`, stairs, BLUE, { stepped: true }),
+              line("smooth limit P·e^(rt)", smooth, RED, { borderDash: [6, 4] })],
+    { x: axis("years", { min: 0, max: t }), y: axis("money") });
+}
+
+// ---- Module 2: binomial tree vs Black-Scholes ----
+const S0 = 100, R2 = 0.05, T2 = 1;
+const logFact = [0];
+for (let i = 1; i <= 200; i++) logFact.push(logFact[i - 1] + Math.log(i));
+function blackScholes(S, K, r, s, T) {
+  const d1 = (Math.log(S / K) + (r + 0.5 * s * s) * T) / (s * Math.sqrt(T)), d2 = d1 - s * Math.sqrt(T);
+  return S * normCdf(d1) - K * Math.exp(-r * T) * normCdf(d2);
+}
+function module2() {
+  const N = v("N2"), K = v("K"), s = v("s2");
+  const dt = T2 / N, h = s * Math.sqrt(dt), u = Math.exp(h), d = 1 / u;
+  const p = (Math.exp(R2 * dt) - d) / (u - d);
+  // Lognormal density of S_T (risk neutral): the continuous limit of the tree.
+  const m = Math.log(S0) + (R2 - 0.5 * s * s) * T2, sd = s * Math.sqrt(T2);
+  const dens = x => normPdf((Math.log(x) - m) / sd) / (x * sd);
+  const xMin = S0 * Math.exp(-3.5 * sd), xMax = S0 * Math.exp(3.5 * sd);
+  const curve = [], paid = [];
+  let peak = 0;
+  for (let i = 0; i <= 400; i++) {
+    const x = xMin + (xMax - xMin) * i / 400, y = dens(x);
+    curve.push({ x, y }); peak = Math.max(peak, y);
+    if (x >= K) paid.push({ x, y });
+  }
+  // Tree: N + 1 end prices, drawn as bars whose area is the probability of ending there.
+  const bars = [];
+  let price = 0;
+  for (let j = 0; j <= N; j++) {
+    // Math.pow, not logs: p can be exactly 1 (e.g. N = 1, sigma = r), and 0 * log(0) would give NaN.
+    const prob = Math.exp(logFact[N] - logFact[j] - logFact[N - j]) * Math.pow(p, j) * Math.pow(1 - p, N - j);
+    const ST = S0 * Math.exp(h * (2 * j - N)), lo = ST / u, hi = ST * u, y = prob / (hi - lo);
+    price += prob * Math.max(ST - K, 0);
+    bars.push({ x: lo, y: 0 }, { x: lo, y }, { x: hi, y }, { x: hi, y: 0 });
+  }
+  price *= Math.exp(-R2 * T2);
+  const bs = blackScholes(S0, K, R2, s, T2), yMax = 1.5 * peak;
+  document.getElementById("out2").innerHTML =
+    `Tree price with N = ${N}: <b>${price.toFixed(4)}</b> &nbsp;|&nbsp; Black–Scholes: <b>${bs.toFixed(4)}</b> &nbsp;|&nbsp; difference: <b>${(price - bs).toFixed(4)}</b>`;
+  if (paid.length) paid.unshift({ x: K, y: 0 });
+  draw("c2", [
+    line(`tree: where the stock ends (N = ${N})`, bars, BLUE, { borderWidth: 1, fill: "origin", backgroundColor: "rgba(37,99,235,0.25)" }),
+    line("smooth limit (Black–Scholes)", curve, RED, { borderDash: [6, 4] }),
+    line("option pays here (S_T > K)", paid, "rgba(0,0,0,0)", { fill: "origin", backgroundColor: "rgba(22,163,74,0.18)" }),
+    vline("_K", K, 0, yMax, GREEN)
+  ], { x: axis("stock price after 1 year, S_T", { min: xMin, max: xMax }),
+       y: axis("likelihood", { min: 0, max: yMax, ticks: { display: false } }) });
+}
+
+// ---- Module 4: VaR-constrained allocation ----
+const MU = 0.10, SIG = 0.20, R4 = 0.03, ALPHA = 0.95, F_MAX = 2;
+const Z = normPpf(ALPHA);
+const growth = f => R4 + f * (MU - R4) - 0.5 * f * f * SIG * SIG;
+const VaR = f => 1 - Math.exp(growth(f) - Z * Math.abs(f) * SIG);
+let bisect = null;  // {a, b} while the bisection animation runs
+
+function module4() {
+  const f = v("f4"), L = v("L");
+  // Wealth after 1 year (in % of start) is lognormal: 100 exp(g(f) + f sigma Z).
+  const m = growth(f), sd = f * SIG, q = 100 * Math.exp(m - Z * sd);
+  const dens = x => normPdf((Math.log(x / 100) - m) / sd) / (x * sd);
+  // Fixed x-range (wide enough for f = 2); the bell itself is sampled densely within ±5 sd so a narrow bell stays smooth.
+  const xMin = 100 * Math.exp(growth(F_MAX) - 3 * F_MAX * SIG), xMax = Math.min(300, 100 * Math.exp(growth(F_MAX) + 3 * F_MAX * SIG));
+  const lo = Math.max(xMin, 100 * Math.exp(m - 5 * sd)), hi = Math.min(xMax, 100 * Math.exp(m + 5 * sd));
+  const curve = [{ x: xMin, y: 0 }], tail = [{ x: xMin, y: 0 }];
+  let peak = 0;
+  for (let i = 0; i <= 500; i++) {
+    const x = lo + (hi - lo) * i / 500, y = dens(x);
+    curve.push({ x, y }); peak = Math.max(peak, y);
+    if (x <= q) tail.push({ x, y });
+  }
+  curve.push({ x: xMax, y: 0 });
+  tail.push({ x: q, y: dens(q) }, { x: q, y: 0 });
+  const varF = VaR(f), ok = varF <= L;
+  document.getElementById("out4").innerHTML =
+    `With f = ${f.toFixed(3)}: ` + (varF >= 0
+      ? `in the worst 5% of years you lose more than <b>${pct(varF)}</b> (VaR). `
+      : `even in the worst 5% of years you still gain <b>${pct(-varF)}</b> (VaR = ${pct(varF)}). `) +
+    `Limit L = ${pct(L)} → ` + (ok ? `<span class="ok">✓ allowed</span>` : `<span class="bad">✗ too risky</span>`);
+  const top = 1.1 * peak;
+  draw("c4", [
+    line("where your money can be after 1 year", curve, BLUE),
+    line("worst 5% of years", tail, RED, { fill: "origin", backgroundColor: "rgba(220,38,38,0.35)", borderWidth: 0 }),
+    vline(`VaR: lose ${pct(varF)}`, q, 0, top, RED),
+    vline(`loss limit L: lose ${pct(L)}`, 100 * (1 - L), 0, top, "#111", [6, 4])
+  ], { x: axis("money after 1 year (% of what you started with)", { min: xMin, max: xMax }),
+       y: axis("likelihood", { min: 0, max: top, ticks: { display: false } }) });
+
+  // Second chart: VaR as a function of f, with the IVT crossing.
+  const pts = [];
+  for (let i = 0; i <= 200; i++) { const x = F_MAX * i / 200; pts.push({ x, y: VaR(x) }); }
+  const yLo = Math.min(...pts.map(p => p.y)), yHi = Math.max(...pts.map(p => p.y));
+  const ds = [line("VaR(f)", pts, BLUE), line("loss limit L", [{ x: 0, y: L }, { x: F_MAX, y: L }], "#111", { borderDash: [6, 4] }),
+    { label: "your f", data: [{ x: f, y: varF }], borderColor: ok ? GREEN : RED, backgroundColor: ok ? GREEN : RED, pointRadius: 7, showLine: false }];
+  if (bisect) ds.push(line("bisection interval [a, b]", [{ x: bisect.a, y: yLo }, { x: bisect.b, y: yLo }], "#f59e0b", { borderWidth: 8 }));
+  draw("c5", ds, { x: axis("fraction in stock f", { min: 0, max: F_MAX }), y: axis("VaR (share of money lost)", { min: yLo - 0.02, max: yHi + 0.02 }) });
+}
+
+document.getElementById("run").addEventListener("click", () => {
+  // Lock the button and sliders while the animation runs, so nothing fights over the f slider.
+  const locked = ["run", "f4", "L"].map(id => document.getElementById(id));
+  locked.forEach(el => el.disabled = true);
+  const L = v("L"), [, hist] = bisection(f => VaR(f) - L, 0, F_MAX);
+  const steps = hist.slice(0, 12), table = document.getElementById("hist");
+  table.innerHTML = "<tr><th>step</th><th>a</th><th>b</th><th>middle f</th><th>VaR − L</th></tr>" +
+    steps.map((row, k) => `<tr id="h${k}"><td>${k + 1}</td>${row.map(x => `<td>${x.toFixed(6)}</td>`).join("")}</tr>`).join("");
+  let k = 0;
+  const timer = setInterval(() => {
+    if (k > 0) document.getElementById("h" + (k - 1)).classList.remove("now");
+    if (k === steps.length) {
+      clearInterval(timer); bisect = null;
+      setSlider("f4", hist[hist.length - 1][2]);
+      locked.forEach(el => el.disabled = false);
+      return;
+    }
+    const [a, b, mid] = steps[k];
+    bisect = { a, b };
+    document.getElementById("h" + k).classList.add("now");
+    setSlider("f4", mid);
+    k++;
+  }, 700);
+});
+
+// ---- sliders ----
+const modules = { n1: module1, P: module1, r1: module1, t1: module1, N2: module2, K: module2, s2: module2, f4: module4, L: module4 };
+function label(id) {
+  const el = document.getElementById(id);
+  el.nextElementSibling.textContent = id === "n1" ? N_CHOICES[el.value][1] : id === "f4" ? (+el.value).toFixed(3) : el.value;
+}
+function setSlider(id, value) {
+  document.getElementById(id).value = value;
+  label(id);
+  modules[id]();
+}
+for (const [id, fn] of Object.entries(modules)) {
+  document.getElementById(id).addEventListener("input", () => { label(id); fn(); });
+  label(id);
+}
+module1(); module2(); module4();
+</script>
+</body>
+</html>
