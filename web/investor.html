@@ -45,6 +45,7 @@
   .input:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
   .input input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 19px; font-weight: 650; padding: 10px 0; }
   .input i { font-style: normal; color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .input select.big { flex: 1; width: 100%; color: var(--text); font-size: 19px; font-weight: 650; padding: 10px 0; }
   .input select { width: auto; border: 0; padding: 4px 0 4px 6px; background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; }
   .lead { font-size: 17px; margin: 0 0 18px; }
   .block { margin-top: 26px; }
@@ -152,9 +153,51 @@
   .hidden { display: none !important; }
   .topbar { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; align-items: center; }
   .lang { display: flex; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--card); }
-  .arcade-btn { border: 1.5px solid #ff3ea5; border-radius: 8px; background: #0b0820; color: #39ff14; font: 700 12.5px ui-monospace, Consolas, monospace;
-                letter-spacing: .06em; text-transform: uppercase; padding: 5px 10px; cursor: pointer; box-shadow: 0 0 8px rgba(255,62,165,.45); }
-  .arcade-btn:hover { box-shadow: 0 0 14px rgba(255,62,165,.8); }
+  .arcade-btn { border: 2px solid #ff3ea5; border-radius: 10px; background: #0b0820; color: #39ff14; font: 800 14.5px ui-monospace, Consolas, monospace;
+                letter-spacing: .06em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; box-shadow: 0 0 10px rgba(255,62,165,.5);
+                text-shadow: 0 0 8px rgba(57,255,20,.6); animation: arcBtnGlow 2.4s ease-in-out infinite; }
+  .arcade-btn:hover, .arcade-btn:focus-visible { box-shadow: 0 0 20px rgba(255,62,165,.95); outline: none; }
+  @keyframes arcBtnGlow { 50% { box-shadow: 0 0 18px rgba(255,62,165,.85); } }
+  /* The arcade poster: a compact banner above the inputs, and a tall poster next to them on wide screens. Always dark neon. */
+  .arc-poster { --p-green: #39ff14; --p-pink: #ff3ea5; --p-cyan: #22e4ff; --p-yellow: #ffe23a; --p-dim: #9c98c8;
+                position: relative; overflow: hidden; display: grid; grid-template-columns: 64px 1fr auto; grid-template-areas: "art title play" "art line play";
+                gap: 2px 14px; align-items: center; margin: 0 0 16px; padding: 12px 16px; border: 2px solid var(--p-pink); border-radius: 16px;
+                background: radial-gradient(circle at 20% 0%, rgba(34,228,255,.16), transparent 55%), radial-gradient(circle at 100% 100%, rgba(255,62,165,.18), transparent 60%), #07051a;
+                color: #e8e6ff; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 0 22px rgba(255,62,165,.35); }
+  .arc-poster::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(transparent 0 2px, rgba(255,255,255,.035) 2px 3px); }
+  .pp-tag, .pp-feat, .pp-meta, .pp-chart, .pp-art .arc-boss { display: none; }
+  .pp-art { grid-area: art; position: relative; display: flex; justify-content: center; align-items: flex-end; }
+  .pp-art .arc-guy { width: 64px; }
+  .pp-title { grid-area: title; margin: 0; color: var(--p-green); font-size: 20px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; line-height: 1.1;
+              text-shadow: 0 0 10px rgba(57,255,20,.7); }
+  .pp-line { grid-area: line; margin: 0; color: #e8e6ff; font-size: 13px; line-height: 1.35; }
+  .pp-play { grid-area: play; position: relative; z-index: 1; padding: 11px 16px; border: 2px solid var(--p-green); border-radius: 12px; background: rgba(57,255,20,.1);
+             color: var(--p-green); font: 900 15px ui-monospace, Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; cursor: pointer;
+             text-shadow: 0 0 8px rgba(57,255,20,.7); box-shadow: 0 0 14px rgba(57,255,20,.35); animation: ppPulse 1.6s ease-in-out infinite; }
+  .pp-play:hover, .pp-play:focus-visible { background: rgba(57,255,20,.2); outline: none; }
+  @keyframes ppPulse { 50% { box-shadow: 0 0 26px rgba(57,255,20,.75); transform: scale(1.03); } }
+  .pp-new { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--p-pink); color: #fff; animation: ppBlink 1.2s steps(2, start) infinite; }
+  @keyframes ppBlink { to { visibility: hidden; } }
+  @media (max-width: 480px) {
+    .arc-poster { grid-template-columns: 52px 1fr; grid-template-areas: "art title" "art line" "play play"; gap: 2px 12px; }
+    .pp-art .arc-guy { width: 52px; } .pp-title { font-size: 17px; } .pp-play { margin-top: 8px; }
+  }
+  @media (min-width: 1120px) {
+    .top.wrap, main.wrap { max-width: 1104px; }
+    .top.wrap > * { max-width: 760px; }
+    main.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 280px; column-gap: 32px; align-items: start; }
+    main.wrap > * { grid-column: 1; min-width: 0; }
+    main.wrap > .arc-poster { grid-column: 2; grid-row: 1 / span 40; position: sticky; top: 16px; display: block; margin: 0; padding: 18px 18px 16px; text-align: center; }
+    .pp-tag { display: block; color: var(--p-yellow); font-size: 12px; font-weight: 800; letter-spacing: .14em; }
+    .pp-title { margin: 8px 0 4px; font-size: 34px; line-height: 1.02; } .pp-title span { display: block; }
+    .pp-art { height: 150px; margin: 4px 0 8px; gap: 2px; } .pp-art .arc-guy { width: 104px; } .pp-art .arc-boss { display: block; width: 94px; }
+    .pp-chart { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+    .pp-line { font-size: 14px; font-weight: 700; }
+    .pp-feat { display: grid; gap: 5px; margin: 12px 0 14px; padding: 0; list-style: none; text-align: left; font-size: 13px; }
+    .pp-feat li { padding: 5px 9px; border-radius: 8px; background: rgba(255,255,255,.05); }
+    .pp-play { display: block; width: 100%; padding: 13px; font-size: 17px; }
+    .pp-meta { display: block; margin-top: 10px; color: var(--p-dim); font-size: 12px; }
+  }
   /* The arcade game: always a dark neon cabinet, whatever the page theme. */
   .arcade { --a-bg: #07051a; --a-text: #e8e6ff; --a-dim: #9c98c8; --a-green: #39ff14; --a-pink: #ff3ea5; --a-cyan: #22e4ff; --a-yellow: #ffe23a; --a-red: #ff4d4d;
             width: min(640px, calc(100% - 24px)); max-height: 94vh; padding: 0; border: 3px solid var(--a-pink); border-radius: 16px; background: var(--a-bg);
@@ -350,6 +393,7 @@
 </header>
 
 <main class="wrap">
+<aside class="arc-poster" id="arcPoster" aria-labelledby="posterTitle"></aside>
 
 <!-- ============ Inputs ============ -->
 <section class="card" id="inputs">
@@ -360,32 +404,17 @@
           <option value="£">£ GBP</option><option value="₺">₺ TRY</option><option value="" data-i18n="noSym">no symbol</option></select></div></label>
     <label class="field"><span data-i18n="fSave">You add each year</span>
       <div class="input"><input id="save" type="number" min="0" step="100" value="1000" inputmode="decimal"><i id="saveSym"></i></div></label>
+    <label class="field"><span data-i18n="fR">Bank interest</span>
+      <div class="input"><input id="r" type="number" min="0" max="100" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
+      <small data-i18n="whereR">what your savings account pays</small></label>
+    <label class="field"><span data-i18n="fInfl">Inflation</span>
+      <div class="input"><input id="infl" type="number" min="-5" max="100" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
+      <small data-i18n="whereInfl">the latest yearly inflation</small></label>
+    <label class="field"><span data-i18n="qYears">For how many years?</span>
+      <div class="input"><select id="years" class="big"><option value="5" data-i18n="y5">5 years</option><option value="10" selected data-i18n="y10">10 years</option>
+        <option value="20" data-i18n="y20">20 years</option><option value="30" data-i18n="y30">30 years</option></select></div></label>
   </div>
-
-  <div class="block">
-    <div class="label" data-i18n="qToday">Today's numbers</div>
-    <small style="margin:0 0 10px" data-i18n="todayIntro">Type what is true today. An empty box uses a typical example number.</small>
-    <div class="fields">
-      <label class="field"><span data-i18n="fR">Bank interest</span>
-        <div class="input"><input id="r" type="number" min="0" max="100" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
-        <small data-i18n="whereR">what your savings account pays</small></label>
-      <label class="field"><span data-i18n="fInfl">Inflation</span>
-        <div class="input"><input id="infl" type="number" min="-5" max="100" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
-        <small data-i18n="whereInfl">the latest yearly inflation</small></label>
-      <label class="field"><span data-i18n="fYield">Bond yield</span>
-        <div class="input"><input id="bondYield" type="number" min="-5" max="100" step="0.1" placeholder="4.5" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
-        <small id="whereYield"></small><small class="use" id="useYield"></small></label>
-      <label class="field"><span data-i18n="fPe">Stock P/E</span>
-        <div class="input"><input id="pe" type="number" min="1" max="200" step="0.1" placeholder="—" inputmode="decimal"><i data-i18n="peUnit">price ÷ earnings</i></div>
-        <small id="wherePe"></small><small class="use" id="usePe"></small></label>
-      <label class="field" id="vixField"><span data-i18n="fVix">VIX (fear index)</span>
-        <div class="input"><input id="vix" type="number" min="5" max="150" step="0.1" placeholder="—" inputmode="decimal"></div>
-        <small data-i18n="whereVix">how much the stock market expects to swing, e.g. on cboe.com</small><small class="use" id="useVix"></small></label>
-    </div>
-    <small id="goldNote"></small>
-    <small id="marketNote"></small>
-    <small id="profileNote"></small>
-  </div>
+  <small id="profileNote"></small>
 
   <div class="block">
     <div class="label" data-i18n="qRisk">How much risk can you take?</div>
@@ -399,13 +428,25 @@
   </div>
 
   <details class="more" id="moreSettings">
-    <summary><span data-i18n="more">More settings</span> <span class="sub" data-i18n="moreSub">years, your own split, stock numbers, surprises, real data</span></summary>
+    <summary><span data-i18n="more">More settings</span> <span class="sub" data-i18n="moreSub">market numbers (P/E, VIX, bond yield), your own split, surprises, real data</span></summary>
     <div class="more-body">
+      <h3 data-i18n="qToday">Today's market numbers (optional)</h3>
+      <small style="margin:0 0 10px" data-i18n="todayIntro">If you know them, type them: the plan then follows today's market. An empty box uses a typical example number.</small>
+      <div class="fields">
+        <label class="field"><span data-i18n="fYield">Bond yield</span>
+          <div class="input"><input id="bondYield" type="number" min="-5" max="100" step="0.1" placeholder="4.5" inputmode="decimal"><i data-i18n="perYear">% a year</i></div>
+          <small id="whereYield"></small><small class="use" id="useYield"></small></label>
+        <label class="field"><span data-i18n="fPe">Stock P/E</span>
+          <div class="input"><input id="pe" type="number" min="1" max="200" step="0.1" placeholder="—" inputmode="decimal"><i data-i18n="peUnit">price ÷ earnings</i></div>
+          <small id="wherePe"></small><small class="use" id="usePe"></small></label>
+        <label class="field" id="vixField"><span data-i18n="fVix">VIX (fear index)</span>
+          <div class="input"><input id="vix" type="number" min="5" max="150" step="0.1" placeholder="—" inputmode="decimal"></div>
+          <small data-i18n="whereVix">how much the stock market expects to swing, e.g. on cboe.com</small><small class="use" id="useVix"></small></label>
+      </div>
+      <small id="goldNote"></small>
+      <small id="marketNote"></small>
       <h3 data-i18n="yourPlan">Your plan</h3>
       <div class="grid">
-        <label><span class="label" data-i18n="qYears">For how many years?</span>
-          <select id="years"><option value="5" data-i18n="y5">5 years</option><option value="10" selected data-i18n="y10">10 years</option>
-            <option value="20" data-i18n="y20">20 years</option><option value="30" data-i18n="y30">30 years</option></select></label>
         <label><span class="label" data-i18n="qSure">How sure must the math be?</span>
           <select id="alpha"><option value="0.90" data-i18n="a90">90%: a bad year is the worst 1 in 10</option>
             <option value="0.95" selected data-i18n="a95">95%: a bad year is the worst 1 in 20</option>
@@ -1735,7 +1776,7 @@ function renderPlan() {
       tx(`<b>${aName(i)}</b> ${pct(st.mu[i])} a year (${says(p.src.mu[i], i)}), risk ${pct(st.sig[i], 0)} (${says(p.src.sig[i], i)})`,
          `<b>${aName(i)}</b> yılda ${pct(st.mu[i])} (${says(p.src.mu[i], i)}), risk ${pct(st.sig[i], 0)} (${says(p.src.sig[i], i)})`)).join(" · ") +
     tx(` · bank ${pct(st.r)} and inflation ${pct(p.infl)} as typed. `, ` · mevduat ${pct(st.r)} ve enflasyon ${pct(p.infl)}, girdiğin gibi. `) +
-    (allExample ? tx("These are example numbers: type today's numbers above for a real plan.", "Bunlar örnek rakamlar: gerçek bir plan için yukarıya bugünün rakamlarını gir.")
+    (allExample ? tx("These are example numbers: type today's market numbers in <b>More settings</b> for a real plan.", "Bunlar örnek rakamlar: gerçek bir plan için <b>Daha fazla ayar</b> bölümüne bugünün piyasa rakamlarını gir.")
                 : tx("Today's numbers and past prices are not a forecast.", "Bugünkü rakamlar ve geçmiş fiyatlar geleceğin tahmini değildir."));
   const span = ([lo, hi]) => Math.round(100 * lo) === Math.round(100 * hi) ? pct(lo, 0) : tx(`${fix(100 * lo, 0)}–${pct(hi, 0)}`, `%${fix(100 * lo, 0)}–${fix(100 * hi, 0)}`);
   const ranges = [0, 1, 2, 3].filter(i => plan.near[i][1] >= 0.005).map(i => `${span(plan.near[i])} ${aLow(i)}`);
@@ -3030,13 +3071,34 @@ $("arcSound").addEventListener("click", () => {
 // close event can arrive late, even after the game is opened again, so it only finishes a year while the game is closed.
 const arcStopYear = () => { if (arc.phase === "play") arcFinishNow(); };
 function arcClose() { arcStopYear(); $("arcade").close(); }
-$("arcadeOpen").addEventListener("click", () => { arcStopYear(); renderArcade(); $("arcade").showModal(); renderArcade(); });
+function arcOpen() { arcStopYear(); renderArcade(); $("arcade").showModal(); renderArcade(); }
+$("arcadeOpen").addEventListener("click", arcOpen);
 $("arcadeClose").addEventListener("click", arcClose);
 let arcDownOnBackdrop = false;                                     // a click on the backdrop closes the game, but not
 $("arcade").addEventListener("pointerdown", e => { arcDownOnBackdrop = e.target === $("arcade"); });   // a drag ending there
 $("arcade").addEventListener("click", e => { if (e.target === $("arcade") && arcDownOnBackdrop) arcClose(); });
 $("arcade").addEventListener("cancel", arcStopYear);              // Escape
-$("arcade").addEventListener("close", () => { if (!$("arcade").open) arcStopYear(); });
+$("arcade").addEventListener("close", () => { if (!$("arcade").open) arcStopYear(); renderPoster(); });
+// The arcade poster on the page: the guy as a Partner and the happy boss over a rising neon chart, a short pitch, four
+// hooks and a big button (Continue in the middle of a game), with the badges and the best score so far.
+function renderPoster() {
+  const mid = arc.phase === "plan" || arc.phase === "play" || arc.phase === "year", best = arcBest(), got = arcBadges().size;
+  $("arcPoster").innerHTML = `<div class="pp-tag">🕹️ ${tx("ARCADE", "ATARİ")}<span class="pp-new">${tx("NEW!", "YENİ!")}</span></div>
+    <h2 class="pp-title" id="posterTitle">${tx("<span>Fund</span> <span>Manager</span>", "<span>Fon</span> <span>Yöneticisi</span>")}</h2>
+    <div class="pp-art" aria-hidden="true"><svg class="pp-chart" viewBox="0 0 240 150" preserveAspectRatio="none">
+      <polyline points="0,130 26,118 48,124 74,96 96,104 122,74 146,84 170,50 196,58 240,14" fill="none" stroke="#22e4ff" stroke-width="3" stroke-linejoin="round" opacity=".45"/>
+      <polyline points="0,138 30,132 58,136 84,116 110,120 138,98 162,104 190,80 214,86 240,52" fill="none" stroke="#39ff14" stroke-width="3" stroke-linejoin="round" opacity=".35"/></svg>
+      <div class="arc-guy bob">${arcGuy("win", 5)}</div><div class="arc-boss happy">${arcBossSvg("happy")}</div></div>
+    <p class="pp-line">${tx(`Grow ${money(ARC_START)} in ${ARC_YEARS} years. Don't get fired!`, `${ARC_YEARS} yılda ${money(ARC_START)} büyüt. Kovulma!`)}</p>
+    <ul class="pp-feat"><li>💔 ${tx(`${ARC_HEARTS} hearts, ${ARC_YEARS} years`, `${ARC_HEARTS} can, ${ARC_YEARS} yıl`)}</li>
+      <li>⬆️ ${tx("Intern → Partner", "Stajyer → Ortak")}</li><li>🚨 ${tx("Crash! Sell, hold or buy?", "Çöküş! Sat, tut ya da al?")}</li>
+      <li>🤖 ${tx("Beat the Quant", "Quant'ı yen")}</li></ul>
+    <button type="button" class="pp-play" id="posterPlay">${mid ? tx(`▶ Continue · year ${arc.year}/${ARC_YEARS}`, `▶ Devam et · yıl ${arc.year}/${ARC_YEARS}`) : tx("▶ Play now", "▶ Hemen oyna")}</button>
+    <div class="pp-meta">🏅 ${got ? tx(`${got}/${ARC_BADGES.length} badges`, `${got}/${ARC_BADGES.length} rozet`) : tx(`${ARC_BADGES.length} badges to collect`, `toplanacak ${ARC_BADGES.length} rozet`)}${best ? ` · ${tx("best", "rekor")} ${money(best)}` : ""}</div>`;
+  $("posterPlay").addEventListener("click", arcOpen);
+}
+$("currency").addEventListener("input", renderPoster);
+document.addEventListener("DOMContentLoaded", renderPoster);       // after the page has picked its language
 
 // =====================================================================
 // Language: the ENG / TUR switch
@@ -3050,10 +3112,10 @@ const I18N_TR = {
   intro: "Durumunu anlat, matematik senin için hisse, altın, tahvil ve mevduatın en iyi karışımını bulsun.",
   fS: "Şimdi yatıracağın para", currency: "para birimi", noSym: "simgesiz", fSave: "Her yıl eklediğin", fR: "Banka faizi", fInfl: "Enflasyon",
   perYear: "yıllık %",
-  qToday: "Bugünün rakamları", todayIntro: "Bugün geçerli olanı gir. Boş bir kutu tipik bir örnek rakam kullanır.",
+  qToday: "Bugünün piyasa rakamları (isteğe bağlı)", todayIntro: "Biliyorsan gir: plan o zaman bugünkü piyasayı izler. Boş bir kutu tipik bir örnek rakam kullanır.",
   whereR: "mevduat hesabının yıllık faizi", whereInfl: "son yıllık enflasyon", fYield: "Tahvil faizi", fPe: "Hisse F/K",
   peUnit: "fiyat ÷ kâr", fVix: "VIX (korku endeksi)", whereVix: "hisse piyasasının ne kadar dalgalanmayı beklediği, örneğin cboe.com", qRisk: "Ne kadar risk alabilirsin?", careful: "Temkinli", balanced: "Dengeli", bold: "Cesur",
-  more: "Daha fazla ayar", moreSub: "süre, kendi dağılımın, hisse rakamları, sürprizler, gerçek veri",
+  more: "Daha fazla ayar", moreSub: "piyasa rakamları (F/K, VIX, tahvil faizi), kendi dağılımın, sürprizler, gerçek veri",
   yourPlan: "Planın", qYears: "Kaç yıl için?", y5: "5 yıl", y10: "10 yıl", y20: "20 yıl", y30: "30 yıl",
   qSure: "Matematik ne kadar emin olmalı?",
   a90: "%90: kötü yıl, 10 yılın en kötüsü", a95: "%95: kötü yıl, 20 yılın en kötüsü", a99: "%99: kötü yıl, 100 yılın en kötüsü",
@@ -3134,6 +3196,7 @@ function setLang(lang) {
   renderInputs();
   renderData();
   if ($("arcade").open) renderArcade();
+  renderPoster();
   if (!cur) return;
   life.scFor = null;                                              // the one future shown is rebuilt with names in the new language
   renderPlan(); renderHow(); renderHistory(); drawLife();
