@@ -58,6 +58,9 @@
   .market.sel, .opt.sel { border-color: var(--blue); background: var(--blue-soft); }
   .market .ic { font-size: 18px; line-height: 1; }
   small.use { color: var(--text); }
+  .fees input { width: 96px; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text);
+                font: inherit; font-weight: 650; text-align: right; }
+  .fees input:focus { outline: none; border-color: var(--blue); }
   .guess { display: grid; gap: 8px; }
   .grow { display: grid; grid-template-columns: 96px 1fr 128px; gap: 12px; align-items: center; }
   .grow > span:first-child { font-weight: 600; white-space: nowrap; }
@@ -479,6 +482,29 @@
       <small data-i18n="stockNote">The P/E box sets the stocks' average return and the VIX box their risk. When a box is empty, the number here is used
       (for a normal market). Uploaded stock prices below fill these in.</small>
       <p><button class="btn ghost" id="resetParams" data-i18n="reset">Reset all to the example</button></p>
+
+      <h3 data-i18n="feesHead">Fees and taxes</h3>
+      <small style="margin:0 0 8px" data-i18n="feesIntro">What you keep is less than what the market pays: funds charge a yearly fee, and the state taxes
+      interest and gains. The plan takes them off each return before it looks for the best mix. An empty box means 0.</small>
+      <div class="buttons"><button class="btn ghost" type="button" data-fees="usa" data-i18n="feesUsa">Typical USA</button>
+        <button class="btn ghost" type="button" data-fees="tr" data-i18n="feesTr">Typical Turkey</button>
+        <button class="btn ghost" type="button" data-fees="none" data-i18n="feesNone">None</button></div>
+      <div class="scroll"><table class="fees">
+          <tr><th></th><th data-i18n="feeCol">Fee, % a year</th><th data-i18n="taxCol">Tax on gains, %</th></tr>
+          <tr><td><i class="dot" style="background:var(--blue)"></i><span data-i18n="gStock">Stocks</span></td>
+            <td><input id="feeS" type="number" min="0" max="20" step="0.05" placeholder="0" inputmode="decimal" aria-label="fee" data-i18n-aria="feeAria"></td>
+            <td><input id="taxS" type="number" min="0" max="100" step="0.5" placeholder="0" inputmode="decimal" aria-label="tax" data-i18n-aria="taxAria"></td></tr>
+          <tr><td><i class="dot" style="background:var(--goldc)"></i><span data-i18n="gGold">Gold</span></td>
+            <td><input id="feeG" type="number" min="0" max="20" step="0.05" placeholder="0" inputmode="decimal" aria-label="fee" data-i18n-aria="feeAria"></td>
+            <td><input id="taxG" type="number" min="0" max="100" step="0.5" placeholder="0" inputmode="decimal" aria-label="tax" data-i18n-aria="taxAria"></td></tr>
+          <tr><td><i class="dot" style="background:var(--bond)"></i><span data-i18n="gBond">Bonds</span></td>
+            <td><input id="feeB" type="number" min="0" max="20" step="0.05" placeholder="0" inputmode="decimal" aria-label="fee" data-i18n-aria="feeAria"></td>
+            <td><input id="taxB" type="number" min="0" max="100" step="0.5" placeholder="0" inputmode="decimal" aria-label="tax" data-i18n-aria="taxAria"></td></tr>
+          <tr><td><i class="dot" style="background:var(--dep)"></i><span data-i18n="gDep">Savings</span></td>
+            <td><input id="feeDep" type="number" min="0" max="20" step="0.05" placeholder="0" inputmode="decimal" aria-label="fee" data-i18n-aria="feeAria"></td>
+            <td><input id="taxDep" type="number" min="0" max="100" step="0.5" placeholder="0" inputmode="decimal" aria-label="tax" data-i18n-aria="taxAria"></td></tr>
+      </table></div>
+      <small id="feesNote"></small>
 
       <h3 data-i18n="surprises">Surprises in the real-life test</h3>
       <div class="grid">
@@ -917,10 +943,14 @@ const CRASH_SAFE = [1.05, 1.03];                                   // what a mar
 // Today's state (p.mood, read from today's numbers) has exactly today's averages p.avg0 (from the P/E, inflation and the
 // bond yield, see params); the other states, used when the years ahead change, are shifted by the MOODS differences. The
 // risks p.sig0 are for a normal market and every state scales them by its MOODS ratio. p.rho is the same in every state.
+// Fees and taxes (p.fee, p.tax; index 3 is the savings account) turn each average return into what you keep: the tax takes
+// its share of the year's average gain (a loss is not taxed) and the fee comes off every year. Risk is left as it is.
 function marketStates(p, lam, J) {
   const n = MOODS.normal, c = MOODS[p.mood], out = {};
+  const keep = (x, i) => { if (!p.fee[i] && !p.tax[i]) return x;
+    const R = Math.exp(x) - 1; return Math.log(Math.max(1e-6, 1 + R - p.tax[i] * Math.max(R, 0) - p.fee[i])); };
   for (const k of REGIME_KEYS) {
-    const m = MOODS[k], rc = Math.max(0, p.r + m.rc - c.rc), avg = p.avg0.map((x, i) => x + m.muc[i] - c.muc[i]);
+    const m = MOODS[k], rc = keep(Math.max(0, p.r + m.rc - c.rc), 3), avg = p.avg0.map((x, i) => keep(x + m.muc[i] - c.muc[i], i));
     const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE];
     out[k] = { key: k, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg: avg[0], avg,
                mu: avg.map(x => Math.exp(x) - 1),
@@ -1107,7 +1137,17 @@ const bandLegend = () => [{ color: "var(--band-calm)", label: tx("calm year", "s
 // =====================================================================
 // typed: the boxes the person filled in (or an uploaded file did), which a change of currency must not overwrite.
 const ui = { risk: "balanced", typed: new Set() };
-const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25, bondYield: "", pe: "", vix: "" };
+const FEE_IDS = ["S", "G", "B", "Dep"];                            // stocks, gold, bonds, savings account (the ASSETS order)
+const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25, bondYield: "", pe: "", vix: "",
+                   ...Object.fromEntries(FEE_IDS.flatMap(a => [["fee" + a, ""], ["tax" + a, ""]])) };
+// Typical fees and taxes (searched October 2026; they change often). USA: an ordinary taxable account in the 22% income
+// bracket: interest is income, long-term stock gains 15%, gold funds 28% (collectibles); index funds ~0.1% a year
+// (Morningstar: passive average 0.11%), gold funds 0.25% (IAU; GLD 0.40%). Turkey: TL deposit stopaj 17.5% up to 6 months,
+// BIST shares and TEFAS equity funds 0%, gold funds 17.5%, government bonds 10% (over 1 year); the fund fees are estimates
+// (Turkish equity funds charge about 1-3.65% a year).
+const FEE_PRESETS = { usa: { fee: [0.1, 0.25, 0.1, 0], tax: [15, 28, 22, 22] },
+                      tr: { fee: [2, 1, 0, 0], tax: [0, 17.5, 10, 17.5] },
+                      none: { fee: ["", "", "", ""], tax: ["", "", "", ""] } };
 // Typical example numbers per currency: what an empty or untouched box means (all in % a year). The lira has its own:
 // Turkish rates and inflation are many times higher, and stocks, gold and bonds in lira swing more because the lira itself
 // moves (gold and stocks in lira both rise when the lira falls, Turkish bonds fall). Lira values are approximate, autumn 2026.
@@ -1130,6 +1170,8 @@ function params() {
               infl: inflPct / 100, alpha: +$("alpha").value,
               mu: Math.log(1 + clamp(num("mu", pr.mu), -50, 150) / 100), sig: clamp(num("sig", pr.sig), 1, 80) / 100,
               years: +$("years").value, fMax: 1, T: 1, profile: pr.key };
+  p.fee = FEE_IDS.map(a => clamp(num("fee" + a, 0), 0, 20) / 100);
+  p.tax = FEE_IDS.map(a => clamp(num("tax" + a, 0), 0, 100) / 100);
   const y = opt("bondYield"), pe = opt("pe"), vix = pr.vix ? opt("vix") : null;
   p.bondY = y !== null ? Math.log(1 + clamp(y, -5, 100) / 100) : null;          // today's bond yield
   p.pe = pe !== null ? clamp(pe, 1, 200) : null;                                  // today's stock P/E
@@ -1161,8 +1203,14 @@ function todayMarket(p) {
   return { key: crisis ? "crisis" : p.infl >= 0.06 ? "inflation" : calm ? "calm" : "normal", d };
 }
 for (const b of document.querySelectorAll("#riskPick .opt")) b.addEventListener("click", () => { ui.risk = b.dataset.risk; onInputChange(); });
-for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "bondYield", "pe", "vix", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
+for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "bondYield", "pe", "vix", "years", "useGuess", "changing", "events", "crashEvery", "crashSize",
+                  ...FEE_IDS.flatMap(a => ["fee" + a, "tax" + a])])
   $(id).addEventListener("input", onInputChange);
+for (const b of document.querySelectorAll("[data-fees]")) b.addEventListener("click", () => {
+  const pr = FEE_PRESETS[b.dataset.fees];
+  FEE_IDS.forEach((a, i) => { $("fee" + a).value = pr.fee[i]; $("tax" + a).value = pr.tax[i]; });
+  onInputChange();
+});
 for (const id of ["r", "infl", "mu", "sig"]) $(id).addEventListener("input", () => ui.typed.add(id));
 // Example numbers of the current currency in the boxes that were not typed (all of them after a reset).
 function fillProfile(all) {
@@ -1633,6 +1681,16 @@ function renderToday(p, states) {
     ? tx(`→ stock risk ${pct(p.vixSig, 0)}: halfway between VIX ${fix(100 * p.vix, 0)} and the usual ${pct(p.sig, 0)}, because VIX looks only a month ahead`,
          `→ hisse riski ${pct(p.vixSig, 0)}: VIX ${fix(100 * p.vix, 0)} ile olağan ${pct(p.sig, 0)} arasının ortası, çünkü VIX yalnızca bir ay ileriye bakar`)
     : tx(`Empty: stock risk ${pct(st.sig[0], 0)}`, `Boş: hisse riski ${pct(st.sig[0], 0)}`);
+  const ft = p.fee.some(Boolean) || p.tax.some(Boolean), keepText = [0, 1, 2].map(i => `${aLow(i)} ${pct(st.mu[i])}`).concat(`${aLow(3)} ${pct(st.r)}`);
+  $("feesNote").innerHTML = (ft ? tx(`<b>What you keep today, a year:</b> ${keepText.join(", ")}. `, `<b>Bugün yılda elinde kalan:</b> ${keepText.join(", ")}. `) : "") +
+    tx(`Typical USA: an ordinary taxable account; interest is taxed as income (22% bracket), long-term stock gains 15%, gold funds 28%
+      (collectibles); index funds cost about 0.1% a year, gold funds 0.25%. Typical Turkey: deposit stopaj 17.5% (up to 6 months), BIST shares
+      and equity funds 0%, gold funds 17.5%, government bonds 10%; the fund fees are estimates (Turkish equity funds charge about 1–3.65% a year).
+      Taxes change often, so check today's rules. The tax takes its share of each year's average gain; risk is left as it is.`,
+       `Tipik ABD: normal vergiye tabi bir hesap; faiz gelir olarak vergilenir (%22 dilimi), uzun vadeli hisse kazancı %15, altın fonları %28
+      (koleksiyon ürünü); endeks fonlarının maliyeti yılda yaklaşık %0,1, altın fonlarınınki %0,25. Tipik Türkiye: mevduat stopajı %17,5 (6 aya kadar),
+      BIST hisseleri ve hisse yoğun fonlar %0, altın fonları %17,5, devlet tahvili %10; fon ücretleri tahmindir (Türkiye'de hisse fonları yılda
+      yaklaşık %1–3,65 alır). Vergiler sık değişir, bu yüzden bugünkü kuralları kontrol et. Vergi her yılın ortalama kazancından payını alır; risk aynı kalır.`);
   $("goldNote").innerHTML = tx(`<b>Gold</b> needs no number: its price says nothing about its future return. Over long periods gold has kept up with
     inflation, so the plan uses inflation + ${GOLD_PREMIUM}% = <b>${ret(1)}</b> a year.`,
     `<b>Altın</b> için rakam gerekmez: fiyatı gelecekteki getirisi hakkında bir şey söylemez. Uzun dönemde altın enflasyona yetişmiştir,
@@ -1775,7 +1833,10 @@ function renderPlan() {
   $("planSource").innerHTML = tx("Where the numbers come from: ", "Rakamlar nereden geliyor: ") + [0, 1, 2].map(i =>
       tx(`<b>${aName(i)}</b> ${pct(st.mu[i])} a year (${says(p.src.mu[i], i)}), risk ${pct(st.sig[i], 0)} (${says(p.src.sig[i], i)})`,
          `<b>${aName(i)}</b> yılda ${pct(st.mu[i])} (${says(p.src.mu[i], i)}), risk ${pct(st.sig[i], 0)} (${says(p.src.sig[i], i)})`)).join(" · ") +
-    tx(` · bank ${pct(st.r)} and inflation ${pct(p.infl)} as typed. `, ` · mevduat ${pct(st.r)} ve enflasyon ${pct(p.infl)}, girdiğin gibi. `) +
+    (p.fee.some(Boolean) || p.tax.some(Boolean)
+      ? tx(` · bank ${pct(st.r)}, inflation ${pct(p.infl)}. All returns are after your fees and taxes. `,
+           ` · mevduat ${pct(st.r)}, enflasyon ${pct(p.infl)}. Tüm getiriler ücretlerin ve vergilerin düşülmüş hâli. `)
+      : tx(` · bank ${pct(st.r)} and inflation ${pct(p.infl)} as typed. `, ` · mevduat ${pct(st.r)} ve enflasyon ${pct(p.infl)}, girdiğin gibi. `)) +
     (allExample ? tx("These are example numbers: type today's market numbers in <b>More settings</b> for a real plan.", "Bunlar örnek rakamlar: gerçek bir plan için <b>Daha fazla ayar</b> bölümüne bugünün piyasa rakamlarını gir.")
                 : tx("Today's numbers and past prices are not a forecast.", "Bugünkü rakamlar ve geçmiş fiyatlar geleceğin tahmini değildir."));
   const span = ([lo, hi]) => Math.round(100 * lo) === Math.round(100 * hi) ? pct(lo, 0) : tx(`${fix(100 * lo, 0)}–${pct(hi, 0)}`, `%${fix(100 * lo, 0)}–${fix(100 * hi, 0)}`);
@@ -3127,6 +3188,10 @@ const I18N_TR = {
   stockNote: "F/K kutusu hisselerin ortalama getirisini, VIX kutusu riskini belirler. Bir kutu boşken buradaki rakam kullanılır (normal bir piyasa için). " +
     "Aşağıya yüklenen hisse fiyatları bunları doldurur.",
   reset: "Hepsini örneğe sıfırla",
+  feesHead: "Ücretler ve vergiler", feesUsa: "Tipik ABD", feesTr: "Tipik Türkiye", feesNone: "Yok",
+  feesIntro: "Elinde kalan, piyasanın ödediğinden azdır: fonlar yıllık ücret alır, devlet de faizi ve kazancı vergilendirir. Plan en iyi " +
+    "karışımı aramadan önce bunları her getiriden düşer. Boş kutu 0 demektir.",
+  feeCol: "Ücret, yıllık %", taxCol: "Kazanç vergisi, %", feeAria: "ücret", taxAria: "vergi",
   surprises: "Gerçek hayat testindeki sürprizler",
   changing: "Piyasalar zamanla değişir<small>Sakin yıllar, krizler ve yüksek enflasyon, gerçek hayattaki gibi birbirini izler.</small>",
   events: "Hayat olayları<small>Bazı yıllarda acil durumlar, primler ve zamlar olur.</small>",

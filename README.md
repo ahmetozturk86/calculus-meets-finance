@@ -175,7 +175,8 @@ Open these files in a browser:
      When even that plan stays within your limit (calm and crisis markets), Balanced gives the same plan as Bold.
      All rates you type are ordinary yearly rates; the math turns them into continuous rates with ln(1 + x).
      Everything else is in a closed **More settings** section: years, **your own guess** of how to split the money
-     (optional), the stock numbers used when the P/E or VIX box is empty, surprises, and
+     (optional), the stock numbers used when the P/E or VIX box is empty, **fees and taxes** (with typical USA
+     and Turkey values to fill in; the plan uses what you keep after them), surprises, and
      optional CSVs of real prices for stocks, gold and bonds, or one file with a column for each
      (`web/sample_prices.csv` is a simulated example). From the files the page estimates each asset's average return,
      risk and how the assets move together; short data is pulled toward typical long-run values, because averages are
