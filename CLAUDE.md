@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-School project + GitHub portfolio piece: finance modules, each showing a discrete model converging to a continuous one (limits), ending in a VaR-constrained portfolio allocation found via the Intermediate Value Theorem + bisection (Module 4: stocks + bank; Module 5: the best mix of stocks, gold, bonds and bank). The school requires **MATLAB**; Python is the reference implementation.
+An individual math student's project (and GitHub portfolio piece): finance modules, each showing a discrete model converging to a continuous one (limits), ending in a VaR-constrained portfolio allocation found via the Intermediate Value Theorem + bisection (Module 4: stocks + bank; Module 5: the best mix of stocks, gold, bonds and bank). The project must run in **MATLAB**; Python is the reference implementation. In public text (README, pages) present it as one math student's own learning project, never as a school project or as professional investment advice, and give The Investor page and the Fund Manager game the same credit as the math.
 
 ## Commands
 

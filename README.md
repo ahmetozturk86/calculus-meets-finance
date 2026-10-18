@@ -1,9 +1,33 @@
 # Limits in Finance
 
 **How much of my savings should I put in the stock market?**
-This school project answers that question with calculus: limits, continuity and the
-Intermediate Value Theorem. It is written in **Python** (with tests), ported 1:1 to
-**MATLAB**, and comes with two web pages you can try in a browser.
+I'm a math student, and this is my own project to see how far calculus (limits, continuity and the
+Intermediate Value Theorem) can go with a real money question. It has three parts that belong
+together: **the math**, **The Investor**, a planner that applies it to your own money, and
+**Fund Manager**, a game that lets you play against it.
+
+> This is a learning project, not investment advice. The plans come from simple models and
+> example numbers; they are not professional recommendations.
+
+## Three parts
+
+**The math.** Six modules: each one takes a discrete financial model, lets a step go to a limit, and
+shows that it converges to a continuous model. The last ones use the Intermediate Value Theorem and
+bisection to find the fastest-growing split of money that keeps a bad-year loss limit. Written in
+**Python** (35 tests) and ported 1:1 to **MATLAB**. The idea in 2 minutes is right below.
+
+**The Investor** (`web/investor.html`). The math applied to your own situation, in English or Turkish.
+You type your money, yearly saving, bank interest, inflation, years and how much risk you can take; you
+get a plan in one plain sentence ("Put $7,298 in stocks, $400 in gold and $2,299 in bonds…"), a line saying
+where every number came from, and a test over 500 simulated futures. Optional extras: today's market
+numbers (bond yield, stock P/E, VIX), fees and taxes (typical USA, Turkey or OECD average), the Turkish
+lira with its own numbers, and real price files, which are read only inside your browser.
+
+**Fund Manager** (the 🕹️ game inside The Investor). You manage $1,000,000 for 5 years with 3 hearts.
+Every year brings a different market; you split the money, and the year plays out month by month
+against **the Quant**, who always plays the math's plan. When the market suddenly drops, you have 8
+seconds to sell, hold or buy the dip. A losing year costs a heart: climb the career ladder or get
+fired. It asks the project's question in a different way: can your instinct beat bisection?
 
 ## The idea in 2 minutes
 
@@ -45,6 +69,7 @@ but 0.53% more growth a year.
 | 2 minutes | the section above |
 | 10 minutes | `web/index.html`: open it in a browser and move the sliders; each module turns a discrete model into its limit |
 | to try it on your own money | `web/investor.html`: **The Investor** (English / Turkish) |
+| to play | the 🕹️ **Fund Manager** button or poster in The Investor |
 | the full mathematics | `report/report.md` and `report/math_guide.html` (derivations and proofs) |
 | the code | `src/` (Python) and `matlab/`, run with the commands below |
 
@@ -201,6 +226,9 @@ Open these files in a browser:
 - `web/investor.html`: **The Investor**, Modules 4 and 5 applied to your own money, in English or Turkish. You type your
   money, yearly saving, bank interest, inflation, years and how much risk you can take, and get a plan in one plain
   sentence ("Put $7,298 in stocks, $400 in gold and $2,299 in bonds…"), tested over 500 simulated futures.
+- **Fund Manager**, the game inside `web/investor.html` (🕹️ button or the poster above the inputs): 5 years, 3 hearts,
+  a different market every year, sudden drops where you decide in 8 seconds, badges and a career ladder, always
+  against the Quant, who plays Module 5's best mix. It uses the same market numbers and correlations as the planner.
 
 <details>
 <summary><b>The Investor in detail</b></summary>
@@ -278,7 +306,7 @@ markets have fat tails, so a normal VaR underestimates extreme losses. Module 4b
 adds rare crashes to fix part of this, but its crash size and frequency are
 assumptions, not estimates. VaR only says where the bad years start; the Expected
 Shortfall next to it says how bad they are on average. The point of the
-project is the mathematics (limits and continuity), not investment advice.
+project is the mathematics (limits and continuity); it is a student's learning project, not investment advice.
 The gold and bond numbers of Module 5 are assumptions too, and real average
 returns are hard to estimate, so the best mix can change a lot with small input
 changes. The real-life test in `investor.html` breaks the assumptions on purpose
