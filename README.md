@@ -161,8 +161,12 @@ Open these files in a browser:
 - `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page,
   in English or Turkish (the **ENG | TUR** switch in the top-right corner; Turkish writes numbers as %7,5 and 10.000).
   1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
-     year, the bank interest rate, inflation, how the market is right now (calm, normal, crisis or high
-     inflation) and how much risk you can take: **Careful**, **Balanced** or **Bold**. Careful and Balanced are your
+     year, **today's numbers** (bank interest, inflation, the 10-year bond yield, the stock market's P/E and VIX) and
+     how much risk you can take. Today's numbers become each asset's expected return and risk: stocks earn about
+     1/P/E plus inflation, bonds their yield, gold inflation + 2% (its price says nothing about its future), and VIX
+     sets the stock risk. The market (calm, normal, crisis or high inflation) is read from VIX, inflation and
+     uploaded prices. With ₺ the empty boxes use typical Turkish numbers and every number is in lira. A line under
+     the plan says where every number came from. The risk choice is **Careful**, **Balanced** or **Bold**. Careful and Balanced are your
      own bad-year loss limits, the same in every market: only about 1 year in 20 should lose more than 5% or 15%
      (how much you can lose is about you, not the market). Bold has no limit except no borrowing: it is the
      fastest-growing plan without borrowing (its bad year is about 22% in a normal market). In calm and normal
@@ -171,12 +175,11 @@ Open these files in a browser:
      When even that plan stays within your limit (calm and crisis markets), Balanced gives the same plan as Bold.
      All rates you type are ordinary yearly rates; the math turns them into continuous rates with ln(1 + x).
      Everything else is in a closed **More settings** section: years, **your own guess** of how to split the money
-     (optional), the stock numbers, today's bond yield (optional), surprises, and
+     (optional), the stock numbers used when the P/E or VIX box is empty, surprises, and
      optional CSVs of real prices for stocks, gold and bonds, or one file with a column for each
      (`web/sample_prices.csv` is a simulated example). From the files the page estimates each asset's average return,
      risk and how the assets move together; short data is pulled toward typical long-run values, because averages are
-     hard to measure. The stock prices also tell it which market it is today (calm, normal, crisis), which you can
-     change. Nothing is calculated until you press **Calculate my plan**.
+     hard to measure. The stock prices also help read today's market. Nothing is calculated until you press **Calculate my plan**.
   2. **Your plan:** one plain sentence in money (how much to put where, a typical year's gain, the bad-year
      loss and what those bad years lose on average), then the best split between stocks, gold, bonds and the
      savings account (Module 5), with the money
@@ -192,9 +195,8 @@ Open these files in a browser:
   4. **How we found your plan:** closed sections with the math: each asset alone vs the mix, the bell curve,
      the IVT + bisection, rare crashes (Module 4b) and the check against real history.
 
-  **The simulated market.** The interest rate and inflation you type belong to the market you pick. The stock
-  numbers are for a normal market, and calm, crisis and high-inflation markets are better or worse versions of
-  them. With "markets change over time" on, they follow each other through a Markov chain, so crises tend to last
+  **The simulated market.** Today's market starts from your numbers; calm, crisis and high-inflation markets
+  are better or worse versions of it. With "markets change over time" on, they follow each other through a Markov chain, so crises tend to last
   a while. Gold, bonds and inflation use illustrative values, roughly like long-run history in developed markets.
   Crash years also move gold and bonds, and every asset's drift is adjusted so its average return stays the one in
   the table. None of this is a forecast. If you uploaded prices, the stock years come from your real data; they
