@@ -1,13 +1,54 @@
-# Limits in Finance — from discrete models to continuous risk optimization
+# Limits in Finance
 
 **How much of my savings should I put in the stock market?**
-This project answers that question with calculus. Every module takes a discrete
-financial model, lets a parameter go to a **limit** (n → ∞, Δt → 0), and shows
-the result converges to a continuous model. The last module uses the
-**continuity** of the risk function (Intermediate Value Theorem + bisection) to
-pick the allocation with the highest growth that still respects a risk limit.
+This school project answers that question with calculus: limits, continuity and the
+Intermediate Value Theorem. It is written in **Python** (with tests), ported 1:1 to
+**MATLAB**, and comes with two web pages you can try in a browser.
 
-Implemented in **Python** (with tests) and ported 1:1 to **MATLAB**.
+## The idea in 2 minutes
+
+**1. Real life is discrete, the formulas are continuous.** Interest is paid monthly and prices
+move tick by tick, but the best formulas are continuous. Modules 1–3 show that each discrete
+model **converges** to its continuous version as the steps get smaller (n → ∞, Δt → 0), so the
+continuous formulas may be used.
+
+**2. Two formulas for one choice.** Put a share f of your money in stocks and the rest in the bank.
+- Typical growth per year: g(f) = r + f(μ − r) − ½f²σ², a hill with its top at f* = (μ − r)/σ².
+- Bad-year loss VaR(f): the loss that only 1 year in 20 is worse than. It grows with f, without jumps.
+
+**3. The Intermediate Value Theorem guarantees an answer, and bisection finds it.**
+With μ = 10%, σ = 20%, a bank at 3% and the rule *"lose at most 15% in a bad year"*:
+with everything in the bank even a bad year gains 3% (VaR(0) = −3%, below the limit), and at f = 2 the bad year loses 43%
+(above it). VaR is continuous, so somewhere in between
+it equals 15% exactly. Bisection halves the interval until it finds that point:
+
+| step | interval | middle f | VaR(middle) | keep the half where the limit is crossed |
+|---|---|---|---|---|
+| 1 | [0, 2] | 1 | 22.0% | too risky → [0, 1] |
+| 2 | [0, 1] | 0.5 | 9.9% | safe → [0.5, 1] |
+| 3 | [0.5, 1] | 0.75 | 16.1% | too risky → [0.5, 0.75] |
+| 4 | [0.5, 0.75] | 0.625 | 13.0% | safe → [0.625, 0.75] |
+| … | … | … | … | … |
+| 41 | | **0.705014** | **15.00%** | |
+
+**Answer: 70.5% in stocks, 29.5% in the bank.** Each step halves the error, so 41 steps give 12
+correct digits. The growth top (f* = 1.75) is further out, so the risk limit decides.
+
+**4. More assets.** Any fixed mix of stocks, gold and bonds behaves like one fund, so step 3 works for
+every mix. Trying all 5,151 mixes gives **73% stocks, 4% gold, 23% bonds**: the same bad-year risk,
+but 0.53% more growth a year.
+
+## Where to start
+
+| you have | look at |
+|---|---|
+| 2 minutes | the section above |
+| 10 minutes | `web/index.html`: open it in a browser and move the sliders; each module turns a discrete model into its limit |
+| to try it on your own money | `web/investor.html`: **The Investor** (English / Turkish) |
+| the full mathematics | `report/report.md` and `report/math_guide.html` (derivations and proofs) |
+| the code | `src/` (Python) and `matlab/`, run with the commands below |
+
+## The modules
 
 | # | Module | Limit / continuity idea | Real-life question |
 |---|--------|------------------------|--------------------|
@@ -154,12 +195,16 @@ generators are different.
 
 ### Web pages (no install, work offline)
 Open these files in a browser:
-- `web/index.html`: interactive explainer, one section per module (1, 2, 3, 4, 4b, 5). Move the big slider and watch
-  each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
-  paths into GBM, then the VaR limit with IVT + bisection, rare crashes and the best mix of stocks, gold and bonds,
-  found by a finer and finer search (dots on a triangle closing in on the true best mix).
-- `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page,
-  in English or Turkish (the **ENG | TUR** switch in the top-right corner; Turkish writes numbers as %7,5 and 10.000).
+- `web/index.html`: the interactive explainer, one section per module (1, 2, 3, 4, 4b, 5). Move the big slider and
+  watch each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
+  paths into GBM, the VaR limit found by IVT + bisection, rare crashes, and the best mix found by a finer and finer search.
+- `web/investor.html`: **The Investor**, Modules 4 and 5 applied to your own money, in English or Turkish. You type your
+  money, yearly saving, bank interest, inflation, years and how much risk you can take, and get a plan in one plain
+  sentence ("Put $7,298 in stocks, $400 in gold and $2,299 in bonds…"), tested over 500 simulated futures.
+
+<details>
+<summary><b>The Investor in detail</b></summary>
+
   1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
      year, **today's numbers** (bank interest, inflation, the 10-year bond yield, the stock market's P/E and VIX) and
      how much risk you can take. Today's numbers become each asset's expected return and risk: stocks earn about
@@ -205,6 +250,8 @@ Open these files in a browser:
 
   The uploaded file is read only inside the page and is never sent anywhere. Neither page uses external libraries,
   so both work offline.
+
+</details>
 
 ## Project layout
 ```
