@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Investor</title>
+<title data-i18n="title">The Investor</title>
 <style>
   :root {
     --bg: #f4f6fb; --card: #ffffff; --text: #0f172a; --muted: #5b6576; --line: #e2e8f0; --soft: #f1f5f9; --soft2: #e8eef7;
@@ -136,13 +136,19 @@
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
   .hidden { display: none !important; }
+  .lang { position: absolute; top: 14px; right: 16px; display: flex; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--card); }
+  .lang button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; padding: 5px 11px; cursor: pointer; }
+  .lang button.sel { background: var(--blue); color: #fff; }
 </style>
 </head>
 <body>
+<div class="lang" role="group" aria-label="Language / Dil">
+  <button type="button" data-lang="en" lang="en" aria-label="English">ENG</button><button type="button" data-lang="tr" lang="tr" aria-label="Türkçe">TUR</button>
+</div>
 <header class="top wrap">
-  <div class="brand">The Investor</div>
-  <h1>How should I split my money?</h1>
-  <p>Tell us your situation and let the math find the best mix of stocks, gold, bonds and savings.</p>
+  <div class="brand" data-i18n="title">The Investor</div>
+  <h1 data-i18n="h1">How should I split my money?</h1>
+  <p data-i18n="intro">Tell us your situation and let the math find the best mix of stocks, gold, bonds and savings.</p>
 </header>
 
 <main class="wrap">
@@ -150,119 +156,120 @@
 <!-- ============ Inputs ============ -->
 <section class="card" id="inputs">
   <div class="fields">
-    <label class="field"><span>Money to invest now</span>
+    <label class="field"><span data-i18n="fS">Money to invest now</span>
       <div class="input"><input id="S" type="number" min="0" step="100" value="10000" inputmode="decimal">
-        <select id="currency" aria-label="currency"><option value="$" selected>$ USD</option><option value="€">€ EUR</option>
-          <option value="£">£ GBP</option><option value="₺">₺ TRY</option><option value="">no symbol</option></select></div></label>
-    <label class="field"><span>You add each year</span>
+        <select id="currency" aria-label="currency" data-i18n-aria="currency"><option value="$" selected>$ USD</option><option value="€">€ EUR</option>
+          <option value="£">£ GBP</option><option value="₺">₺ TRY</option><option value="" data-i18n="noSym">no symbol</option></select></div></label>
+    <label class="field"><span data-i18n="fSave">You add each year</span>
       <div class="input"><input id="save" type="number" min="0" step="100" value="1000" inputmode="decimal"><i id="saveSym"></i></div></label>
-    <label class="field"><span>Bank interest</span>
-      <div class="input"><input id="r" type="number" min="0" max="30" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div></label>
-    <label class="field"><span>Inflation</span>
-      <div class="input"><input id="infl" type="number" min="-5" max="50" step="0.1" value="3" inputmode="decimal"><i>% a year</i></div></label>
+    <label class="field"><span data-i18n="fR">Bank interest</span>
+      <div class="input"><input id="r" type="number" min="0" max="30" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div></label>
+    <label class="field"><span data-i18n="fInfl">Inflation</span>
+      <div class="input"><input id="infl" type="number" min="-5" max="50" step="0.1" value="3" inputmode="decimal"><i data-i18n="perYear">% a year</i></div></label>
   </div>
 
   <div class="block">
-    <div class="label">How is the market right now?</div>
+    <div class="label" data-i18n="qMarket">How is the market right now?</div>
     <div class="markets" id="moodPick"></div>
     <small id="moodText"></small>
     <small id="moodNote"></small>
   </div>
 
   <div class="block">
-    <div class="label">How much risk can you take?</div>
+    <div class="label" data-i18n="qRisk">How much risk can you take?</div>
     <div class="risks" id="riskPick">
-      <button class="opt" type="button" data-risk="careful">Careful</button>
-      <button class="opt" type="button" data-risk="balanced">Balanced</button>
-      <button class="opt" type="button" data-risk="bold">Bold</button>
+      <button class="opt" type="button" data-risk="careful" data-i18n="careful">Careful</button>
+      <button class="opt" type="button" data-risk="balanced" data-i18n="balanced">Balanced</button>
+      <button class="opt" type="button" data-risk="bold" data-i18n="bold">Bold</button>
     </div>
     <small id="riskText"></small>
     <small id="riskCap"></small>
   </div>
 
   <details class="more" id="moreSettings">
-    <summary>More settings <span class="sub">years, your own split, stock numbers, surprises, real data</span></summary>
+    <summary><span data-i18n="more">More settings</span> <span class="sub" data-i18n="moreSub">years, your own split, stock numbers, surprises, real data</span></summary>
     <div class="more-body">
-      <h3>Your plan</h3>
+      <h3 data-i18n="yourPlan">Your plan</h3>
       <div class="grid">
-        <label><span class="label">For how many years?</span>
-          <select id="years"><option value="5">5 years</option><option value="10" selected>10 years</option><option value="20">20 years</option><option value="30">30 years</option></select></label>
-        <label><span class="label">How sure must the math be?</span>
-          <select id="alpha"><option value="0.90">90%: a bad year is the worst 1 in 10</option>
-            <option value="0.95" selected>95%: a bad year is the worst 1 in 20</option>
-            <option value="0.99">99%: a bad year is the worst 1 in 100</option></select></label>
+        <label><span class="label" data-i18n="qYears">For how many years?</span>
+          <select id="years"><option value="5" data-i18n="y5">5 years</option><option value="10" selected data-i18n="y10">10 years</option>
+            <option value="20" data-i18n="y20">20 years</option><option value="30" data-i18n="y30">30 years</option></select></label>
+        <label><span class="label" data-i18n="qSure">How sure must the math be?</span>
+          <select id="alpha"><option value="0.90" data-i18n="a90">90%: a bad year is the worst 1 in 10</option>
+            <option value="0.95" selected data-i18n="a95">95%: a bad year is the worst 1 in 20</option>
+            <option value="0.99" data-i18n="a99">99%: a bad year is the worst 1 in 100</option></select></label>
       </div>
 
-      <h3>How would you split your money?</h3>
-      <label class="check"><input id="useGuess" type="checkbox"><span>Make my own guess<small>Pick your own split before the math. After you press the button you see if you can beat the math.</small></span></label>
+      <h3 data-i18n="qSplit">How would you split your money?</h3>
+      <label class="check"><input id="useGuess" type="checkbox"><span data-i18n="useGuess">Make my own guess<small>Pick your own split before the math. After you press the button you see if you can beat the math.</small></span></label>
       <div id="guessBox" class="hidden">
         <div class="guess" style="margin-top:12px">
-          <div class="grow"><span><i class="dot" style="background:var(--blue)"></i>Stocks</span>
-            <input id="gStock" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: stocks (%)" style="accent-color:var(--blue)"><b id="gStock_v"></b></div>
-          <div class="grow"><span><i class="dot" style="background:var(--goldc)"></i>Gold</span>
-            <input id="gGold" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: gold (%)" style="accent-color:var(--gold-ui)"><b id="gGold_v"></b></div>
-          <div class="grow"><span><i class="dot" style="background:var(--bond)"></i>Bonds</span>
-            <input id="gBond" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: bonds (%)" style="accent-color:var(--bond)"><b id="gBond_v"></b></div>
-          <div class="grow"><span><i class="dot" style="background:var(--dep)"></i>Savings</span>
-            <span class="muted">the rest</span><b id="gDep_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--blue)"></i><span data-i18n="gStock">Stocks</span></span>
+            <input id="gStock" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: stocks (%)" data-i18n-aria="gStockAria" style="accent-color:var(--blue)"><b id="gStock_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--goldc)"></i><span data-i18n="gGold">Gold</span></span>
+            <input id="gGold" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: gold (%)" data-i18n-aria="gGoldAria" style="accent-color:var(--gold-ui)"><b id="gGold_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--bond)"></i><span data-i18n="gBond">Bonds</span></span>
+            <input id="gBond" type="range" min="0" max="100" step="1" value="25" aria-label="your guess: bonds (%)" data-i18n-aria="gBondAria" style="accent-color:var(--bond)"><b id="gBond_v"></b></div>
+          <div class="grow"><span><i class="dot" style="background:var(--dep)"></i><span data-i18n="gDep">Savings</span></span>
+            <span class="muted" data-i18n="theRest">the rest</span><b id="gDep_v"></b></div>
         </div>
         <div class="stackbar" id="guessBar" aria-hidden="true"></div>
       </div>
 
-      <h3>Stocks in a normal market</h3>
+      <h3 data-i18n="stockHead">Stocks in a normal market</h3>
       <div class="grid">
-        <label class="field"><span>Average return (μ)</span>
-          <div class="input"><input id="mu" type="number" min="-50" max="80" step="0.1" value="10.5"><i>% a year</i></div></label>
-        <label class="field"><span>Risk: how much a year swings (σ)</span>
-          <div class="input"><input id="sig" type="number" min="1" max="80" step="0.1" value="20"><i>% a year</i></div></label>
+        <label class="field"><span data-i18n="fMu">Average return (μ)</span>
+          <div class="input"><input id="mu" type="number" min="-50" max="80" step="0.1" value="10.5"><i data-i18n="perYear">% a year</i></div></label>
+        <label class="field"><span data-i18n="fSig">Risk: how much a year swings (σ)</span>
+          <div class="input"><input id="sig" type="number" min="1" max="80" step="0.1" value="20"><i data-i18n="perYear">% a year</i></div></label>
       </div>
-      <small>Calm, crisis and high-inflation markets are better or worse versions of these numbers. Gold and bonds use typical
+      <small data-i18n="stockNote">Calm, crisis and high-inflation markets are better or worse versions of these numbers. Gold and bonds use typical
       long-run values (table below). Upload real prices below to estimate the stock numbers from data.</small>
-      <p><button class="btn ghost" id="resetParams">Reset all to the example</button></p>
+      <p><button class="btn ghost" id="resetParams" data-i18n="reset">Reset all to the example</button></p>
 
-      <h3>Surprises in the real-life test</h3>
+      <h3 data-i18n="surprises">Surprises in the real-life test</h3>
       <div class="grid">
-        <label class="check"><input id="changing" type="checkbox" checked><span>Markets change over time<small>Calm years, crises and high inflation follow each other, like real life.</small></span></label>
-        <label class="check"><input id="events" type="checkbox" checked><span>Life events<small>Emergencies, bonuses and raises happen in some years.</small></span></label>
-        <label><span class="label">Rare crash: about once every <b id="crashEvery_v"></b></span>
+        <label class="check"><input id="changing" type="checkbox" checked><span data-i18n="changing">Markets change over time<small>Calm years, crises and high inflation follow each other, like real life.</small></span></label>
+        <label class="check"><input id="events" type="checkbox" checked><span data-i18n="events">Life events<small>Emergencies, bonuses and raises happen in some years.</small></span></label>
+        <label><span class="label"><span data-i18n="crashEvery">Rare crash:</span> <b id="crashEvery_v"></b></span>
           <input id="crashEvery" type="range" min="0" max="4" step="1" value="2">
-          <small>The stock's average return stays the same; only bad years get worse. Crises bring more crashes.</small></label>
-        <label><span class="label">Crash size: stocks fall <b id="crashSize_v"></b></span>
+          <small data-i18n="crashEveryNote">The stock's average return stays the same; only bad years get worse. Crises bring more crashes.</small></label>
+        <label><span class="label"><span data-i18n="crashSize">Crash size:</span> <b id="crashSize_v"></b></span>
           <input id="crashSize" type="range" min="0.1" max="0.45" step="0.05" value="0.25"></label>
       </div>
 
-      <h3>Use real stock prices (optional)</h3>
-      <p class="muted" style="margin-top:0">Upload a CSV with a date column and a price column, for example an index exported from investing.com or Yahoo Finance.
+      <h3 data-i18n="dataHead">Use real stock prices (optional)</h3>
+      <p class="muted" style="margin-top:0" data-i18n="dataIntro">Upload a CSV with a date column and a price column, for example an index exported from investing.com or Yahoo Finance.
       <b>The file is read only inside this page and never uploaded anywhere.</b> No data? Try <code>sample_prices.csv</code> from the same folder.</p>
       <div class="drop" id="drop">
         <input id="file" type="file" accept=".csv,.txt,text/csv">
-        <div class="muted">or drag a file here</div>
+        <div class="muted" data-i18n="dragHere">or drag a file here</div>
       </div>
       <div class="status" id="dataStatus"></div>
       <div id="dataSummary" class="hidden">
         <div class="stats" id="dataStats"></div>
         <div class="chart" id="priceChart"></div>
-        <div class="buttons"><button class="btn ghost" id="useEstimates">Put the estimated μ and σ back in</button>
-           <button class="btn ghost" id="clearData">Remove data</button></div>
+        <div class="buttons"><button class="btn ghost" id="useEstimates" data-i18n="useEstimates">Put the estimated μ and σ back in</button>
+           <button class="btn ghost" id="clearData" data-i18n="clearData">Remove data</button></div>
       </div>
       <p class="muted" id="dataNote"></p>
 
-      <h3>The markets used (illustrative, not forecasts)</h3>
+      <h3 data-i18n="marketsUsed">The markets used (illustrative, not forecasts)</h3>
       <div class="scroll"><table id="moodTable"></table></div>
       <small id="crashNote"></small>
-      <h3>How the market changes from one year to the next</h3>
+      <h3 data-i18n="transHead">How the market changes from one year to the next</h3>
       <div class="scroll"><table id="transTable"></table></div>
       <small id="transNote"></small>
     </div>
   </details>
   <button class="btn calc" id="calc" type="button">Calculate my plan</button>
-  <small class="hidden" id="calcNote">You changed your inputs. Press the button again to update the results.</small>
+  <small class="hidden" id="calcNote" data-i18n="calcNote">You changed your inputs. Press the button again to update the results.</small>
 </section>
 
 <div id="results" class="hidden">
 <!-- ============ The plan ============ -->
 <section class="card" id="plan">
-  <h2>Your plan</h2>
+  <h2 data-i18n="yourPlan">Your plan</h2>
   <p class="lead" id="planSentence"></p>
   <div class="plan">
     <div id="donut"></div>
@@ -271,7 +278,7 @@
   <div class="tiles" id="planTiles"></div>
   <p id="planWhy"></p>
   <div id="vsBlock">
-    <h3>Your guess vs the math</h3>
+    <h3 data-i18n="vsHead">Your guess vs the math</h3>
     <div class="scroll"><table id="vsMath"></table></div>
     <p class="verdict" id="vsVerdict"></p>
   </div>
@@ -281,21 +288,21 @@
 
 <!-- ============ Real life ============ -->
 <section class="card" id="lifeCard">
-  <h2>Your plan in real life</h2>
+  <h2 data-i18n="lifeHead">Your plan in real life</h2>
   <p class="muted" id="lifeSettings"></p>
-  <div class="buttons"><button class="btn" id="lifePlay">▶ Play the years</button> <button class="btn ghost" id="lifeSkip">Skip to the end</button>
-     <button class="btn ghost" id="lifeNew">Another future</button></div>
+  <div class="buttons"><button class="btn" id="lifePlay" data-i18n="play">▶ Play the years</button> <button class="btn ghost" id="lifeSkip" data-i18n="skip">Skip to the end</button>
+     <button class="btn ghost" id="lifeNew" data-i18n="another">Another future</button></div>
   <div class="reveal" id="lifeLog"></div>
   <div class="chart" id="lifeChart"></div>
   <div class="scroll"><table id="lifeTable"></table></div>
-  <h3>One future can be lucky or unlucky. Here are 500 of them:</h3>
+  <h3 data-i18n="manyHead">One future can be lucky or unlucky. Here are 500 of them:</h3>
   <div id="lifeWins"></div>
   <div class="scroll"><table id="lifeMany"></table></div>
   <small id="lifeManyNote"></small>
   <details class="more" id="moreStrategies">
-    <summary>Compare more strategies <span class="sub">stocks only, all gold, …</span></summary>
+    <summary><span data-i18n="moreStrat">Compare more strategies</span> <span class="sub" data-i18n="moreStratSub">stocks only, all gold, …</span></summary>
     <div class="more-body">
-      <p class="muted">The same 500 futures for other simple strategies.</p>
+      <p class="muted" data-i18n="moreStratNote">The same 500 futures for other simple strategies.</p>
       <div class="scroll"><table id="lifeExtra"></table></div>
     </div>
   </details>
@@ -303,24 +310,24 @@
 
 <!-- ============ How it works ============ -->
 <section class="card" id="how">
-  <h2>How we found your plan</h2>
-  <p class="muted" style="margin-top:0">The math behind the plan, step by step. Open any part.</p>
+  <h2 data-i18n="howHead">How we found your plan</h2>
+  <p class="muted" style="margin-top:0" data-i18n="howIntro">The math behind the plan, step by step. Open any part.</p>
 
   <details class="more">
-    <summary>Why mixing helps <span class="sub">each asset alone vs your mix, same risk</span></summary>
+    <summary><span data-i18n="mixHead">Why mixing helps</span> <span class="sub" data-i18n="mixSub">each asset alone vs your mix, same risk</span></summary>
     <div class="more-body">
-      <p class="muted">Typical growth per year that each choice can reach <b>without breaking your bad-year limit</b>.
+      <p class="muted" data-i18n="mixIntro">Typical growth per year that each choice can reach <b>without breaking your bad-year limit</b>.
       With only one asset next to the savings account, the risk limit stops you early. Mixing assets that don't fall together lets you grow faster for the same risk.</p>
       <div class="bars" id="mixBars"></div>
     </div>
   </details>
 
   <details class="more">
-    <summary>What could happen next year <span class="sub">the bell curve</span></summary>
+    <summary><span data-i18n="bellHead">What could happen next year</span> <span class="sub" data-i18n="bellSub">the bell curve</span></summary>
     <div class="more-body">
-      <p class="muted">The curve shows where your money can be after one year with your mix. The red tail is the worst years
+      <p class="muted" data-i18n="bellIntro">The curve shows where your money can be after one year with your mix. The red tail is the worst years
       (the worst 1 in 20 at 95%). Where the tail starts is the <b>Value-at-Risk</b>, your bad-year loss. It must stay right of your limit (dashed line).</p>
-      <label><span class="label">Try putting more or less of your money into the mix: <b id="fTryLabel"></b></span>
+      <label><span class="label"><span data-i18n="fTry">Try putting more or less of your money into the mix:</span> <b id="fTryLabel"></b></span>
         <input id="fTry" type="range" min="0" max="1" step="any" value="0"></label>
       <div class="status" id="tryStatus"></div>
       <div class="chart" id="bellChart"></div>
@@ -328,9 +335,9 @@
   </details>
 
   <details class="more">
-    <summary>How the answer is found <span class="sub">Intermediate Value Theorem + bisection</span></summary>
+    <summary><span data-i18n="ivtHead">How the answer is found</span> <span class="sub" data-i18n="ivtSub">Intermediate Value Theorem + bisection</span></summary>
     <div class="more-body">
-      <p class="muted">Any fixed mix of stocks, gold and bonds behaves like <b>one fund</b>. Put a share f of your money in that fund and keep the rest in the savings account.
+      <p class="muted" data-i18n="ivtIntro">Any fixed mix of stocks, gold and bonds behaves like <b>one fund</b>. Put a share f of your money in that fund and keep the rest in the savings account.
       The bad-year loss VaR(f) grows with f without jumps. At f = 0 it is below your limit and at the top it is above, so by the
       <b>Intermediate Value Theorem</b> it crosses your limit somewhere. <b>Bisection</b> finds that point by halving the interval again and again.</p>
       <div class="chart" id="varChart"></div>
@@ -341,9 +348,9 @@
   </details>
 
   <details class="more">
-    <summary>What if rare crashes happen? <span class="sub">fat tails</span></summary>
+    <summary><span data-i18n="crashHead">What if rare crashes happen?</span> <span class="sub" data-i18n="crashSub">fat tails</span></summary>
     <div class="more-body">
-      <p class="muted">The bell curve says a really bad year is almost impossible, but real markets sometimes crash. Here the stock's
+      <p class="muted" data-i18n="crashIntro">The bell curve says a really bad year is almost impossible, but real markets sometimes crash. Here the stock's
       <b>average return stays the same</b>, but now and then it suddenly falls. The crash-aware VaR still grows with f without jumps,
       so the same <b>Intermediate Value Theorem + bisection</b> finds the new answer. Shown for stocks + savings account (Module 4b).</p>
       <small id="crashSettingsNote"></small>
@@ -353,25 +360,25 @@
   </details>
 
   <details class="more">
-    <summary>Check with real history <span class="sub">needs uploaded prices</span></summary>
+    <summary><span data-i18n="histHead">Check with real history</span> <span class="sub" data-i18n="histSub">needs uploaded prices</span></summary>
     <div class="more-body">
-      <div id="histEmpty"><p>The plan assumes returns follow a bell curve. Real markets have more extreme years ("fat tails").
+      <div id="histEmpty"><p data-i18n="histEmpty">The plan assumes returns follow a bell curve. Real markets have more extreme years ("fat tails").
         Upload stock prices in <b>More settings</b> to test the stocks + savings answer against what really happened.</p></div>
       <div id="histBody" class="hidden">
-        <h3>Real one-year returns vs the bell curve</h3>
+        <h3 data-i18n="histChartHead">Real one-year returns vs the bell curve</h3>
         <p class="muted" id="histIntro"></p>
         <div class="chart" id="histChart"></div>
-        <h3>Two answers</h3>
+        <h3 data-i18n="twoAnswers">Two answers</h3>
         <div class="stats" id="histStats"></div>
         <div id="histText"></div>
-        <div class="note">One-year periods start at every data point, so they overlap and are not independent. Treat the history check as a rough guide, not a guarantee.</div>
+        <div class="note" data-i18n="histNote">One-year periods start at every data point, so they overlap and are not independent. Treat the history check as a rough guide, not a guarantee.</div>
       </div>
     </div>
   </details>
 </section>
 </div>
 </main>
-<footer>An illustrative model for learning, not financial advice. Same math as the <a href="index.html">Limits in Finance</a> project:
+<footer data-i18n="footer">An illustrative model for learning, not financial advice. Same math as the <a href="index.html">Limits in Finance</a> project:
 continuous limits, the Intermediate Value Theorem and bisection.</footer>
 
 <script>
@@ -495,9 +502,16 @@ function bestMix(m, L, alpha) {
 // Small helpers
 // =====================================================================
 const $ = id => document.getElementById(id);
-const pct = (x, d = 1) => (100 * x).toFixed(d) + "%";
+// The page language (ENG / TUR switch): tx(en, tr) picks the text, and numbers are written the Turkish way in Turkish
+// (%7,5 and 10.000). Rates typed into the inputs always use a dot, as number inputs need.
+let LANG = "en";
+const tx = (en, tr) => LANG === "tr" ? tr : en;
+const locale = () => tx("en-US", "tr-TR");
+const fix = (x, d) => tx(x.toFixed(d), x.toFixed(d).replace(".", ","));
+const pct = (x, d = 1) => LANG === "tr" ? (100 * x < 0 && fix(-100 * x, d) !== fix(0, d) ? "-" : "") + "%" + fix(Math.abs(100 * x), d) : fix(100 * x, d) + "%";
 const signed = (x, d = 1) => (x >= 0 ? "+" : "−") + pct(Math.abs(x), d);
-const num = x => Math.round(x).toLocaleString("en-US");
+const num = x => Math.round(x).toLocaleString(locale());
+const capFirst = s => s.charAt(0).toLocaleUpperCase(locale()) + s.slice(1);
 const sym = () => $("currency").value;
 const money = x => (x < 0 ? "−" : "") + sym() + num(Math.abs(x));
 const inSym = label => sym() ? `${label} (${sym()})` : label;
@@ -560,7 +574,7 @@ function drawDonut(el, parts, big, small) {
       stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 90 90)"/>`);
     off += len;
   }
-  el.innerHTML = `<svg viewBox="0 0 180 180" role="img" aria-label="your mix"><circle r="${R}" cx="90" cy="90" fill="none" stroke="var(--soft2)" stroke-width="26"/>
+  el.innerHTML = `<svg viewBox="0 0 180 180" role="img" aria-label="${tx("your mix", "karışımın")}"><circle r="${R}" cx="90" cy="90" fill="none" stroke="var(--soft2)" stroke-width="26"/>
     ${segs.join("")}<text x="90" y="88" text-anchor="middle" font-size="27" font-weight="800" fill="var(--text)">${big}</text>
     <text x="90" y="109" text-anchor="middle" font-size="12" fill="var(--muted)">${small}</text></svg>`;
 }
@@ -568,22 +582,36 @@ function drawDonut(el, parts, big, small) {
 // =====================================================================
 // Markets: the four market states and how they change
 // =====================================================================
+// low: the name inside a sentence; in: "put money in ..." (Turkish: the dative form).
 const ASSETS = [
-  { key: "stock", name: "Stocks", color: "var(--blue)" },
-  { key: "gold", name: "Gold", color: "var(--goldc)" },
-  { key: "bond", name: "Bonds", color: "var(--bond)" },
-  { key: "dep", name: "Savings account", color: "var(--dep)" }];
+  { key: "stock", name: "Stocks", low: "stocks", in: "stocks", color: "var(--blue)", tr: { name: "Hisseler", low: "hisse", in: "hisselere" } },
+  { key: "gold", name: "Gold", low: "gold", in: "gold", color: "var(--goldc)", tr: { name: "Altın", low: "altın", in: "altına" } },
+  { key: "bond", name: "Bonds", low: "bonds", in: "bonds", color: "var(--bond)", tr: { name: "Tahviller", low: "tahvil", in: "tahvillere" } },
+  { key: "dep", name: "Savings account", low: "savings", in: "the savings account", color: "var(--dep)",
+    tr: { name: "Mevduat hesabı", low: "mevduat", in: "mevduat hesabına" } }];
+const aName = i => tx(ASSETS[i].name, ASSETS[i].tr.name), aLow = i => tx(ASSETS[i].low, ASSETS[i].tr.low), aIn = i => tx(ASSETS[i].in, ASSETS[i].tr.in);
 // Illustrative settings (simple yearly rates, roughly like long-run history in developed markets). Not forecasts.
 // mu / sig: expected yearly return and volatility of [stocks, gold, bonds]; r: savings account rate; shock: chance of a market-crash year.
 const MOODS = {
   calm:      { name: "Calm", icon: "☀️", infl: 0.02, r: 0.025, mu: [0.10, 0.03, 0.04], sig: [0.13, 0.12, 0.04], shock: 0.02,
-               text: "Steady growth, low inflation." },
+               text: "Steady growth, low inflation.",
+               tr: { name: "Sakin", text: "İstikrarlı büyüme, düşük enflasyon.", a: "sakin bir piyasa", in: "sakin bir piyasada", year: "sakin bir yıl" } },
   normal:    { name: "Normal", icon: "⛅", infl: 0.03, r: 0.04, mu: [0.08, 0.05, 0.045], sig: [0.16, 0.15, 0.06], shock: 0.05,
-               text: "Stocks usually beat the bank." },
+               text: "Stocks usually beat the bank.",
+               tr: { name: "Normal", text: "Hisseler genelde bankayı geçer.", a: "normal bir piyasa", in: "normal bir piyasada", year: "normal bir yıl" } },
   crisis:    { name: "Crisis", icon: "⛈️", infl: 0.01, r: 0.02, mu: [-0.05, 0.08, 0.07], sig: [0.20, 0.15, 0.07], shock: 0.15,
-               text: "Stocks fall, crashes are common." },
+               text: "Stocks fall, crashes are common.",
+               tr: { name: "Kriz", text: "Hisseler düşer, çöküşler sık olur.", a: "kriz piyasası", in: "kriz piyasasında", year: "kriz yılı" } },
   inflation: { name: "High inflation", icon: "🔥", infl: 0.08, r: 0.06, mu: [0.04, 0.12, 0.01], sig: [0.18, 0.16, 0.08], shock: 0.08,
-               text: "Prices rise fast, cash loses value." }};
+               text: "Prices rise fast, cash loses value.",
+               tr: { name: "Yüksek enflasyon", text: "Fiyatlar hızla artar, nakit değer kaybeder.", a: "yüksek enflasyonlu bir piyasa",
+                     in: "yüksek enflasyonlu bir piyasada", year: "yüksek enflasyonlu bir yıl" } }};
+// A market's name, and the phrases "a calm market", "in a calm market" and "a calm year" in the page language.
+const moodName = k => tx(MOODS[k].name, MOODS[k].tr.name);
+const moodLow = k => moodName(k).toLocaleLowerCase(locale());
+const moodA = k => tx(`a ${MOODS[k].name.toLowerCase()} market`, MOODS[k].tr.a);
+const moodIn = k => tx(`in a ${MOODS[k].name.toLowerCase()} market`, MOODS[k].tr.in);
+const moodYear = k => tx(`a ${MOODS[k].name.toLowerCase()} year`, MOODS[k].tr.year);
 // The model works with continuous rates (Module 1): a simple rate x becomes ln(1 + x), so e^(rate) = 1 + x.
 // The same holds for the rates people type (params): every rate on this page is an ordinary yearly rate.
 for (const m of Object.values(MOODS)) { m.rc = Math.log(1 + m.r); m.muc = m.mu.map(x => Math.log(1 + x)); }
@@ -613,7 +641,7 @@ function marketStates(p, lam, J) {
   for (const k of REGIME_KEYS) {
     const m = MOODS[k], mucAvg = p.mu + (m.muc[0] - n.muc[0]), rc = Math.max(0, p.r + m.rc - c.rc);
     const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE], avg = [mucAvg, m.muc[1], m.muc[2]];
-    out[k] = { key: k, name: m.name, icon: m.icon, text: m.text, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg, avg,
+    out[k] = { key: k, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg, avg,
                mu: avg.map(x => Math.exp(x) - 1),
                muc: avg.map((x, i) => x - Math.log(1 + shock * (crash[i] - 1))),       // drifts between crashes
                sig: [p.sig * m.sig[0] / n.sig[0], m.sig[1], m.sig[2]] };
@@ -628,6 +656,7 @@ function crashSettings() {
   return { every, lam: every ? 1 / every : 0, J: -+$("crashSize").value };
 }
 const EMERGENCIES = ["car repair", "health bill", "home repair", "family help"];
+const EMERGENCIES_TR = ["araba tamiri", "sağlık faturası", "ev tamiri", "aile yardımı"];
 
 // ---- random numbers (seeded, so a future can be replayed) ----
 function mulberry32(a) {
@@ -725,13 +754,13 @@ function generateYears(set, seed) {
       const shift = Math.log(1 + real[k].R) - logs[12][0];
       logs.forEach((l, m) => { l[0] += shift * m / 12; });
     }
-    const u = rng(), size = rng(), what = EMERGENCIES[Math.floor(rng() * EMERGENCIES.length)];
+    const u = rng(), size = rng(), what = Math.floor(rng() * EMERGENCIES.length);   // an index, written in the page language later
     const event = set.events === false ? null                     // the draws above still happen, so seeds stay comparable
                 : u < 0.12 ? { type: "emergency", size: 0.10 + 0.15 * size, what }
                 : u < 0.20 ? { type: "bonus", size: 0.05 + 0.10 * size }
                 : u < 0.26 ? { type: "raise", size: 0.20 } : null;
     years.push({ months: logs.map(l => l.map(Math.exp)), shock, infl: mood.infl, event,
-                 regime, label: real ? real[k].label : null });
+                 regime, span: real ? real[k].span : null });
   }
   return years;
 }
@@ -788,13 +817,14 @@ function animate(ms, frame) {
 function regimeBands(years, played, top) {
   return years.slice(0, played).map((y, k) => ({ x0: k, x1: k + 1, y: top, color: REGIME_BAND[y.regime] })).filter(b => b.color);
 }
-const BAND_LEGEND = [{ color: "var(--band-calm)", label: "calm year", box: true }, { color: "var(--band-crisis)", label: "crisis year", box: true },
-                     { color: "var(--band-infl)", label: "high-inflation year", box: true }];
+const bandLegend = () => [{ color: "var(--band-calm)", label: tx("calm year", "sakin yıl"), box: true },
+                           { color: "var(--band-crisis)", label: tx("crisis year", "kriz yılı"), box: true },
+                           { color: "var(--band-infl)", label: tx("high-inflation year", "yüksek enflasyon yılı"), box: true }];
 
 // =====================================================================
 // Inputs
 // =====================================================================
-const ui = { mood: "normal", risk: "balanced" };
+const ui = { mood: "normal", risk: "balanced", filled: null };     // filled: the market whose typical rates were filled in
 const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
@@ -809,7 +839,7 @@ function params() {
 for (const [key, m] of Object.entries(MOODS)) {
   const b = document.createElement("button");
   b.className = "market"; b.dataset.mood = key; b.type = "button";
-  b.innerHTML = `<span class="ic" aria-hidden="true">${m.icon}</span>${m.name}`;
+  b.innerHTML = `<span class="ic" aria-hidden="true">${m.icon}</span><span class="nm"></span>`;
   b.addEventListener("click", () => pickMood(key));
   $("moodPick").appendChild(b);
 }
@@ -819,7 +849,7 @@ function pickMood(key) {
   if (key !== ui.mood) {
     $("r").value = (100 * (Math.exp(Math.max(0, p.r + to.rc - from.rc)) - 1)).toFixed(1);
     $("infl").value = (100 * p.infl + 100 * (to.infl - from.infl)).toFixed(1);
-    $("moodNote").innerHTML = `We filled in a typical interest rate and inflation for a <b>${to.name.toLowerCase()}</b> market. Type your own if they are different.`;
+    ui.filled = key;
   }
   ui.mood = key;
   onInputChange();
@@ -829,7 +859,7 @@ for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "years", "useG
   $(id).addEventListener("input", onInputChange);
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
-  ui.mood = "normal"; ui.risk = "balanced"; $("moodNote").textContent = "";
+  ui.mood = "normal"; ui.risk = "balanced"; ui.filled = null;
   onInputChange();
 });
 // Your guess: stocks, gold and bonds in whole percent; the savings account gets the rest. A slider first takes from the
@@ -859,14 +889,20 @@ function onInputChange() {
   renderData();
   if (!cur) return;
   $("results").classList.add("stale");
-  $("calc").textContent = "Recalculate my plan";
   $("calcNote").classList.remove("hidden");
+  calcLabel();
 }
+const calcLabel = () => { $("calc").textContent = $("results").classList.contains("stale")
+  ? tx("Recalculate my plan", "Planımı yeniden hesapla") : tx("Calculate my plan", "Planımı hesapla"); };
 
 // =====================================================================
 // CSV upload (read locally with FileReader; nothing leaves the page)
 // =====================================================================
 let data = null;
+// Errors carry both languages, and the status line is kept as a function so it can be redrawn in the other language.
+const fail = (en, tr) => { const e = new Error(en); e.tr = tr; throw e; };
+let statusFn = null;
+const setStatus = fn => { statusFn = fn; $("dataStatus").innerHTML = fn ? fn() : ""; };
 function splitCsvLine(line, delim) {
   const out = []; let cur = "", q = false;
   for (let i = 0; i < line.length; i++) {
@@ -913,7 +949,7 @@ const norm = s => s.toLowerCase().replace(/["\s]/g, "").replace(/ı/g, "i").repl
 function parsePriceCsv(text) {
   text = text.replace(/^﻿/, "");
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-  if (lines.length < 2) throw new Error("The file has fewer than 2 lines.");
+  if (lines.length < 2) fail("The file has fewer than 2 lines.", "Dosyada 2'den az satır var.");
   const head = lines[0];
   const delim = (head.match(/;/g) || []).length > 0 ? ";" : head.includes("\t") ? "\t" : ",";
   let rows = lines.map(l => splitCsvLine(l, delim));
@@ -934,7 +970,8 @@ function parsePriceCsv(text) {
       if (ok >= Math.min(25, rows.length * 0.8)) priceCol = c;
     }
   }
-  if (priceCol < 0) throw new Error("Could not find a price column. Use a column named Close or Price.");
+  if (priceCol < 0) fail("Could not find a price column. Use a column named Close or Price.",
+                         "Fiyat sütunu bulunamadı. Adı Close, Price, Kapanış ya da Şimdi olan bir sütun kullan.");
   // dd/mm/yyyy vs mm/dd/yyyy: if any first number is above 12 it must be the day.
   const slashOrder = rows.some(r => { const m = (r[dateCol] || "").match(/^"?(\d{1,2})[/-](\d{1,2})[/-]\d{4}/); return m && +m[1] > 12; }) ? "dmy" : "mdy";
   const pts = []; let skipped = 0;
@@ -943,11 +980,13 @@ function parsePriceCsv(text) {
     const t = parts ? toTime(parts) : NaN, p = parseNumber(r[priceCol], delim);
     if (Number.isFinite(t) && Number.isFinite(p)) pts.push({ t, p }); else skipped++;
   }
-  if (pts.some(x => x.p <= 0)) throw new Error("Prices must be positive. Check that you picked a price column, not a change column.");
+  if (pts.some(x => x.p <= 0)) fail("Prices must be positive. Check that you picked a price column, not a change column.",
+                                    "Fiyatlar pozitif olmalı. Değişim sütunu değil, fiyat sütunu seçtiğinden emin ol.");
   pts.sort((a, b) => a.t - b.t);
   const uniq = pts.filter((x, i) => i === 0 || x.t !== pts[i - 1].t);
-  if (uniq.length < 30) throw new Error(`Only ${uniq.length} usable rows were found; at least 30 prices are needed.`);
-  return { pts: uniq, skipped, priceName: hasHeader ? header[priceCol].replace(/"/g, "") : "column " + (priceCol + 1) };
+  if (uniq.length < 30) fail(`Only ${uniq.length} usable rows were found; at least 30 prices are needed.`,
+                             `Yalnızca ${uniq.length} kullanılabilir satır bulundu; en az 30 fiyat gerekiyor.`);
+  return { pts: uniq, skipped, priceName: hasHeader ? header[priceCol].replace(/"/g, "") : null, priceCol };
 }
 
 // Estimate GBM parameters: sigma = sd(log returns)/sqrt(dt), mu = mean(log returns)/dt + sigma^2/2.
@@ -960,16 +999,19 @@ function estimate(pts) {
   const sig = s / Math.sqrt(dt), mu = m / dt + 0.5 * sig * sig;
   const gaps = []; for (let i = 1; i < n; i++) gaps.push((pts[i].t - pts[i - 1].t) / 864e5);
   gaps.sort((a, b) => a - b);
-  const med = gaps[Math.floor(gaps.length / 2)];
-  const freq = med <= 4 ? "daily" : med <= 10 ? "weekly" : med <= 45 ? "monthly" : `every ~${Math.round(med)} days`;
+  const gap = gaps[Math.floor(gaps.length / 2)];                // median days between prices
   // One-year returns: k steps ahead from every start point (overlapping), and non-overlapping years for the simulation.
   const k = Math.max(1, Math.round(1 / dt)), windows = [], years = [];
   for (let i = 0; i + k < n; i++) windows.push(pts[i + k].p / pts[i].p - 1);
-  for (let i = 0; i + k < n; i += k) years.push({ R: pts[i + k].p / pts[i].p - 1, label: `${fmtDate(pts[i].t)} – ${fmtDate(pts[i + k].t)}` });
-  return { n, spanYears, dt, mu, sig, freq, k, windows, years };
+  for (let i = 0; i + k < n; i += k) years.push({ R: pts[i + k].p / pts[i].p - 1, span: [pts[i].t, pts[i + k].t] });
+  return { n, spanYears, dt, mu, sig, gap, k, windows, years };
 }
+const freqText = gap => gap <= 4 ? tx("daily", "günlük") : gap <= 10 ? tx("weekly", "haftalık") : gap <= 45 ? tx("monthly", "aylık")
+  : tx(`every ~${Math.round(gap)} days`, `~${Math.round(gap)} günde bir`);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-function fmtDate(t) { const d = new Date(t); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
+const MONTHS_TR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+function fmtDate(t) { const d = new Date(t); return `${tx(MONTHS, MONTHS_TR)[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
+const fmtSpan = ([t0, t1]) => `${fmtDate(t0)} – ${fmtDate(t1)}`;
 // The estimate mu is a continuous drift; the input shows it as the average yearly return e^mu - 1.
 const setStock = (mu, sig) => { $("mu").value = (100 * clamp(Math.exp(mu) - 1, -0.5, 0.8)).toFixed(1); $("sig").value = (100 * clamp(sig, 0.01, 0.8)).toFixed(1); };
 
@@ -978,21 +1020,22 @@ function loadCsvText(text, name) {
     const parsed = parsePriceCsv(text), est = estimate(parsed.pts);
     data = { name, ...parsed, ...est };
     setStock(est.mu, est.sig);
-    const warn = parsed.skipped ? ` <span class="warn">${parsed.skipped} row(s) could not be read and were skipped.</span>` : "";
-    $("dataStatus").innerHTML = `<span class="ok">✓ Loaded ${name}</span> using the “${parsed.priceName}” column.${warn}` +
-      (est.windows.length < 10 ? ` <span class="warn">Less than ~2 years of data: the history check needs more.</span>` : "");
+    const col = () => parsed.priceName ?? tx(`column ${parsed.priceCol + 1}`, `${parsed.priceCol + 1}. sütun`);
+    setStatus(() => tx(`<span class="ok">✓ Loaded ${name}</span> using the “${col()}” column.`, `<span class="ok">✓ ${name} yüklendi</span>, “${col()}” sütunu kullanıldı.`) +
+      (parsed.skipped ? ` <span class="warn">${tx(`${parsed.skipped} row(s) could not be read and were skipped.`, `${parsed.skipped} satır okunamadı ve atlandı.`)}</span>` : "") +
+      (est.windows.length < 10 ? ` <span class="warn">${tx("Less than ~2 years of data: the history check needs more.", "2 yıldan az veri: geçmiş kontrolü için daha fazlası gerekiyor.")}</span>` : ""));
   } catch (e) {
     data = null;
-    $("dataStatus").innerHTML = `<span class="bad">✗ ${e.message}</span>`;
+    setStatus(() => `<span class="bad">✗ ${tx(e.message, e.tr || e.message)}</span>`);
   }
   onInputChange();
 }
 function readFile(file) {
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { $("dataStatus").innerHTML = `<span class="bad">✗ The file is larger than 10 MB.</span>`; return; }
+  if (file.size > 10 * 1024 * 1024) { setStatus(() => `<span class="bad">✗ ${tx("The file is larger than 10 MB.", "Dosya 10 MB'tan büyük.")}</span>`); return; }
   const reader = new FileReader();
   reader.onload = () => loadCsvText(String(reader.result), file.name);
-  reader.onerror = () => { $("dataStatus").innerHTML = `<span class="bad">✗ Could not read the file.</span>`; };
+  reader.onerror = () => setStatus(() => `<span class="bad">✗ ${tx("Could not read the file.", "Dosya okunamadı.")}</span>`);
   reader.readAsText(file);
 }
 $("file").addEventListener("change", e => readFile(e.target.files[0]));
@@ -1001,7 +1044,7 @@ drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add(
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFile(e.dataTransfer.files[0]); });
 $("useEstimates").addEventListener("click", () => { if (data) { setStock(data.mu, data.sig); onInputChange(); } });
-$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; $("dataStatus").innerHTML = ""; onInputChange(); });
+$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; setStatus(null); onInputChange(); });
 
 // =====================================================================
 // The answer, computed once per change of the inputs
@@ -1070,7 +1113,7 @@ function calculate() {
   const res = $("results"), first = res.classList.contains("hidden");
   res.classList.remove("hidden", "stale");
   if (first) res.classList.add("show");
-  $("calc").textContent = "Calculate my plan";
+  calcLabel();
   $("calcNote").classList.add("hidden");
   renderPlan();
   renderHow();
@@ -1080,9 +1123,7 @@ function calculate() {
 }
 $("calc").addEventListener("click", calculate);
 const mixText = w => {
-  const t = [0, 1, 2].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${ASSETS[i].name.toLowerCase()}`);
-  if (w[3] >= 0.005) t.push(`${pct(w[3], 0)} savings`);
-  return t.join(" · ");
+  return [0, 1, 2, 3].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${aLow(i)}`).join(" · ");
 };
 
 // The plan with no limit at all is the fastest-growing mix without borrowing, and "Bold" stops at its bad-year loss.
@@ -1106,71 +1147,90 @@ function riskLimit(p, risk) {
 // sigma_d^2 = d'Cd is convex, so the riskiest mix is a single asset: the top is "borrow" when it is that asset.
 function topReason(top, m) {
   if (top.f < 1 - 1e-6) return { why: "kelly" };
-  if (top.fund.sig >= Math.max(...m.sig) - 1e-9) return { why: "borrow", asset: ASSETS[top.d.indexOf(Math.max(...top.d))].name.toLowerCase() };
+  if (top.fund.sig >= Math.max(...m.sig) - 1e-9) return { why: "borrow", asset: top.d.indexOf(Math.max(...top.d)) };   // index into ASSETS
   return { why: "drag" };
 }
+const HURT = () => tx("big losses hurt more than big gains help", "büyük kayıplar, büyük kazançların getirdiğinden fazlasını götürür");
 function renderInputs() {
   const p = params(), cap = riskTop(p), c = crashSettings(), states = marketStates(p, c.lam, c.J), every = Math.round(1 / (1 - p.alpha));
   const reason = cap.top.d ? topReason(cap.top, cap.m) : null;
   $("riskCap").innerHTML = ui.risk !== "bold" ? ""
-    : !reason ? `In this market nothing grows faster than the savings account, so the plan keeps everything there.`
-    : reason.why === "borrow" ? `Bold puts all your money in ${reason.asset}, the riskiest asset here. Taking more risk would mean borrowing money, which this plan never does.`
-    : reason.why === "drag" ? `Bold is the fastest-growing mix without borrowing (${mixText(cap.top.w)}). Any riskier mix would grow slower, because big losses hurt more than big gains help.`
-    : `Bold is the fastest-growing plan (${mixText(cap.top.w)}). Putting more into it would make your money grow slower, because big losses hurt more than big gains help.`;
+    : !reason ? tx(`In this market nothing grows faster than the savings account, so the plan keeps everything there.`,
+                   `Bu piyasada hiçbir şey mevduat hesabından hızlı büyümüyor, bu yüzden plan her şeyi orada tutar.`)
+    : reason.why === "borrow" ? tx(`Bold puts all your money in ${aIn(reason.asset)}, the riskiest asset here. Taking more risk would mean borrowing money, which this plan never does.`,
+        `Cesur, tüm paranı ${aIn(reason.asset)} yatırır; buradaki en riskli varlık bu. Daha fazla risk almak borç para kullanmak demek, bu plan bunu asla yapmaz.`)
+    : reason.why === "drag" ? tx(`Bold is the fastest-growing mix without borrowing (${mixText(cap.top.w)}). Any riskier mix would grow slower, because ${HURT()}.`,
+        `Cesur, borç almadan en hızlı büyüyen karışım (${mixText(cap.top.w)}). Daha riskli her karışım daha yavaş büyür, çünkü ${HURT()}.`)
+    : tx(`Bold is the fastest-growing plan (${mixText(cap.top.w)}). Putting more into it would make your money grow slower, because ${HURT()}.`,
+         `Cesur, en hızlı büyüyen plan (${mixText(cap.top.w)}). Ona daha fazla para koymak paranı daha yavaş büyütür, çünkü ${HURT()}.`);
   for (const b of document.querySelectorAll(".market")) {
     b.classList.toggle("sel", b.dataset.mood === p.mood); b.setAttribute("aria-pressed", b.dataset.mood === p.mood);
+    b.querySelector(".nm").textContent = moodName(b.dataset.mood);
   }
   for (const b of document.querySelectorAll("#riskPick .opt")) {
     b.classList.toggle("sel", b.dataset.risk === ui.risk); b.setAttribute("aria-pressed", b.dataset.risk === ui.risk);
   }
-  $("moodText").textContent = MOODS[p.mood].text;
+  $("moodText").textContent = tx(MOODS[p.mood].text, MOODS[p.mood].tr.text);
+  $("moodNote").innerHTML = !ui.filled ? ""
+    : tx(`We filled in a typical interest rate and inflation for a <b>${moodLow(ui.filled)}</b> market. Type your own if they are different.`,
+         `${capFirst(MOODS[ui.filled].tr.a)} için tipik bir faiz ve enflasyon yazdık. Seninkiler farklıysa kendin gir.`);
   $("saveSym").textContent = sym();
   const gw = guessW();
   $("guessBox").classList.toggle("hidden", !$("useGuess").checked);
   ["gStock", "gGold", "gBond", "gDep"].forEach((id, i) => { $(id + "_v").innerHTML = `${pct(gw[i], 0)}<small>${money(p.S * gw[i])}</small>`; });
   $("guessBar").innerHTML = gw.map((x, i) => `<i style="width:${100 * x}%;background:${ASSETS[i].color}"></i>`).join("");
   // VaR is not the most you can lose: it is where the worst 1 year in `every` starts, so those years lose more.
-  const lossText = `only about 1 year in ${every} should lose more than <b>${money(p.S * p.L)}</b> of your ${money(p.S)}`;
-  $("riskText").innerHTML = !cap.top.d ? `In this market the savings account grows fastest, so every choice keeps your money there.`
-    : ui.risk === "bold" ? `No loss limit, only no borrowing. With the fastest-growing plan, ${lossText}.`
-    : `Your limit: ${lossText}.` + (cap.top.var <= p.L
-      ? ` In a ${MOODS[p.mood].name.toLowerCase()} market even the fastest-growing plan stays within it, so this gives the same plan as Bold.` : "");
-  $("crashEvery_v").textContent = c.every ? `${c.every} years` : "never";
-  $("crashSize_v").textContent = pct(-c.J, 0);
+  const lossText = tx(`only about 1 year in ${every} should lose more than <b>${money(p.S * p.L)}</b> of your ${money(p.S)}`,
+                      `${money(p.S)} paranın <b>${money(p.S * p.L)}</b> tutarından fazlasını kaybetmen yalnızca yaklaşık ${every} yılda bir beklenir`);
+  $("riskText").innerHTML = !cap.top.d ? tx(`In this market the savings account grows fastest, so every choice keeps your money there.`,
+                                            `Bu piyasada en hızlı mevduat hesabı büyüyor, bu yüzden her seçim paranı orada tutar.`)
+    : ui.risk === "bold" ? tx(`No loss limit, only no borrowing. With the fastest-growing plan, ${lossText}.`,
+                              `Kayıp sınırı yok, yalnızca borç kullanılmaz. En hızlı büyüyen planda ${lossText}.`)
+    : tx(`Your limit: ${lossText}.`, `Sınırın: ${lossText}.`) + (cap.top.var <= p.L
+      ? tx(` ${capFirst(moodIn(p.mood))} even the fastest-growing plan stays within it, so this gives the same plan as Bold.`,
+           ` ${capFirst(moodIn(p.mood))} en hızlı büyüyen plan bile bu sınırın içinde kalıyor, bu yüzden bu seçim Cesur ile aynı planı verir.`) : "");
+  $("crashEvery_v").textContent = c.every ? tx(`about once every ${c.every} years`, `yaklaşık ${c.every} yılda bir`) : tx("never", "hiçbir zaman");
+  $("crashSize_v").textContent = tx(`stocks fall ${pct(-c.J, 0)}`, `hisseler ${pct(-c.J, 0)} düşer`);
   const st = REGIME_KEYS.map(k => states[k]);
-  $("moodTable").innerHTML = "<tr><th></th>" + st.map(m => `<th>${m.name}${m.key === p.mood ? " (now)" : ""}</th>`).join("") + "</tr>" +
-    [["Inflation", m => pct(m.infl, 1)], ["Savings account rate", m => pct(m.r, 1)],
-     ...[0, 1, 2].map(i => [`${ASSETS[i].name}: average / risk`, m => `${pct(m.mu[i], 1)} / ${pct(m.sig[i], 0)}`]),
-     ["Chance of a market-crash year", m => pct(m.shock, 0)]]
+  $("moodTable").innerHTML = "<tr><th></th>" + st.map(m => `<th>${moodName(m.key)}${m.key === p.mood ? tx(" (now)", " (şimdi)") : ""}</th>`).join("") + "</tr>" +
+    [[tx("Inflation", "Enflasyon"), m => pct(m.infl, 1)], [tx("Savings account rate", "Mevduat faizi"), m => pct(m.r, 1)],
+     ...[0, 1, 2].map(i => [`${aName(i)}: ${tx("average / risk", "ortalama / risk")}`, m => `${pct(m.mu[i], 1)} / ${pct(m.sig[i], 0)}`]),
+     [tx("Chance of a market-crash year", "Piyasa çöküşü yılı olasılığı"), m => pct(m.shock, 0)]]
     .map(([name, f]) => `<tr><td>${name}</td>${st.map(m => `<td>${f(m)}</td>`).join("")}</tr>`).join("");
-  $("crashNote").textContent = c.every ? "A market-crash year: " + ASSETS.slice(0, 3).map((a, i) => { const x = states.normal.crash[i] - 1;
-    return `${a.name.toLowerCase()} ${x < 0 ? "−" : "+"}${pct(Math.abs(x), 0)}`; }).join(", ") +
-    " on top of the normal ups and downs (all in one month). The averages above already include the crash years." : "Crashes are switched off.";
-  $("transTable").innerHTML = "<tr><th>This year ↓ / next year →</th>" + REGIME_KEYS.map(k => `<th>${MOODS[k].name}</th>`).join("") + "</tr>" +
-    REGIME_KEYS.map(k => `<tr><td>${MOODS[k].name}</td>${TRANSITION[k].map(q => `<td>${pct(q, 0)}</td>`).join("")}</tr>`).join("");
-  $("transNote").textContent = "Typical length: " + REGIME_KEYS.map((k, i) => `${MOODS[k].name.toLowerCase()} about ${(1 / (1 - TRANSITION[k][i])).toFixed(1)} years`).join(", ") + ".";
+  const crashMoves = [0, 1, 2].map(i => { const x = states.normal.crash[i] - 1; return `${aLow(i)} ${x < 0 ? "−" : "+"}${pct(Math.abs(x), 0)}`; }).join(", ");
+  $("crashNote").textContent = !c.every ? tx("Crashes are switched off.", "Çöküşler kapalı.")
+    : tx(`A market-crash year: ${crashMoves} on top of the normal ups and downs (all in one month). The averages above already include the crash years.`,
+         `Piyasa çöküşü yılı: normal iniş çıkışların üstüne ${crashMoves} (hepsi tek bir ayda). Yukarıdaki ortalamalar çöküş yıllarını zaten içeriyor.`);
+  $("transTable").innerHTML = `<tr><th>${tx("This year ↓ / next year →", "Bu yıl ↓ / gelecek yıl →")}</th>` + REGIME_KEYS.map(k => `<th>${moodName(k)}</th>`).join("") + "</tr>" +
+    REGIME_KEYS.map(k => `<tr><td>${moodName(k)}</td>${TRANSITION[k].map(q => `<td>${pct(q, 0)}</td>`).join("")}</tr>`).join("");
+  $("transNote").textContent = tx("Typical length: ", "Tipik süre: ") + REGIME_KEYS.map((k, i) => { const len = fix(1 / (1 - TRANSITION[k][i]), 1);
+    return tx(`${moodLow(k)} about ${len} years`, `${moodLow(k)} yaklaşık ${len} yıl`); }).join(", ") + ".";
   const nData = data ? data.years.length : 0;
-  $("dataNote").innerHTML = nData >= 5
-    ? `The real-life test uses <b>your uploaded stock years</b> (${nData} real years, shuffled). Their crashes are real ones, so no extra
+  $("dataNote").innerHTML = nData < 5 ? ""
+    : tx(`The real-life test uses <b>your uploaded stock years</b> (${nData} real years, shuffled). Their crashes are real ones, so no extra
        crashes are added, and gold, bonds, savings and inflation stay at the picked market's values (no market changes on top of real years).
-       ${nData < p.years ? ` Your data has ${nData} years, so the future lasts ${nData} years.` : ""}`
-    : "";
+       ${nData < p.years ? ` Your data has ${nData} years, so the future lasts ${nData} years.` : ""}`,
+         `Gerçek hayat testi <b>yüklediğin hisse yıllarını</b> kullanıyor (${nData} gerçek yıl, karıştırılmış). Çöküşleri gerçek, bu yüzden ek
+       çöküş eklenmiyor; altın, tahvil, mevduat ve enflasyon seçilen piyasanın değerlerinde kalıyor (gerçek yılların üstüne piyasa değişimi yok).
+       ${nData < p.years ? ` Verinde ${nData} yıl var, bu yüzden gelecek ${nData} yıl sürüyor.` : ""}`);
 }
 
 function renderData() {
   $("dataSummary").classList.toggle("hidden", !data);
   if (!data) return;
   $("dataStats").innerHTML = [
-    [`${fmtDate(data.pts[0].t)} – ${fmtDate(data.pts[data.n - 1].t)}`, `${data.spanYears.toFixed(1)} years of ${data.freq} prices (${data.n} points)`],
-    [pct(Math.exp(data.mu) - 1), "estimated average return per year"], [pct(data.sig), "estimated volatility σ per year"],
-    [pct(data.pts[data.n - 1].p / data.pts[0].p - 1, 0), "total price change"]
+    [fmtSpan([data.pts[0].t, data.pts[data.n - 1].t]), tx(`${fix(data.spanYears, 1)} years of ${freqText(data.gap)} prices (${data.n} points)`,
+                                                          `${fix(data.spanYears, 1)} yıllık ${freqText(data.gap)} fiyat (${data.n} nokta)`)],
+    [pct(Math.exp(data.mu) - 1), tx("estimated average return per year", "tahmini yıllık ortalama getiri")],
+    [pct(data.sig), tx("estimated volatility σ per year", "tahmini yıllık oynaklık σ")],
+    [pct(data.pts[data.n - 1].p / data.pts[0].p - 1, 0), tx("total price change", "toplam fiyat değişimi")]
   ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
   const YEAR = 365.25 * 864e5, yr = t => 1970 + t / YEAR;
   const pts = data.pts.map(x => ({ x: yr(x.t), y: x.p })), ps = data.pts.map(x => x.p);
   const lo = Math.min(...ps), hi = Math.max(...ps);
   drawChart($("priceChart"), { x: [pts[0].x, pts[pts.length - 1].x], y: [Math.max(0, lo - 0.05 * (hi - lo)), hi + 0.05 * (hi - lo)],
-    series: [{ pts, color: "var(--blue)", width: 1.6 }], xFmt: t => Math.floor(t), yFmt: v => v.toLocaleString("en-US"),
-    xLabel: "year", yLabel: "price", aria: "price history" });
+    series: [{ pts, color: "var(--blue)", width: 1.6 }], xFmt: t => Math.floor(t), yFmt: v => v.toLocaleString(locale()),
+    xLabel: tx("year", "yıl"), yLabel: tx("price", "fiyat"), aria: tx("price history", "fiyat geçmişi") });
 }
 
 // Typical money after n years in today's money: grows at the median rate e^g, minus inflation, plus the yearly saving.
@@ -1178,57 +1238,75 @@ function typicalAfter(p, g, n) { let x = p.S; for (let k = 0; k < n; k++) x = x 
 
 function renderPlan() {
   const { p, st, plan, crashPlan, sol, c } = cur, w = plan.w, every = Math.round(1 / (1 - p.alpha));
-  const parts = ASSETS.map((a, i) => ({ ...a, w: Math.max(0, w[i]) })).filter(x => x.w >= 0.005);
-  drawDonut($("donut"), parts, signed(Math.exp(plan.g) - 1), "a year, typical");
-  $("planHead").textContent = plan.d ? `In a ${st.name.toLowerCase()} market, split your money like this:` : "Keep everything in the savings account.";
-  $("planParts").innerHTML = parts.map(x => `<div class="part"><i style="background:${x.color}"></i><span>${x.name}</span><b>${pct(x.w, 0)}</b>
+  const parts = ASSETS.map((a, i) => ({ ...a, i, w: Math.max(0, w[i]) })).filter(x => x.w >= 0.005);
+  drawDonut($("donut"), parts, signed(Math.exp(plan.g) - 1), tx("a year, typical", "yılda, tipik"));
+  $("planHead").textContent = plan.d ? tx(`In ${moodA(st.key)}, split your money like this:`, `${capFirst(moodIn(st.key))} paranı şöyle böl:`)
+    : tx("Keep everything in the savings account.", "Her şeyi mevduat hesabında tut.");
+  $("planParts").innerHTML = parts.map(x => `<div class="part"><i style="background:${x.color}"></i><span>${aName(x.i)}</span><b>${pct(x.w, 0)}</b>
     <span class="amt">${money(p.S * x.w)}</span></div>`).join("");
   // The answer in one plain sentence, in money.
-  const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0];
-  const where = x => x.key === "dep" ? "the savings account" : x.name.toLowerCase();
+  const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + tx(" and ", " ve ") + a[a.length - 1] : a[0];
   const gain = p.S * (Math.exp(plan.g) - 1), bad = plan.var > 0
-    ? `only about 1 year in ${every} should lose more than <b>${money(p.S * plan.var)}</b> (those years lose about ` +
-      `${money(p.S * plan.es)} on average)`
-    : `even a bad year (the worst 1 in ${every}) should still end above where it started`;
+    ? tx(`only about 1 year in ${every} should lose more than <b>${money(p.S * plan.var)}</b> (those years lose about ${money(p.S * plan.es)} on average)`,
+         `kaybın <b>${money(p.S * plan.var)}</b> tutarını aşması yalnızca yaklaşık ${every} yılda bir beklenir (o yıllarda ortalama kayıp yaklaşık ${money(p.S * plan.es)})`)
+    : tx(`even a bad year (the worst 1 in ${every}) should still end above where it started`,
+         `kötü bir yıl bile (${every} yılın en kötüsü) başladığı yerin üstünde bitmeli`);
   $("planSentence").innerHTML = !(p.S > 0)
-    ? `Put <b>${list(parts.map((x, i) => `${pct(x.w, 0)}${i ? "" : " of your money"} in ${where(x)}`))}</b>.`
+    ? tx(`Put <b>${list(parts.map((x, i) => `${pct(x.w, 0)}${i ? "" : " of your money"} in ${aIn(x.i)}`))}</b>.`,
+         `Paranı şöyle dağıt: <b>${list(parts.map(x => `${aIn(x.i)} ${pct(x.w, 0)}`))}</b>.`)
     : plan.d
-      ? `Put <b>${list(parts.map(x => `${money(p.S * x.w)} in ${where(x)}`))}</b>. In a typical year your ${money(p.S)} grows by about <b>${money(gain)}</b>, and ${bad}.`
-      : `Keep all ${money(p.S)} in the savings account: it grows by about <b>${money(gain)}</b> a year, with no risk.`;
+      ? tx(`Put <b>${list(parts.map(x => `${money(p.S * x.w)} in ${aIn(x.i)}`))}</b>. In a typical year your ${money(p.S)} grows by about <b>${money(gain)}</b>, and ${bad}.`,
+           `<b>${capFirst(list(parts.map(x => `${aIn(x.i)} ${money(p.S * x.w)}`)))}</b> yatır. Tipik bir yılda ${money(p.S)} paran yaklaşık <b>${money(gain)}</b> büyür; ${bad}.`)
+      : tx(`Keep all ${money(p.S)} in the savings account: it grows by about <b>${money(gain)}</b> a year, with no risk.`,
+           `${money(p.S)} paranın tamamını mevduat hesabında tut: risksiz, yılda yaklaşık <b>${money(gain)}</b> büyür.`);
   const real = Math.exp(plan.g) / (1 + p.infl) - 1, bankG = st.rc, n = p.years;
   $("planTiles").innerHTML = [
-    [signed(Math.exp(plan.g) - 1), "typical growth per year"],
-    [signed(real), `after ${pct(p.infl, 1)} inflation`],
-    [plan.var > 0 ? "−" + pct(plan.var) : signed(-plan.var), `in a bad year (worst 1 in ${every}); your limit is −${pct(p.L, 0)}`],
-    [money(typicalAfter(p, plan.g, n)), `typical money after ${n} years, in today's money (savings account only: ${money(typicalAfter(p, bankG, n))})`]
+    [signed(Math.exp(plan.g) - 1), tx("typical growth per year", "yıllık tipik büyüme")],
+    [signed(real), tx(`after ${pct(p.infl, 1)} inflation`, `${pct(p.infl, 1)} enflasyondan sonra`)],
+    [plan.var > 0 ? "−" + pct(plan.var) : signed(-plan.var), tx(`in a bad year (worst 1 in ${every}); your limit is −${pct(p.L, 0)}`,
+                                                                  `kötü bir yılda (${every} yılın en kötüsü); sınırın −${pct(p.L, 0)}`)],
+    [money(typicalAfter(p, plan.g, n)), tx(`typical money after ${n} years, in today's money (savings account only: ${money(typicalAfter(p, bankG, n))})`,
+                                           `${n} yıl sonra tipik paran, bugünün parasıyla (yalnızca mevduat: ${money(typicalAfter(p, bankG, n))})`)]
   ].map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
   let why;
-  if (!plan.d) why = `In this market no mix of stocks, gold and bonds is expected to grow faster than the savings account (${pct(st.r, 1)} a year), so taking risk does not pay.`;
+  if (!plan.d) why = tx(`In this market no mix of stocks, gold and bonds is expected to grow faster than the savings account (${pct(st.r, 1)} a year), so taking risk does not pay.`,
+                        `Bu piyasada hiçbir hisse, altın ve tahvil karışımının mevduat hesabından (yılda ${pct(st.r, 1)}) hızlı büyümesi beklenmiyor, bu yüzden risk almak karşılığını vermiyor.`);
   else {
-    const reason = topReason(cur.top, cur.m), notReached = plan.var > p.L - 0.005 ? "" : ` Your ${pct(p.L, 0)} limit is not reached.`;
+    const reason = topReason(cur.top, cur.m), notReached = plan.var > p.L - 0.005 ? "" : tx(` Your ${pct(p.L, 0)} limit is not reached.`, ` ${pct(p.L, 0)} sınırına ulaşılmıyor.`);
     why = plan.g >= cur.top.g - 0.0002                            // within 0.02% a year of the fastest-growing mix
-      ? `This is the fastest-growing plan you can build without borrowing. ` + (
-          reason.why === "borrow" ? `It puts all your money in ${reason.asset}, the riskiest asset here; taking more risk would mean borrowing, which this plan never does.`
-          : reason.why === "drag" ? `Any riskier mix would grow slower, because big losses hurt more than big gains help.`
-          : `Putting more into it would make your money grow slower, because big losses hurt more than big gains help.`) + notReached
+      ? tx(`This is the fastest-growing plan you can build without borrowing. `, `Bu, borç almadan kurabileceğin en hızlı büyüyen plan. `) + (
+          reason.why === "borrow" ? tx(`It puts all your money in ${aIn(reason.asset)}, the riskiest asset here; taking more risk would mean borrowing, which this plan never does.`,
+                                       `Tüm paranı ${aIn(reason.asset)} koyuyor, buradaki en riskli varlık bu; daha fazla risk borç almak demek, bu plan bunu asla yapmaz.`)
+          : reason.why === "drag" ? tx(`Any riskier mix would grow slower, because ${HURT()}.`, `Daha riskli her karışım daha yavaş büyür, çünkü ${HURT()}.`)
+          : tx(`Putting more into it would make your money grow slower, because ${HURT()}.`, `Ona daha fazla para koymak paranı daha yavaş büyütür, çünkü ${HURT()}.`)) + notReached
       : plan.var > p.L - 0.005
-        ? `This is the fastest-growing mix whose bad year stays within your ${pct(p.L, 0)} limit. A riskier mix would lose more than ${money(p.S * p.L)} in a bad year.`
-        : `This is the fastest-growing mix in this market without borrowing.` + notReached;
+        ? tx(`This is the fastest-growing mix whose bad year stays within your ${pct(p.L, 0)} limit. A riskier mix would lose more than ${money(p.S * p.L)} in a bad year.`,
+             `Bu, kötü yılı ${pct(p.L, 0)} sınırının içinde kalan en hızlı büyüyen karışım. Daha riskli bir karışım kötü bir yılda ${money(p.S * p.L)} tutarından fazla kaybederdi.`)
+        : tx(`This is the fastest-growing mix in this market without borrowing.`, `Bu, bu piyasada borç almadan en hızlı büyüyen karışım.`) + notReached;
     const g4 = growthRate(sol.fOpt, cur.stockP.mu, cur.stockP.sig, cur.stockP.r), gain = plan.g - g4;
-    if (gain > 0.0005) why += ` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), with the same loss limit.`;
+    if (gain > 0.0005) why += tx(` That is <b>${signed(gain, 2)} a year</b> more than using only stocks and the savings account (${pct(sol.fOpt, 0)} stocks), with the same loss limit.`,
+                                 ` Bu, aynı kayıp sınırıyla yalnızca hisse ve mevduat kullanmaktan (${pct(sol.fOpt, 0)} hisse) <b>yılda ${signed(gain, 2)}</b> daha fazla.`);
   }
   $("planWhy").innerHTML = why;
   renderVsMath();
   const showCrash = crashPlan && c.every;
   $("planCrash").classList.toggle("hidden", !showCrash);
-  if (showCrash) $("planCrash").innerHTML = `<b>Safer if crashes happen.</b> The bell-curve math above ignores rare crashes. If stocks can fall ${pct(-c.J, 0)}
-    about once every ${c.every} years (in a ${st.name.toLowerCase()} market: a ${pct(st.shock, 1)} chance each year), a mix that keeps the same promise is
-    <b>${crashPlan.d ? mixText(crashPlan.w) : "all in the savings account"}</b>. It is tested in real life below, under “Compare more strategies”.`;
+  if (showCrash) {
+    const crashMix = crashPlan.d ? mixText(crashPlan.w) : tx("all in the savings account", "tamamı mevduat hesabında");
+    $("planCrash").innerHTML = tx(`<b>Safer if crashes happen.</b> The bell-curve math above ignores rare crashes. If stocks can fall ${pct(-c.J, 0)}
+    about once every ${c.every} years (${moodIn(st.key)}: a ${pct(st.shock, 1)} chance each year), a mix that keeps the same promise is
+    <b>${crashMix}</b>. It is tested in real life below, under “Compare more strategies”.`,
+      `<b>Çöküş olursa daha güvenli.</b> Yukarıdaki çan eğrisi hesabı nadir çöküşleri yok sayar. Hisseler yaklaşık ${c.every} yılda bir ${pct(-c.J, 0)}
+    düşebiliyorsa (${moodIn(st.key)}: her yıl ${pct(st.shock, 1)} olasılık), aynı sözü tutan karışım <b>${crashMix}</b>. Aşağıda gerçek hayatta,
+    “Daha fazla stratejiyi karşılaştır” altında test ediliyor.`);
+  }
   let hn = "";
   if (cur.data && cur.data.windows.length >= 10) {
     const hs = solveHistory(cur.stockP);
-    if (hs.f < sol.fOpt - 0.005) hn = `<b>History check:</b> in your uploaded data, real bad years were worse than the bell curve predicts. ` +
-      `With only stocks and the savings account, history suggests at most <b>${pct(hs.f, 0)}</b> in stocks instead of ${pct(sol.fOpt, 0)} (see part 4).`;
+    if (hs.f < sol.fOpt - 0.005) hn = tx(`<b>History check:</b> in your uploaded data, real bad years were worse than the bell curve predicts. ` +
+      `With only stocks and the savings account, history suggests at most <b>${pct(hs.f, 0)}</b> in stocks instead of ${pct(sol.fOpt, 0)} (see part 4).`,
+      `<b>Geçmiş kontrolü:</b> yüklediğin veride gerçek kötü yıllar çan eğrisinin tahmininden daha kötüydü. ` +
+      `Yalnızca hisse ve mevduatla geçmiş, ${pct(sol.fOpt, 0)} yerine en fazla <b>${pct(hs.f, 0)}</b> hisse öneriyor (4. bölüme bak).`);
   }
   $("planHistory").classList.toggle("hidden", !hn);
   $("planHistory").innerHTML = hn;
@@ -1239,34 +1317,41 @@ function renderVsMath() {
   $("vsBlock").classList.toggle("hidden", !guess);
   if (!guess) return;
   const loss = x => `${x.var > 0 ? "−" + pct(x.var) : signed(-x.var)} ${within(x) ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`}`;
-  $("vsMath").innerHTML = `<tr><th></th><th>Split</th><th>Typical growth a year</th><th>Bad year (worst 1 in ${every})</th><th>After ${n} years</th></tr>` +
-    [["Your guess", "var(--amber)", guess], ["The math", "var(--blue)", plan]].map(([name, color, x]) =>
+  $("vsMath").innerHTML = `<tr><th></th><th>${tx("Split", "Dağılım")}</th><th>${tx("Typical growth a year", "Yıllık tipik büyüme")}</th>` +
+    `<th>${tx(`Bad year (worst 1 in ${every})`, `Kötü yıl (${every} yılın en kötüsü)`)}</th><th>${tx(`After ${n} years`, `${n} yıl sonra`)}</th></tr>` +
+    [[tx("Your guess", "Tahminin"), "var(--amber)", guess], [tx("The math", "Matematik"), "var(--blue)", plan]].map(([name, color, x]) =>
       `<tr><td><i class="dot" style="background:${color}"></i><b>${name}</b></td><td>${mixText(x.w)}</td><td>${signed(Math.exp(x.g) - 1)}</td>
        <td>${loss(x)}</td><td>${money(typicalAfter(p, x.g, n))}</td></tr>`).join("");
   const gap = typicalAfter(p, plan.g, n) - typicalAfter(p, guess.g, n);
   let v;
   if (!within(guess))
-    v = `<span class="bad">Your guess breaks your limit:</span> in a bad year it loses ${pct(guess.var)}, more than your ${pct(p.L, 0)}.` +
-        (guess.g > plan.g ? " It grows faster only because it takes more risk than you accept." : " And the math still grows faster.");
+    v = tx(`<span class="bad">Your guess breaks your limit:</span> in a bad year it loses ${pct(guess.var)}, more than your ${pct(p.L, 0)}.`,
+           `<span class="bad">Tahminin sınırını aşıyor:</span> kötü bir yılda ${pct(guess.var)} kaybediyor, bu ${pct(p.L, 0)} sınırından fazla.`) +
+        (guess.g > plan.g ? tx(" It grows faster only because it takes more risk than you accept.", " Daha hızlı büyümesinin tek nedeni, kabul ettiğinden fazla risk alması.")
+                          : tx(" And the math still grows faster.", " Üstelik matematik yine de daha hızlı büyüyor."));
   else if (guess.g > plan.g - 0.0005)
-    v = `<span class="ok">You found the math's answer!</span> Your guess keeps your limit and grows as fast as the plan` +
-        (guess.g > plan.g + 0.0005 ? " (even a little faster: the math tries mixes in 1% steps)." : ".");
+    v = tx(`<span class="ok">You found the math's answer!</span> Your guess keeps your limit and grows as fast as the plan`,
+           `<span class="ok">Matematiğin cevabını buldun!</span> Tahminin sınırını koruyor ve plan kadar hızlı büyüyor`) +
+        (guess.g > plan.g + 0.0005 ? tx(" (even a little faster: the math tries mixes in 1% steps).", " (hatta biraz daha hızlı: matematik karışımları %1'lik adımlarla dener).") : ".");
   else
-    v = `<span class="ok">Both keep your limit</span>, but the math grows <b>${signed(Math.exp(plan.g) - Math.exp(guess.g), 2)}</b> a year faster:` +
-        ` about <b>${money(gap)}</b> more after ${n} years.`;
+    v = tx(`<span class="ok">Both keep your limit</span>, but the math grows <b>${signed(Math.exp(plan.g) - Math.exp(guess.g), 2)}</b> a year faster:` +
+           ` about <b>${money(gap)}</b> more after ${n} years.`,
+           `<span class="ok">İkisi de sınırını koruyor</span>, ama matematik yılda <b>${signed(Math.exp(plan.g) - Math.exp(guess.g), 2)}</b> daha hızlı büyüyor:` +
+           ` ${n} yıl sonra yaklaşık <b>${money(gap)}</b> daha fazla.`);
   $("vsVerdict").innerHTML = v;
 }
 
 function renderHow() {
   const { p, m, plan, sol, stockP } = cur, z = normPpf(p.alpha);
   // 1. each asset alone vs the mix
-  const rows = [{ name: "Savings account only", sub: "", g: m.rc, color: "var(--dep)" }];
+  const rows = [{ name: tx("Savings account only", "Yalnızca mevduat"), sub: "", g: m.rc, color: "var(--dep)" }];
   [0, 1, 2].forEach(i => { const e = [0, 0, 0]; e[i] = 1; const r = fundFraction(e, p.L, m, p.alpha, z);
-    rows.push({ name: `${ASSETS[i].name} + savings`, sub: r.f > 0 ? `${pct(r.f, 0)} ${ASSETS[i].name.toLowerCase()}` : "never beats savings", g: r.g, color: ASSETS[i].color }); });
-  rows.push({ name: "Your mix", sub: plan.d ? mixText(plan.w) : "", g: plan.g, color: "var(--purple)", you: true });
+    rows.push({ name: `${aName(i)} + ${tx("savings", "mevduat")}`, sub: r.f > 0 ? `${pct(r.f, 0)} ${aLow(i)}` : tx("never beats savings", "mevduatı hiç geçemez"),
+                g: r.g, color: ASSETS[i].color }); });
+  rows.push({ name: tx("Your mix", "Karışımın"), sub: plan.d ? mixText(plan.w) : "", g: plan.g, color: "var(--purple)", you: true });
   const top = Math.max(...rows.map(r => Math.exp(r.g) - 1), 0.001);
   $("mixBars").innerHTML = rows.map(r => { const v = Math.exp(r.g) - 1;
-    return `<div class="bar"><div class="name">${r.you ? "<b>Your mix</b>" : r.name}<small>${r.sub}</small></div>
+    return `<div class="bar"><div class="name">${r.you ? `<b>${r.name}</b>` : r.name}<small>${r.sub}</small></div>
       <div class="track"><div class="fill" style="width:${clamp(v / top, 0.02, 1) * 100}%;background:${r.color}">${signed(v)}</div></div></div>`; }).join("");
   // 2. bell curve of the plan's fund (stocks if nothing beats the savings account)
   const fd = plan.d ? plan.fund : fundOf([1, 0, 0], m), f0 = plan.d ? plan.f : 0;
@@ -1274,14 +1359,20 @@ function renderHow() {
   if (!tr.dataset.touched) tr.value = f0;
   const ft = +tr.value, varF = f => 1 - Math.exp(growthRate(f, fd.mu, fd.sig, fd.r) - z * f * fd.sig), vt = varF(ft), every = Math.round(1 / (1 - p.alpha));
   $("fTryLabel").textContent = `${pct(ft, 0)} = ${money(p.S * ft)}`;
-  $("tryStatus").innerHTML = `With ${pct(ft, 0)} of your money in the mix${plan.d ? ` (${mixText(plan.d)})` : " (stocks)"}, the worst 1 year in ${every} loses <b>${pct(vt)}</b> → ` +
-    (vt <= p.L + 1e-9 ? `<span class="ok">✓ within your limit</span>` : `<span class="bad">✗ breaks your limit of ${pct(p.L, 0)}</span>`);
+  const inMix = plan.d ? ` (${mixText(plan.d)})` : tx(" (stocks)", " (hisse)");
+  $("tryStatus").innerHTML = tx(`With ${pct(ft, 0)} of your money in the mix${inMix}, the worst 1 year in ${every} loses <b>${pct(vt)}</b> → `,
+                                `Paranın ${pct(ft, 0)} kadarı karışımdayken${inMix}, ${every} yılın en kötü yılı <b>${pct(vt)}</b> kaybettirir → `) +
+    (vt <= p.L + 1e-9 ? `<span class="ok">✓ ${tx("within your limit", "sınırının içinde")}</span>`
+                      : `<span class="bad">✗ ${tx(`breaks your limit of ${pct(p.L, 0)}`, `${pct(p.L, 0)} sınırını aşıyor`)}</span>`);
   drawBell(p, fd, ft);
   // 3. the IVT + bisection, shown for stocks + savings (Module 4) and the plan's fund
   drawVar(p, sol, fd, varF, plan);
-  $("gridText").innerHTML = `We do this for every mix of stocks, gold and bonds in 1% steps: <b>${MIX_GRID.length.toLocaleString("en-US")} mixes</b>, ` +
-    `so ${MIX_GRID.length.toLocaleString("en-US")} bisections. Each one gives the largest safe share f for that mix; your plan is the mix that grows fastest. ` +
-    `(Same method as Module 5 in the Python and MATLAB code.)`;
+  const nMix = num(MIX_GRID.length);
+  $("gridText").innerHTML = tx(`We do this for every mix of stocks, gold and bonds in 1% steps: <b>${nMix} mixes</b>, ` +
+    `so ${nMix} bisections. Each one gives the largest safe share f for that mix; your plan is the mix that grows fastest. ` +
+    `(Same method as Module 5 in the Python and MATLAB code.)`,
+    `Bunu hisse, altın ve tahvilin %1'lik adımlarla her karışımı için yapıyoruz: <b>${nMix} karışım</b>, yani ${nMix} kez ikiye bölme. ` +
+    `Her biri o karışım için en büyük güvenli f payını verir; planın, en hızlı büyüyen karışımdır. (Python ve MATLAB kodundaki Modül 5 ile aynı yöntem.)`);
   renderCrash(stockP, sol);
 }
 $("fTry").addEventListener("input", () => { $("fTry").dataset.touched = "1"; renderHow(); });
@@ -1292,12 +1383,13 @@ function drawBell(p, fd, f) {
   const gM = growthRate(1, fd.mu, fd.sig, fd.r), sM = fd.sig;
   const limitX = 1 - p.L, q = Math.exp(m - z * sd);
   const x0 = Math.max(0, Math.min(Math.exp(gM - 3.2 * sM), limitX - 0.05)), x1 = Math.min(Math.exp(gM + 3.2 * sM), Math.exp(gM) * 3);
-  const legend = [{ color: "var(--blue)", label: "where your money can be" }, { color: "var(--red)", label: `worst ${pct(1 - p.alpha, 0)} of years` },
-                  { color: "var(--ink)", label: `your limit: ${money(S * limitX)}`, dash: true }];
-  const fmt = v => num(S * v);
+  const legend = [{ color: "var(--blue)", label: tx("where your money can be", "paranın olabileceği yer") },
+                  { color: "var(--red)", label: tx(`worst ${pct(1 - p.alpha, 0)} of years`, `yılların en kötü ${pct(1 - p.alpha, 0)} kısmı`) },
+                  { color: "var(--ink)", label: tx(`your limit: ${money(S * limitX)}`, `sınırın: ${money(S * limitX)}`), dash: true }];
+  const fmt = v => num(S * v), xLabel = inSym(tx("money after 1 year", "1 yıl sonraki para"));
   if (sd < 1e-9) {                                             // all in the savings account: no risk, one certain outcome
-    drawChart($("bellChart"), { x: [x0, x1], y: [0, 1], hideY: true, xFmt: fmt, xLabel: inSym("money after 1 year"),
-      vlines: [{ x: Math.exp(fd.r), color: "var(--blue)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: "outcome" });
+    drawChart($("bellChart"), { x: [x0, x1], y: [0, 1], hideY: true, xFmt: fmt, xLabel,
+      vlines: [{ x: Math.exp(fd.r), color: "var(--blue)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: tx("outcome", "sonuç") });
     return;
   }
   const dens = x => normPdf((Math.log(x) - m) / sd) / (x * sd);
@@ -1311,9 +1403,9 @@ function drawBell(p, fd, f) {
   }
   curve.push({ x: hi, y: 0 }, { x: x1, y: 0 });
   if (tail.length) tail.push({ x: q, y: dens(q) });
-  drawChart($("bellChart"), { x: [x0, x1], y: [0, peak * 1.1], hideY: true, xFmt: fmt, xLabel: inSym("money after 1 year"),
+  drawChart($("bellChart"), { x: [x0, x1], y: [0, peak * 1.1], hideY: true, xFmt: fmt, xLabel,
     series: [{ pts: tail, fill: "var(--red-soft)" }, { pts: curve, color: "var(--blue)" }],
-    vlines: [{ x: q, color: "var(--red)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: "outcome distribution" });
+    vlines: [{ x: q, color: "var(--red)" }, { x: limitX, color: "var(--ink)", dash: "6 4" }], legend, aria: tx("outcome distribution", "sonuç dağılımı") });
 }
 
 function drawVar(p, sol, fd, varF, plan) {
@@ -1324,35 +1416,45 @@ function drawVar(p, sol, fd, varF, plan) {
   if (sol.status === "binding") dots.push({ x: sol.fVar, y: p.L, color: "var(--blue)" });
   if (plan.d) dots.push({ x: plan.f, y: varF(plan.f), color: "var(--purple)" });
   drawChart($("varChart"), { x: [0, 1], y: [lo - pad, hi + pad], xFmt: v => pct(v, 0), yFmt: v => pct(v, 0),
-    xLabel: "share of your money in the fund (f)", yLabel: "bad-year loss (VaR)", aria: "VaR versus share",
+    xLabel: tx("share of your money in the fund (f)", "paranın fondaki payı (f)"), yLabel: tx("bad-year loss (VaR)", "kötü yıl kaybı (VaR)"),
+    aria: tx("VaR versus share", "VaR ve pay"),
     series: [{ pts: ptsS, color: "var(--blue)" }, ...(plan.d ? [{ pts: ptsM, color: "var(--purple)" }] : [])],
     hlines: [{ y: p.L, color: "var(--ink)", dash: "6 4" }], dots,
-    legend: [{ color: "var(--blue)", label: "stocks only" }, ...(plan.d ? [{ color: "var(--purple)", label: `your mix (${mixText(plan.d)})` }] : []),
-             { color: "var(--ink)", label: "your limit L", dash: true }] });
+    legend: [{ color: "var(--blue)", label: tx("stocks only", "yalnızca hisse") },
+             ...(plan.d ? [{ color: "var(--purple)", label: tx(`your mix (${mixText(plan.d)})`, `karışımın (${mixText(plan.d)})`) }] : []),
+             { color: "var(--ink)", label: tx("your limit L", "sınırın L"), dash: true }] });
   const rows = sol.history.slice(0, 10);
-  $("bisectIntro").textContent = "Bisection for the stocks-only fund (Module 4):";
+  $("bisectIntro").textContent = tx("Bisection for the stocks-only fund (Module 4):", "Yalnızca hisse fonu için ikiye bölme (Modül 4):");
   $("bisectTable").innerHTML = rows.length
-    ? "<tr><th>step</th><th>a</th><th>b</th><th>middle f</th><th>VaR − L</th></tr>" +
-      rows.map((r, k) => `<tr><td>${k + 1}</td>${r.map(x => `<td>${x.toFixed(4)}</td>`).join("")}</tr>`).join("") +
-      `<tr><td colspan="5" class="muted">… ${sol.history.length} steps in total → f = ${sol.fVar.toFixed(6)}</td></tr>`
-    : `<tr><td class="muted">${sol.status === "notBinding" ? "With stocks only, your limit is never reached, so there is no crossing to find." : "No crossing: the limit cannot be met."}</td></tr>`;
+    ? `<tr><th>${tx("step", "adım")}</th><th>a</th><th>b</th><th>${tx("middle f", "orta f")}</th><th>VaR − L</th></tr>` +
+      rows.map((r, k) => `<tr><td>${k + 1}</td>${r.map(x => `<td>${fix(x, 4)}</td>`).join("")}</tr>`).join("") +
+      `<tr><td colspan="5" class="muted">… ${tx(`${sol.history.length} steps in total`, `toplam ${sol.history.length} adım`)} → f = ${fix(sol.fVar, 6)}</td></tr>`
+    : `<tr><td class="muted">${sol.status === "notBinding"
+        ? tx("With stocks only, your limit is never reached, so there is no crossing to find.", "Yalnızca hisseyle sınırına hiç ulaşılmıyor, bu yüzden bulunacak bir kesişme yok.")
+        : tx("No crossing: the limit cannot be met.", "Kesişme yok: sınır karşılanamıyor.")}</td></tr>`;
 }
 
 // ---- Fat tails: the stocks + savings answer when rare crashes can happen (Module 4b) ----
 function renderCrash(p, sol) {
   const { lam, J, varFun, status, fLimit: fC } = cur.crash, worst = Math.round(1 / (1 - p.alpha)), every = cur.c.every;
-  $("crashSettingsNote").innerHTML = every
-    ? `Crash settings (More settings): stocks fall <b>${pct(-J, 0)}</b> about <b>once every ${every} years</b> in a normal market` +
-      (cur.st.key !== "normal" ? `, so about once every ${(1 / lam).toFixed(1)} years in a ${cur.st.name.toLowerCase()} market` : "") + "."
-    : `Crashes are switched off in More settings, so both answers are the same. Turn them on to compare.`;
+  const often = cur.st.key !== "normal" ? fix(1 / lam, 1) : null;
+  $("crashSettingsNote").innerHTML = !every
+    ? tx(`Crashes are switched off in More settings, so both answers are the same. Turn them on to compare.`,
+         `Çöküşler “Daha fazla ayar” bölümünde kapalı, bu yüzden iki cevap aynı. Karşılaştırmak için aç.`)
+    : tx(`Crash settings (More settings): stocks fall <b>${pct(-J, 0)}</b> about <b>once every ${every} years</b> in a normal market` +
+         (often ? `, so about once every ${often} years ${moodIn(cur.st.key)}` : "") + ".",
+         `Çöküş ayarları (Daha fazla ayar): normal bir piyasada hisseler <b>yaklaşık ${every} yılda bir</b> <b>${pct(-J, 0)}</b> düşer` +
+         (often ? `, yani ${moodIn(cur.st.key)} yaklaşık ${often} yılda bir` : "") + ".");
   const fB = Number.isFinite(sol.fVar) ? sol.fVar : 0;
   const chance = (f, l) => f > 0 ? jumpLogWealthCdf(Math.log(1 - p.L), f, p.mu, p.sig, p.r, p.T, l, J) : 0;
-  const oneIn = q => q > 0 ? `1 year in ${q > 0.5 ? (1 / q).toFixed(1) : Math.round(1 / q)}` : "never";
+  const oneIn = q => { if (!(q > 0)) return tx("never", "hiç"); const x = q > 0.5 ? fix(1 / q, 1) : Math.round(1 / q); return tx(`1 year in ${x}`, `${x} yılda 1`); };
   const pB = chance(fB, 0), pC = chance(fB, lam);
   $("crashStats").innerHTML = [
-    [`${pct(fB)} → ${pct(fC)}`, "most stock your limit allows: bell curve → with crashes"],
-    [`${pct(sol.varFun(fB))} → ${pct(varFun(fB))}`, `bad-year loss (VaR ${pct(p.alpha, 0)}) at ${pct(fB)} in stocks`],
-    [`${oneIn(pB)} → ${oneIn(pC)}`, `how often ${pct(fB)} in stocks loses more than your ${pct(p.L, 0)} limit (promised: 1 in ${worst})`]
+    [`${pct(fB)} → ${pct(fC)}`, tx("most stock your limit allows: bell curve → with crashes", "sınırının izin verdiği en fazla hisse: çan eğrisi → çöküşlerle")],
+    [`${pct(sol.varFun(fB))} → ${pct(varFun(fB))}`, tx(`bad-year loss (VaR ${pct(p.alpha, 0)}) at ${pct(fB)} in stocks`,
+                                                       `${pct(fB)} hissede kötü yıl kaybı (VaR ${pct(p.alpha, 0)})`)],
+    [`${oneIn(pB)} → ${oneIn(pC)}`, tx(`how often ${pct(fB)} in stocks loses more than your ${pct(p.L, 0)} limit (promised: 1 in ${worst})`,
+                                       `${pct(fB)} hisse ne sıklıkla ${pct(p.L, 0)} sınırından fazla kaybettirir (söz: ${worst} yılda 1)`)]
   ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
   const ptsB = [], ptsC = [];
   for (let i = 0; i <= 80; i++) { const f = i / 80; ptsB.push({ x: f, y: sol.varFun(f) }); ptsC.push({ x: f, y: varFun(f) }); }
@@ -1361,11 +1463,13 @@ function renderCrash(p, sol) {
   if (sol.status === "binding") dots.push({ x: fB, y: p.L, color: "var(--blue)" });
   if (status === "binding" && lam > 0) dots.push({ x: fC, y: p.L, color: "var(--red)" });
   drawChart($("crashChart"), { x: [0, 1], y: [lo - pad, hi + pad], xFmt: v => pct(v, 0), yFmt: v => pct(v, 0),
-    xLabel: "share of your money in stocks (f)", yLabel: "VaR (loss)", aria: "VaR with and without crashes",
+    xLabel: tx("share of your money in stocks (f)", "paranın hissedeki payı (f)"), yLabel: tx("VaR (loss)", "VaR (kayıp)"),
+    aria: tx("VaR with and without crashes", "çöküşlü ve çöküşsüz VaR"),
     series: [{ pts: ptsB, color: "var(--blue)" }, ...(lam > 0 ? [{ pts: ptsC, color: "var(--red)" }] : [])],
     hlines: [{ y: p.L, color: "var(--ink)", dash: "6 4" }], dots,
-    legend: [{ color: "var(--blue)", label: "bell curve only" }, ...(lam > 0 ? [{ color: "var(--red)", label: "with rare crashes" }] : []),
-             { color: "var(--ink)", label: "your limit L", dash: true }] });
+    legend: [{ color: "var(--blue)", label: tx("bell curve only", "yalnızca çan eğrisi") },
+             ...(lam > 0 ? [{ color: "var(--red)", label: tx("with rare crashes", "nadir çöküşlerle") }] : []),
+             { color: "var(--ink)", label: tx("your limit L", "sınırın L"), dash: true }] });
 }
 
 // ---- History check (stocks + savings account) ----
@@ -1387,8 +1491,10 @@ function renderHistory() {
   $("histBody").classList.toggle("hidden", !ok);
   if (!ok) return;
   const R = cur.data.windows, sorted = [...R].sort((a, b) => a - b);
-  $("histIntro").innerHTML = `Bars: the stock's real return over every one-year period in your data (${R.length} periods).
-    Red curve: what the bell-curve model with an average return of ${pct(Math.exp(p.mu) - 1)} and σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`;
+  $("histIntro").innerHTML = tx(`Bars: the stock's real return over every one-year period in your data (${R.length} periods).
+    Red curve: what the bell-curve model with an average return of ${pct(Math.exp(p.mu) - 1)} and σ = ${pct(p.sig)} expects. Bars far left of the curve are the “fat tails”.`,
+    `Çubuklar: verindeki her bir yıllık dönemde hissenin gerçek getirisi (${R.length} dönem). Kırmızı eğri: ortalama getirisi
+    ${pct(Math.exp(p.mu) - 1)} ve σ = ${pct(p.sig)} olan çan eğrisi modelinin beklentisi. Eğrinin çok solundaki çubuklar “kalın kuyruklar”.`);
   const lo = Math.min(sorted[0], -0.5), hi = Math.max(sorted[sorted.length - 1], 0.6), nb = 24, w = (hi - lo) / nb, counts = Array(nb).fill(0);
   for (const x of R) counts[Math.min(nb - 1, Math.floor((x - lo) / w))]++;
   const bars = counts.map((c, i) => ({ x0: lo + i * w, x1: lo + (i + 1) * w, y: c / (R.length * w), color: "var(--blue-soft)" }));
@@ -1397,22 +1503,31 @@ function renderHistory() {
   for (let i = 0; i <= 300; i++) { const x = lo + (hi - lo) * i / 300; if (x > -1) curve.push({ x, y: normPdf((Math.log(1 + x) - m) / p.sig) / ((1 + x) * p.sig) }); }
   const ymax = Math.max(...bars.map(b => b.y), ...curve.map(c => c.y)) * 1.1;
   const qHist = quantileLinear(sorted, 1 - p.alpha), qModel = Math.exp(m - normPpf(p.alpha) * p.sig) - 1;
-  drawChart($("histChart"), { x: [lo, hi], y: [0, ymax], hideY: true, bars, xFmt: v => pct(v, 0), xLabel: "stock return over one year",
+  const worstP = pct(1 - p.alpha, 0);
+  drawChart($("histChart"), { x: [lo, hi], y: [0, ymax], hideY: true, bars, xFmt: v => pct(v, 0), xLabel: tx("stock return over one year", "bir yıllık hisse getirisi"),
     series: [{ pts: curve, color: "var(--red)", dash: "6 4" }],
-    vlines: [{ x: qHist, color: "var(--blue)" }, { x: qModel, color: "var(--red)" }], aria: "histogram of one-year returns",
-    legend: [{ color: "var(--blue-soft)", label: "real one-year returns" }, { color: "var(--red)", label: "bell-curve model", dash: true },
-             { color: "var(--blue)", label: `real worst ${pct(1 - p.alpha, 0)}: ${pct(qHist)}` }, { color: "var(--red)", label: `model worst ${pct(1 - p.alpha, 0)}: ${pct(qModel)}` }] });
+    vlines: [{ x: qHist, color: "var(--blue)" }, { x: qModel, color: "var(--red)" }], aria: tx("histogram of one-year returns", "bir yıllık getirilerin histogramı"),
+    legend: [{ color: "var(--blue-soft)", label: tx("real one-year returns", "gerçek bir yıllık getiriler") },
+             { color: "var(--red)", label: tx("bell-curve model", "çan eğrisi modeli"), dash: true },
+             { color: "var(--blue)", label: `${tx(`real worst ${worstP}`, `gerçek en kötü ${worstP}`)}: ${pct(qHist)}` },
+             { color: "var(--red)", label: `${tx(`model worst ${worstP}`, `model en kötü ${worstP}`)}: ${pct(qModel)}` }] });
   const hs = solveHistory(p), fModel = sol.fOpt, fRec = Math.min(fModel, hs.f);
   const breaks = histPortfolio(p, fModel).filter(x => 1 - x > p.L + 1e-12).length;
   $("histStats").innerHTML = [
-    [pct(fModel), "bell-curve model says (stocks + savings)"], [pct(hs.f), "real history allows"],
-    [pct(fRec), "recommended: the smaller one"], [`${breaks} of ${R.length}`, `past one-year periods where ${pct(fModel)} in stocks broke your limit`]
+    [pct(fModel), tx("bell-curve model says (stocks + savings)", "çan eğrisi modeli diyor (hisse + mevduat)")], [pct(hs.f), tx("real history allows", "gerçek geçmiş izin veriyor")],
+    [pct(fRec), tx("recommended: the smaller one", "öneri: küçük olanı")],
+    [tx(`${breaks} of ${R.length}`, `${R.length} dönemde ${breaks}`), tx(`past one-year periods where ${pct(fModel)} in stocks broke your limit`,
+                                                                       `${pct(fModel)} hissenin sınırını aştığı geçmiş bir yıllık dönemler`)]
   ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
-  const share = breaks / R.length, promised = 1 - p.alpha;
-  $("histText").innerHTML = `<p>The model promises that your limit breaks in about ${pct(promised, 0)} of years. In your data it broke in
-    <b>${pct(share)}</b> of one-year periods → ${share <= promised * 1.25 ? `<span class="ok">consistent with the model</span>` : `<span class="bad">more often than promised</span>`}.</p>
+  const share = breaks / R.length, promised = 1 - p.alpha, fits = share <= promised * 1.25;
+  $("histText").innerHTML = tx(`<p>The model promises that your limit breaks in about ${pct(promised, 0)} of years. In your data it broke in
+    <b>${pct(share)}</b> of one-year periods → ${fits ? `<span class="ok">consistent with the model</span>` : `<span class="bad">more often than promised</span>`}.</p>
     <p class="muted">The history answer uses the same method as the model: the historical VaR changes without jumps as f grows,
-    so the Intermediate Value Theorem guarantees a crossing with your limit, and bisection finds it.</p>`;
+    so the Intermediate Value Theorem guarantees a crossing with your limit, and bisection finds it.</p>`,
+    `<p>Model, sınırının yılların yaklaşık ${pct(promised, 0)} kadarında aşılacağını söylüyor. Verinde bir yıllık dönemlerin
+    <b>${pct(share)}</b> kadarında aşıldı → ${fits ? `<span class="ok">modelle uyumlu</span>` : `<span class="bad">söz verilenden sık</span>`}.</p>
+    <p class="muted">Geçmiş cevabı modelle aynı yöntemi kullanır: f büyüdükçe tarihsel VaR sıçramadan değişir, bu yüzden
+    Ara Değer Teoremi sınırınla bir kesişmeyi garanti eder ve ikiye bölme yöntemi onu bulur.</p>`);
 }
 
 // =====================================================================
@@ -1429,26 +1544,30 @@ function lifeSettings() {
            crash: useData ? { ...c, every: 0, lam: 0 } : c, states: useData ? marketStates(p, 0, c.J) : states };
 }
 function settingsText(set) {
-  const c = set.crash;
-  return `${set.length} years · ` + (set.useData
-    ? `your real stock years, shuffled (with their real crashes) · gold, bonds and savings in a ${set.states[set.mood].name.toLowerCase()} market · `
-    : `starts in a ${set.states[set.mood].name.toLowerCase()} market · ${set.changing ? "markets change over time" : "the market never changes"} · ` +
-      `${c.every ? `a ${pct(-c.J, 0)} crash about every ${c.every} years` : "no crashes"} · `) + `life events ${set.events ? "on" : "off"} · ` +
-    `you add ${money(set.save)} a year`;
+  const c = set.crash, m = set.mood;
+  return tx(`${set.length} years · `, `${set.length} yıl · `) + (set.useData
+    ? tx(`your real stock years, shuffled (with their real crashes) · gold, bonds and savings ${moodIn(m)} · `,
+         `gerçek hisse yılların, karıştırılmış (gerçek çöküşleriyle) · altın, tahvil ve mevduat ${moodIn(m)} · `)
+    : tx(`starts ${moodIn(m)}`, `${moodIn(m)} başlıyor`) + " · " +
+      (set.changing ? tx("markets change over time", "piyasalar zamanla değişir") : tx("the market never changes", "piyasa hiç değişmez")) + " · " +
+      (c.every ? tx(`a ${pct(-c.J, 0)} crash about every ${c.every} years`, `yaklaşık ${c.every} yılda bir ${pct(-c.J, 0)} çöküş`) : tx("no crashes", "çöküş yok")) + " · ") +
+    (set.events ? tx("life events on", "hayat olayları açık") : tx("life events off", "hayat olayları kapalı")) + " · " +
+    tx(`you add ${money(set.save)} a year`, `yılda ${money(set.save)} ekliyorsun`);
 }
 // The main comparison (your plan, your guess if you made one, the savings account) and a few simple extras for "Compare more strategies".
 function lifeStrategies() {
   const { plan, crashPlan, sol, c, guess } = cur, f = sol.fOpt;
+  const allSavings = tx("all savings", "tamamı mevduat");
   const rows = [
-    { key: "plan", name: "Your plan", desc: plan.d ? mixText(plan.w) : "all savings", w: plan.w, color: "var(--blue)", width: 3.4, main: true },
-    ...(guess ? [{ key: "guess", name: "Your guess", desc: mixText(guess.w), w: guess.w, color: "var(--amber)", width: 2.4, main: true }] : []),
-    { key: "bank", name: "Savings account only", desc: "no risk", w: [0, 0, 0, 1], color: "var(--dep)", main: true }];
+    { key: "plan", name: tx("Your plan", "Planın"), desc: plan.d ? mixText(plan.w) : allSavings, w: plan.w, color: "var(--blue)", width: 3.4, main: true },
+    ...(guess ? [{ key: "guess", name: tx("Your guess", "Tahminin"), desc: mixText(guess.w), w: guess.w, color: "var(--amber)", width: 2.4, main: true }] : []),
+    { key: "bank", name: tx("Savings account only", "Yalnızca mevduat"), desc: tx("no risk", "risksiz"), w: [0, 0, 0, 1], color: "var(--dep)", main: true }];
   if (crashPlan && c.every && crashPlan.w.some((x, i) => Math.abs(x - plan.w[i]) > 0.005))
-    rows.push({ key: "crash", name: "Crash-safe plan", desc: crashPlan.d ? mixText(crashPlan.w) : "all savings", w: crashPlan.w, color: "var(--purple)" });
+    rows.push({ key: "crash", name: tx("Crash-safe plan", "Çöküşe dayanıklı plan"), desc: crashPlan.d ? mixText(crashPlan.w) : allSavings, w: crashPlan.w, color: "var(--purple)" });
   return rows.concat([
-    { key: "stock4", name: "Stocks + savings only", desc: `${pct(f, 0)} stocks`, w: [f, 0, 0, 1 - f], color: "var(--green)" },
-    { key: "stocks", name: "All stocks", desc: "100% stocks", w: [1, 0, 0, 0], color: "var(--red)" },
-    { key: "gold", name: "All gold", desc: "100% gold", w: [0, 1, 0, 0], color: "var(--goldc)" }]);
+    { key: "stock4", name: tx("Stocks + savings only", "Yalnızca hisse + mevduat"), desc: `${pct(f, 0)} ${aLow(0)}`, w: [f, 0, 0, 1 - f], color: "var(--green)" },
+    { key: "stocks", name: tx("All stocks", "Tamamı hisse"), desc: `${pct(1, 0)} ${aLow(0)}`, w: [1, 0, 0, 0], color: "var(--red)" },
+    { key: "gold", name: tx("All gold", "Tamamı altın"), desc: `${pct(1, 0)} ${aLow(1)}`, w: [0, 1, 0, 0], color: "var(--goldc)" }]);
 }
 function lifeScenario(seed, set = lifeSettings(), strategies = lifeStrategies()) {
   const years = generateYears(set, seed);
@@ -1468,40 +1587,51 @@ const nameCell = r => `<i class="dot" style="background:${r.color}"></i>${r.name
 function drawLife() {
   const sc = scenarioNow(), n = sc.years.length, main = sc.rows.filter(r => r.main);
   const upto = life.upto === null ? n : life.upto, real = st => st.money / st.price;
-  $("lifeSettings").innerHTML = `One possible future: your plan${cur.guess ? ", your guess" : ""} and the savings account, on exactly the same years. ` +
-    `<b>Settings:</b> ${settingsText(sc.set)} (change them in More settings). Future #${life.seed}.`;
+  $("lifeSettings").innerHTML = tx(`One possible future: your plan${cur.guess ? ", your guess" : ""} and the savings account, on exactly the same years. ` +
+    `<b>Settings:</b> ${settingsText(sc.set)} (change them in More settings). Future #${life.seed}.`,
+    `Olası bir gelecek: planın${cur.guess ? ", tahminin" : ""} ve mevduat hesabı, tamamen aynı yıllarda. ` +
+    `<b>Ayarlar:</b> ${settingsText(sc.set)} (“Daha fazla ayar” bölümünden değiştir). Gelecek #${life.seed}.`);
   const cut = path => {                                            // the part of a path up to time `upto`, smoothly
     const pts = path.filter(q => q.x <= upto), next = path.find(q => q.x > upto), last = pts[pts.length - 1];
     return next && last ? pts.concat({ x: upto, y: last.y + (next.y - last.y) * (upto - last.x) / (next.x - last.x) }) : pts;
   };
   const all = main.concat([{ st: sc.keep }]).flatMap(r => r.st.path.map(q => q.y));
   const top = Math.max(...all, sc.set.S) * 1.08;
-  drawChart($("lifeChart"), { x: [0, n], y: [0, top], xFmt: v => v, yFmt: v => num(v), xLabel: "year", yLabel: inSym("in today's money"),
-    bars: regimeBands(sc.years, Math.ceil(upto), top), aria: "your plan in one possible future",
+  drawChart($("lifeChart"), { x: [0, n], y: [0, top], xFmt: v => v, yFmt: v => num(v), xLabel: tx("year", "yıl"), yLabel: inSym(tx("in today's money", "bugünün parasıyla")),
+    bars: regimeBands(sc.years, Math.ceil(upto), top), aria: tx("your plan in one possible future", "olası bir gelecekte planın"),
     series: [{ pts: cut(sc.keep.path), color: "var(--gray)", dash: "5 4", width: 1.6 },
              ...main.slice().reverse().map(r => ({ pts: cut(r.st.path), color: r.color, width: r.width || 2 }))],
     hlines: [{ y: sc.set.S, color: "var(--gray)", dash: "4 4" }],
-    legend: main.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: "keeping up with inflation", dash: true }], BAND_LEGEND) });
+    legend: main.map(r => ({ color: r.color, label: r.name })).concat([{ color: "var(--gray)", label: tx("keeping up with inflation", "enflasyona ayak uydurmak"), dash: true }], bandLegend()) });
   // what happened in the last finished year
   const k = Math.min(n, Math.floor(upto + 1e-9));
-  if (k === 0) $("lifeLog").innerHTML = `Press <b>▶ Play the years</b> to watch your plan year by year. The market starts <b>${sc.set.states[sc.set.mood].name.toLowerCase()}</b>.`;
+  if (k === 0) $("lifeLog").innerHTML = tx(`Press <b>▶ Play the years</b> to watch your plan year by year. The market starts <b>${moodLow(sc.set.mood)}</b>.`,
+                                           `Planını yıl yıl izlemek için <b>▶ Yılları oynat</b> düğmesine bas. Piyasa başlangıçta <b>${moodLow(sc.set.mood)}</b>.`);
   else {
     const y = sc.years[k - 1], prev = k > 1 ? sc.years[k - 2].regime : null, ch = w => w.reduce((s, wi, i) => s + wi * y.months[12][i], 0) - 1;
-    const fmt = x => `<b class="${x >= 0 ? "ok" : "bad"}">${signed(x)}</b>`;
-    const ev = y.event ? { emergency: ` An emergency (${y.event.what}) cost ${pct(y.event.size, 0)} of your starting money.`,
-                           bonus: " A bonus at work was added.", raise: " You got a raise, so you save more from now on." }[y.event.type] : "";
-    const over = ch(sc.rows[0].w) < -sc.set.L ? ` <span class="bad">Your plan lost more than your ${pct(sc.set.L, 0)} limit this year.</span>` : "";
-    $("lifeLog").innerHTML = `<b>Year ${k}${y.label ? ` (${y.label})` : ""}:</b> a <b>${sc.set.states[y.regime].name.toLowerCase()}</b> year` +
-      (prev && prev !== y.regime ? ` (the market turned)` : "") + (y.shock ? `, <span class="bad">market crash!</span>` : "") +
-      `. Your plan ${fmt(ch(sc.rows[0].w))}${cur.guess ? `, your guess ${fmt(ch(cur.guess.w))}` : ""}, savings ${fmt(ch([0, 0, 0, 1]))}. ` +
-      `Prices rose ${pct(y.infl, 1)}.${ev}${over}`;
+    const fmt = x => `<b class="${x >= 0 ? "ok" : "bad"}">${signed(x)}</b>`, e = y.event;
+    const ev = !e ? "" : e.type === "emergency"
+        ? tx(` An emergency (${EMERGENCIES[e.what]}) cost ${pct(e.size, 0)} of your starting money.`,
+             ` Bir acil durum (${EMERGENCIES_TR[e.what]}) başlangıç paranın ${pct(e.size, 0)} kadarına mal oldu.`)
+      : e.type === "bonus" ? tx(" A bonus at work was added.", " İşten bir prim eklendi.")
+      : tx(" You got a raise, so you save more from now on.", " Zam aldın, bu yüzden bundan sonra daha çok biriktiriyorsun.");
+    const over = ch(sc.rows[0].w) < -sc.set.L ? ` <span class="bad">${tx(`Your plan lost more than your ${pct(sc.set.L, 0)} limit this year.`,
+                                                                        `Planın bu yıl ${pct(sc.set.L, 0)} sınırından fazla kaybetti.`)}</span>` : "";
+    const span = y.span ? ` (${fmtSpan(y.span)})` : "";
+    $("lifeLog").innerHTML = tx(`<b>Year ${k}${span}:</b> <b>${moodYear(y.regime)}</b>`, `<b>${k}. yıl${span}:</b> <b>${moodYear(y.regime)}</b>`) +
+      (prev && prev !== y.regime ? tx(` (the market turned)`, ` (piyasa döndü)`) : "") + (y.shock ? `, <span class="bad">${tx("market crash!", "piyasa çöküşü!")}</span>` : "") +
+      tx(`. Your plan ${fmt(ch(sc.rows[0].w))}${cur.guess ? `, your guess ${fmt(ch(cur.guess.w))}` : ""}, savings ${fmt(ch([0, 0, 0, 1]))}. Prices rose ${pct(y.infl, 1)}.`,
+         `. Planın ${fmt(ch(sc.rows[0].w))}${cur.guess ? `, tahminin ${fmt(ch(cur.guess.w))}` : ""}, mevduat ${fmt(ch([0, 0, 0, 1]))}. Fiyatlar ${pct(y.infl, 1)} arttı.`) +
+      ev + over;
   }
   // the result table, once all years are shown
   const done = upto >= n - 1e-9;
-  $("lifeTable").innerHTML = done ? "<tr><th>Strategy</th><th>Final money</th><th>In today's money</th><th>Years over your limit</th></tr>" +
+  $("lifeTable").innerHTML = done ? `<tr><th>${tx("Strategy", "Strateji")}</th><th>${tx("Final money", "Son para")}</th>` +
+    `<th>${tx("In today's money", "Bugünün parasıyla")}</th><th>${tx("Years over your limit", "Sınırı aşan yıllar")}</th></tr>` +
     main.map(r => `<tr><td>${nameCell(r)}</td><td>${money(r.st.money)}</td><td><b>${money(real(r.st))}</b></td>
-      <td>${r.st.strikes} of ${n}</td></tr>`).join("") +
-    `<tr><td><i class="dot" style="background:var(--gray)"></i>Just keeping up with inflation <span class="muted">(reference)</span></td><td>${money(sc.keep.money)}</td><td>${money(real(sc.keep))}</td><td>–</td></tr>` : "";
+      <td>${tx(`${r.st.strikes} of ${n}`, `${n} yılda ${r.st.strikes}`)}</td></tr>`).join("") +
+    `<tr><td><i class="dot" style="background:var(--gray)"></i>${tx("Just keeping up with inflation", "Yalnızca enflasyona ayak uydurmak")} ` +
+    `<span class="muted">${tx("(reference)", "(karşılaştırma için)")}</span></td><td>${money(sc.keep.money)}</td><td>${money(real(sc.keep))}</td><td>–</td></tr>` : "";
 }
 function animateLife() {
   const n = scenarioNow().years.length, token = ++life.token;
@@ -1533,7 +1663,7 @@ function renderLifeMany() {
           per[i].real.push(v); per[i].strikes += r.st.strikes; per[i].beat += v > bankReal ? 1 : 0; });
       }
       if (seed <= LIFE_FUTURES) {
-        $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures… ${pct((seed - 1) / LIFE_FUTURES, 0)}`;
+        $("lifeManyNote").textContent = tx(`Testing ${LIFE_FUTURES} futures… `, `${LIFE_FUTURES} gelecek test ediliyor… `) + pct((seed - 1) / LIFE_FUTURES, 0);
         setTimeout(step);
         return;
       }
@@ -1541,17 +1671,21 @@ function renderLifeMany() {
       showLifeMany(life.lastMany);
       done(true);
     };
-    $("lifeManyNote").textContent = `Testing ${LIFE_FUTURES} futures…`;
+    $("lifeManyNote").textContent = tx(`Testing ${LIFE_FUTURES} futures…`, `${LIFE_FUTURES} gelecek test ediliyor…`);
     setTimeout(step);
   });
 }
 function showLifeMany({ per, n, guessAhead, ties, p }) {
   const N = LIFE_FUTURES;
   const q = (a, x) => quantileLinear(a.slice().sort((u, v) => u - v), x), share = x => pct(x / N, 0);
-  const oneIn = x => x >= 100 ? `almost never (1 in ${Math.round(x)})` : `1 year in ${x < 20 ? x.toFixed(1) : Math.round(x)}`;
-  const every = r => r.strikes ? oneIn(N * n / r.strikes) : "never";
-  const head = "<tr><th>Strategy</th><th>Typical result (median)</th><th>Ends above savings only</th><th>A year over your limit</th></tr>";
-  const row = r => `<tr><td>${nameCell(r)}</td><td><b>${money(q(r.real, 0.5))}</b></td>
+  const oneIn = x => { const y = x < 20 ? fix(x, 1) : Math.round(x);
+    return x >= 100 ? tx(`almost never (1 in ${Math.round(x)})`, `neredeyse hiç (${Math.round(x)} yılda 1)`) : tx(`1 year in ${y}`, `${y} yılda 1`); };
+  const every = r => r.strikes ? oneIn(N * n / r.strikes) : tx("never", "hiç");
+  // Names come from lifeStrategies() again, so a language switch renames the rows without running the futures again.
+  const fresh = new Map(lifeStrategies().map(r => [r.key, r]));
+  const head = `<tr><th>${tx("Strategy", "Strateji")}</th><th>${tx("Typical result (median)", "Tipik sonuç (medyan)")}</th>` +
+    `<th>${tx("Ends above savings only", "Yalnızca mevduattan iyi")}</th><th>${tx("A year over your limit", "Sınırı aşan bir yıl")}</th></tr>`;
+  const row = r => `<tr><td>${nameCell(fresh.get(r.key) || r)}</td><td><b>${money(q(r.real, 0.5))}</b></td>
       <td>${r.key === "bank" ? "–" : share(r.beat)}</td><td>${every(r)}</td></tr>`;
   $("lifeMany").innerHTML = head + per.filter(r => r.main).map(row).join("");
   $("lifeExtra").innerHTML = head + per.filter(r => !r.main).map(row).join("");
@@ -1559,20 +1693,130 @@ function showLifeMany({ per, n, guessAhead, ties, p }) {
   const you = per[0], guess = per.find(r => r.key === "guess"), mathAhead = N - guessAhead - ties;
   const seg = (k, color, label) => k ? `<span style="width:${100 * k / N}%;background:${color}">${k / N >= 0.15 ? label : ""}</span>` : "";
   $("lifeWins").innerHTML = !guess ? "" : ties === N
-    ? `<p class="muted">Your guess is the same split as the math's plan, so both end with the same money in every future.</p>`
-    : `<div class="split" role="img" aria-label="the math ahead in ${share(mathAhead)}, your guess ahead in ${share(guessAhead)} of futures">` +
-      `${seg(mathAhead, "var(--blue)", `Math ${share(mathAhead)}`)}${seg(ties, "var(--gray)", `same ${share(ties)}`)}${seg(guessAhead, "var(--amber)", `You ${share(guessAhead)}`)}</div>` +
-      `<small>Who ended with more money after ${n} years: the math's plan in <b>${share(mathAhead)}</b> of the futures, your guess in <b>${share(guessAhead)}</b>` +
-      (ties ? ` (the same in ${share(ties)})` : "") + `. A year over your ${pct(p.L, 0)} limit: the plan ${every(you)}, your guess ${every(guess)}.</small>`;
-  const promise = Math.round(1 / (1 - p.alpha)), seen = you.strikes ? N * n / you.strikes : Infinity;
-  $("lifeManyNote").innerHTML = `Money is in today's money, after ${n} years. Your plan promises a year over your ${pct(p.L, 0)} limit at most ` +
+    ? `<p class="muted">${tx("Your guess is the same split as the math's plan, so both end with the same money in every future.",
+                              "Tahminin, matematiğin planıyla aynı dağılım; bu yüzden ikisi her gelecekte aynı parayla biter.")}</p>`
+    : `<div class="split" role="img" aria-label="${tx(`the math ahead in ${share(mathAhead)}, your guess ahead in ${share(guessAhead)} of futures`,
+                                                      `geleceklerin ${share(mathAhead)} kadarında matematik, ${share(guessAhead)} kadarında tahminin önde`)}">` +
+      `${seg(mathAhead, "var(--blue)", `${tx("Math", "Matematik")} ${share(mathAhead)}`)}${seg(ties, "var(--gray)", `${tx("same", "aynı")} ${share(ties)}`)}` +
+      `${seg(guessAhead, "var(--amber)", `${tx("You", "Sen")} ${share(guessAhead)}`)}</div>` +
+      tx(`<small>Who ended with more money after ${n} years: the math's plan in <b>${share(mathAhead)}</b> of the futures, your guess in <b>${share(guessAhead)}</b>` +
+         (ties ? ` (the same in ${share(ties)})` : "") + `. A year over your ${pct(p.L, 0)} limit: the plan ${every(you)}, your guess ${every(guess)}.</small>`,
+         `<small>${n} yıl sonra kimin daha çok parası oldu: geleceklerin <b>${share(mathAhead)}</b> kadarında matematiğin planının, <b>${share(guessAhead)}</b> kadarında tahmininin` +
+         (ties ? ` (${share(ties)} kadarında aynı)` : "") + `. ${pct(p.L, 0)} sınırını aşan bir yıl: planda ${every(you)}, tahmininde ${every(guess)}.</small>`);
+  const promise = Math.round(1 / (1 - p.alpha)), seen = you.strikes ? N * n / you.strikes : Infinity, holds = seen >= promise * 0.9;
+  $("lifeManyNote").innerHTML = tx(`Money is in today's money, after ${n} years. Your plan promises a year over your ${pct(p.L, 0)} limit at most ` +
     `<b>1 year in ${promise}</b>. In these futures it happened <b>${Number.isFinite(seen) ? oneIn(seen) : "never"}</b>` +
-    (seen >= promise * 0.9 ? `, <span class="ok">so the promise holds</span>.` : `, <span class="warn">more often than promised</span>: the surprises switched on in More settings (changing markets, crashes) are outside the bell-curve math.`) +
+    (holds ? `, <span class="ok">so the promise holds</span>.` : `, <span class="warn">more often than promised</span>: the surprises switched on in More settings (changing markets, crashes) are outside the bell-curve math.`) +
     ` With a market that never changes, no crashes and no life events, the futures follow the math of your plan closely: the plan is` +
-    ` rebalanced once a year while the math assumes all the time, which makes slightly fewer years go over the limit.`;
+    ` rebalanced once a year while the math assumes all the time, which makes slightly fewer years go over the limit.`,
+    `Para, ${n} yıl sonra bugünün parasıyla. Planın, ${pct(p.L, 0)} sınırını aşan yılın en fazla <b>${promise} yılda 1</b> olacağını söz veriyor. ` +
+    (Number.isFinite(seen) ? `Bu geleceklerde bu <b>${oneIn(seen)}</b> oldu` : `Bu geleceklerde bu <b>hiç olmadı</b>`) +
+    (holds ? `, <span class="ok">yani söz tutuluyor</span>.` : `, <span class="warn">söz verilenden sık</span>: “Daha fazla ayar” bölümünde açık olan sürprizler (değişen piyasalar, çöküşler) çan eğrisi hesabının dışında.`) +
+    ` Piyasa hiç değişmezse, çöküş ve hayat olayı yoksa, gelecekler planının hesabını yakından izler: plan yılda bir kez dengelenir,` +
+    ` hesap ise sürekli dengelendiğini varsayar; bu da sınırı aşan yılları biraz azaltır.`);
 }
 
+// =====================================================================
+// Language: the ENG / TUR switch
+// =====================================================================
+// Static text is written in English in the HTML (data-i18n="key", saved in data-en the first time) and in Turkish here.
+// Text built by the code uses tx(en, tr), so switching redraws the results as they are, without recalculating.
+const I18N_TR = {
+  title: "Yatırımcı",
+  h1: "Paramı nasıl bölmeliyim?",
+  intro: "Durumunu anlat, matematik senin için hisse, altın, tahvil ve mevduatın en iyi karışımını bulsun.",
+  fS: "Şimdi yatıracağın para", currency: "para birimi", noSym: "simgesiz", fSave: "Her yıl eklediğin", fR: "Banka faizi", fInfl: "Enflasyon",
+  perYear: "yıllık %",
+  qMarket: "Piyasa şu an nasıl?", qRisk: "Ne kadar risk alabilirsin?", careful: "Temkinli", balanced: "Dengeli", bold: "Cesur",
+  more: "Daha fazla ayar", moreSub: "süre, kendi dağılımın, hisse rakamları, sürprizler, gerçek veri",
+  yourPlan: "Planın", qYears: "Kaç yıl için?", y5: "5 yıl", y10: "10 yıl", y20: "20 yıl", y30: "30 yıl",
+  qSure: "Matematik ne kadar emin olmalı?",
+  a90: "%90: kötü yıl, 10 yılın en kötüsü", a95: "%95: kötü yıl, 20 yılın en kötüsü", a99: "%99: kötü yıl, 100 yılın en kötüsü",
+  qSplit: "Paranı nasıl bölerdin?",
+  useGuess: "Kendi tahminimi yap<small>Matematikten önce kendi dağılımını seç. Butona bastıktan sonra matematiği yenip yenemediğini görürsün.</small>",
+  gStock: "Hisseler", gGold: "Altın", gBond: "Tahviller", gDep: "Mevduat", theRest: "kalanı",
+  gStockAria: "tahminin: hisseler (%)", gGoldAria: "tahminin: altın (%)", gBondAria: "tahminin: tahviller (%)",
+  stockHead: "Normal bir piyasada hisseler", fMu: "Ortalama getiri (μ)", fSig: "Risk: bir yılda ne kadar dalgalanır (σ)",
+  stockNote: "Sakin, kriz ve yüksek enflasyonlu piyasalar bu rakamların daha iyi ya da daha kötü hâlleridir. Altın ve tahvil tipik uzun dönem " +
+    "değerlerini kullanır (aşağıdaki tablo). Hisse rakamlarını veriden tahmin etmek için aşağıya gerçek fiyatları yükle.",
+  reset: "Hepsini örneğe sıfırla",
+  surprises: "Gerçek hayat testindeki sürprizler",
+  changing: "Piyasalar zamanla değişir<small>Sakin yıllar, krizler ve yüksek enflasyon, gerçek hayattaki gibi birbirini izler.</small>",
+  events: "Hayat olayları<small>Bazı yıllarda acil durumlar, primler ve zamlar olur.</small>",
+  crashEvery: "Nadir çöküş:", crashSize: "Çöküş büyüklüğü:",
+  crashEveryNote: "Hissenin ortalama getirisi aynı kalır; yalnızca kötü yıllar daha kötü olur. Krizler daha çok çöküş getirir.",
+  dataHead: "Gerçek hisse fiyatlarını kullan (isteğe bağlı)",
+  dataIntro: "Tarih sütunu ve fiyat sütunu olan bir CSV yükle, örneğin investing.com ya da Yahoo Finance'ten indirilmiş bir endeks. " +
+    "<b>Dosya yalnızca bu sayfanın içinde okunur ve hiçbir yere yüklenmez.</b> Verin yok mu? Aynı klasördeki <code>sample_prices.csv</code> dosyasını dene.",
+  dragHere: "ya da dosyayı buraya sürükle",
+  useEstimates: "Tahmin edilen μ ve σ'yı geri koy", clearData: "Veriyi kaldır",
+  marketsUsed: "Kullanılan piyasalar (temsilî, tahmin değil)", transHead: "Piyasa bir yıldan diğerine nasıl değişir",
+  calcNote: "Girdilerini değiştirdin. Sonuçları güncellemek için butona yeniden bas.",
+  vsHead: "Tahminin mi, matematik mi?",
+  lifeHead: "Planın gerçek hayatta", play: "▶ Yılları oynat", skip: "Sona atla", another: "Başka bir gelecek",
+  manyHead: "Tek bir gelecek şanslı ya da şanssız olabilir. İşte 500 tanesi:",
+  moreStrat: "Daha fazla stratejiyi karşılaştır", moreStratSub: "yalnızca hisse, tamamı altın, …",
+  moreStratNote: "Diğer basit stratejiler için aynı 500 gelecek.",
+  howHead: "Planını nasıl bulduk", howIntro: "Planın arkasındaki matematik, adım adım. İstediğin bölümü aç.",
+  mixHead: "Karıştırmak neden işe yarar", mixSub: "her varlık tek başına ve karışımın, aynı risk",
+  mixIntro: "Her seçimin <b>kötü yıl sınırını aşmadan</b> ulaşabileceği yıllık tipik büyüme. Mevduatın yanında tek bir varlıkla risk sınırı seni erken " +
+    "durdurur. Birlikte düşmeyen varlıkları karıştırmak, aynı riskle daha hızlı büyümeni sağlar.",
+  bellHead: "Gelecek yıl ne olabilir", bellSub: "çan eğrisi",
+  bellIntro: "Eğri, karışımınla bir yıl sonra paranın nerede olabileceğini gösterir. Kırmızı kuyruk en kötü yıllardır (%95'te 20 yılın en kötüsü). " +
+    "Kuyruğun başladığı yer <b>Riske Maruz Değer (VaR)</b>, yani kötü yıl kaybındır. Sınırının (kesikli çizgi) sağında kalmalı.",
+  fTry: "Karışıma daha fazla ya da daha az para koymayı dene:",
+  ivtHead: "Cevap nasıl bulunur", ivtSub: "Ara Değer Teoremi + ikiye bölme",
+  ivtIntro: "Hisse, altın ve tahvilin her sabit karışımı <b>tek bir fon</b> gibi davranır. Paranın f payını bu fona koy, kalanını mevduatta tut. " +
+    "Kötü yıl kaybı VaR(f), f ile sıçramadan artar. f = 0'da sınırının altında, en üstte ise üstündedir; bu yüzden <b>Ara Değer Teoremi</b>'ne göre " +
+    "bir yerde sınırını keser. <b>İkiye bölme yöntemi</b> aralığı tekrar tekrar ikiye bölerek bu noktayı bulur.",
+  crashHead: "Nadir çöküşler olursa ne olur?", crashSub: "kalın kuyruklar",
+  crashIntro: "Çan eğrisi gerçekten kötü bir yılın neredeyse imkânsız olduğunu söyler, ama gerçek piyasalar bazen çöker. Burada hissenin " +
+    "<b>ortalama getirisi aynı kalır</b>, ama ara sıra aniden düşer. Çöküşleri hesaba katan VaR da f ile sıçramadan artar, bu yüzden aynı " +
+    "<b>Ara Değer Teoremi + ikiye bölme</b> yeni cevabı bulur. Hisse + mevduat için gösteriliyor (Modül 4b).",
+  histHead: "Gerçek geçmişle kontrol et", histSub: "fiyat yüklemen gerekir",
+  histEmpty: "Plan, getirilerin çan eğrisine uyduğunu varsayar. Gerçek piyasalarda daha uç yıllar olur (“kalın kuyruklar”). Hisse + mevduat " +
+    "cevabını gerçekte olanlarla test etmek için <b>Daha fazla ayar</b> bölümünden hisse fiyatlarını yükle.",
+  histChartHead: "Gerçek bir yıllık getiriler ve çan eğrisi", twoAnswers: "İki cevap",
+  histNote: "Bir yıllık dönemler her veri noktasında başlar, bu yüzden üst üste biner ve bağımsız değildir. Geçmiş kontrolünü garanti değil, kaba bir rehber olarak gör.",
+  footer: "Öğrenmek için temsilî bir model, yatırım tavsiyesi değildir. <a href=\"index.html\">Limits in Finance</a> projesiyle aynı matematik: " +
+    "sürekli limitler, Ara Değer Teoremi ve ikiye bölme yöntemi."
+};
+function applyLang() {
+  document.documentElement.lang = LANG;
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = LANG === "tr" ? I18N_TR[el.dataset.i18n] : el.dataset.en;
+  }
+  for (const el of document.querySelectorAll("[data-i18n-aria]")) {
+    if (el.dataset.enAria === undefined) el.dataset.enAria = el.getAttribute("aria-label");
+    el.setAttribute("aria-label", LANG === "tr" ? I18N_TR[el.dataset.i18nAria] : el.dataset.enAria);
+  }
+  for (const b of document.querySelectorAll(".lang button")) {
+    b.classList.toggle("sel", b.dataset.lang === LANG); b.setAttribute("aria-pressed", b.dataset.lang === LANG);
+  }
+  calcLabel();
+}
+// Like the currency: everything is redrawn in the new language, nothing is recalculated or dimmed.
+function setLang(lang) {
+  if (lang === LANG) return;
+  LANG = lang;
+  try { localStorage.setItem("investorLang", lang); } catch (e) { /* the choice is just not remembered */ }
+  applyLang();
+  setStatus(statusFn);
+  renderInputs();
+  renderData();
+  if (!cur) return;
+  life.scFor = null;                                               // the one future shown is rebuilt with names in the new language
+  renderPlan(); renderHow(); renderHistory(); drawLife();
+  if (life.lastMany) showLifeMany(life.lastMany);
+}
+for (const b of document.querySelectorAll(".lang button")) b.addEventListener("click", () => setLang(b.dataset.lang));
+
 // ---- start ----
+{ let saved = null;
+  try { saved = localStorage.getItem("investorLang"); } catch (e) { /* no storage: use the browser's language */ }
+  LANG = saved === "en" || saved === "tr" ? saved : /^tr\b/i.test(navigator.language || "") ? "tr" : "en"; }
+applyLang();
 renderInputs();
 renderData();
 // Charts are drawn for a narrow or a wide screen (drawChart), so they are redrawn only when that changes, with no new calculation.

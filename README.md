@@ -158,7 +158,8 @@ Open these files in a browser:
   each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
   paths into GBM, then the VaR limit with IVT + bisection, rare crashes and the best mix of stocks, gold and bonds,
   found by a finer and finer search (dots on a triangle closing in on the true best mix).
-- `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page.
+- `web/investor.html`: **The Investor**, the real-life version of Modules 4 and 5, on one minimalist page,
+  in English or Turkish (the **ENG | TUR** switch in the top-right corner; Turkish writes numbers as %7,5 and 10.000).
   1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
      year, the bank interest rate, inflation, how the market is right now (calm, normal, crisis or high
      inflation) and how much risk you can take: **Careful**, **Balanced** or **Bold**. Careful and Balanced are your
