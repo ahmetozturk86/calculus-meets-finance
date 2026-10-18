@@ -157,15 +157,31 @@
   /* The arcade game: always a dark neon cabinet, whatever the page theme. */
   .arcade { --a-bg: #07051a; --a-text: #e8e6ff; --a-dim: #9c98c8; --a-green: #39ff14; --a-pink: #ff3ea5; --a-cyan: #22e4ff; --a-yellow: #ffe23a; --a-red: #ff4d4d;
             width: min(640px, calc(100% - 24px)); max-height: 94vh; padding: 0; border: 3px solid var(--a-pink); border-radius: 16px; background: var(--a-bg);
-            color: var(--a-text); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 0 30px rgba(255,62,165,.5), inset 0 0 40px rgba(34,228,255,.08); }
+            color: var(--a-text); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 0 30px rgba(255,62,165,.5), inset 0 0 40px rgba(34,228,255,.08);
+            scrollbar-width: none; }
+  html:has(.arcade[open]) { overflow: hidden; }                   /* the page behind the game does not scroll or show a bar */
+  .arcade::-webkit-scrollbar { display: none; }                     /* it still scrolls, without a bar */
   .arcade::backdrop { background: rgba(2,1,10,.82); }
   .arcade::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: 13px;
                    background: repeating-linear-gradient(transparent 0 2px, rgba(255,255,255,.035) 2px 3px); }
-  .arc-bar { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; padding: 10px 14px; border-bottom: 2px dashed rgba(255,62,165,.5);
+  .arc-bar { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; padding: 10px 14px;
              font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-  .arc-bar #arcScore { color: var(--a-yellow); } .arc-bar #arcLevel { color: var(--a-cyan); } .arc-bar #arcLives { color: var(--a-red); font-size: 16px; letter-spacing: .1em; } .arc-bar #arcHi { color: var(--a-dim); }
-  .arc-bar .broke { display: inline-block; animation: arcBreak .9s ease both; }
-  @keyframes arcBreak { 0% { transform: scale(1); color: var(--a-red); } 30% { transform: scale(1.9) rotate(-15deg); } 60% { transform: scale(1.3) rotate(12deg); } 100% { transform: none; } }
+  .arc-bar #arcLevel { color: var(--a-cyan); font-size: clamp(20px, 5vw, 26px); font-weight: 900; text-shadow: 0 0 10px rgba(34,228,255,.6); } .arc-bar #arcHi { color: var(--a-dim); }
+  /* The two things that matter most, big: the money (counts up or down when it changes) and the hearts (beating). */
+  .arc-bar #arcScore { display: inline-block; min-width: 5.5ch; color: var(--a-yellow); font-size: clamp(22px, 5.5vw, 30px); font-weight: 900; letter-spacing: .02em;
+                       font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(255,226,58,.6); text-transform: none; }
+  .arc-bar #arcScore.up { animation: arcUp .9s ease; } .arc-bar #arcScore.down { animation: arcDown .9s ease; }
+  @keyframes arcUp { 0% { transform: scale(1); } 25% { transform: scale(1.18); color: var(--a-green); text-shadow: 0 0 18px rgba(57,255,20,.9); } 100% { transform: scale(1); } }
+  @keyframes arcDown { 0%, 100% { transform: none; } 15% { color: var(--a-red); text-shadow: 0 0 18px rgba(255,77,77,.9); transform: translateX(-6px) scale(1.1); }
+                       35% { color: var(--a-red); transform: translateX(6px) scale(1.1); } 55% { color: var(--a-red); transform: translateX(-3px); } }
+  .arc-bar #arcLives { display: inline-flex; gap: 4px; font-size: clamp(24px, 6vw, 32px); line-height: 1; }
+  .arc-bar .h { display: inline-block; color: var(--a-red); text-shadow: 0 0 10px rgba(255,77,77,.7); animation: arcBeat 1.4s ease-in-out infinite; }
+  .arc-bar .h:nth-child(2) { animation-delay: .12s; } .arc-bar .h:nth-child(3) { animation-delay: .24s; }
+  .arc-bar .h.danger { animation-duration: .55s; text-shadow: 0 0 16px rgba(255,77,77,1); }
+  .arc-bar .h.empty { color: var(--a-dim); opacity: .5; text-shadow: none; animation: none; }
+  @keyframes arcBeat { 0%, 40%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 28% { transform: scale(1.08); } }
+  .arc-bar .broke { display: inline-block; animation: arcBreak 1.1s ease both; }
+  @keyframes arcBreak { 0% { transform: scale(1); } 25% { transform: scale(2.2) rotate(-18deg); } 50% { transform: scale(1.5) rotate(14deg); } 75% { transform: translateY(4px) rotate(-6deg); } 100% { transform: none; opacity: .75; } }
   .arc-x { margin-left: auto; border: 0; background: transparent; color: var(--a-dim); font: inherit; font-size: 16px; cursor: pointer; }
   .arc-screen { padding: 14px 18px 20px; position: relative; overflow: hidden; }
   .arc-screen.hit { animation: arcShake .45s ease; }
@@ -196,9 +212,14 @@
   .arcade th, .arcade td { padding: 5px 6px; border-bottom: 1px solid rgba(156,152,200,.25); text-align: right; font-variant-numeric: tabular-nums; }
   .arcade th { color: var(--a-dim); font-weight: 600; font-size: 12px; }
   .arcade th:first-child, .arcade td:first-child { text-align: left; }
-  .arc-slider { display: grid; grid-template-columns: 82px 1fr 104px; gap: 10px; align-items: center; margin: 4px 0; }
-  .arc-slider input { margin: 0; width: 100%; }
-  .arc-slider b { text-align: right; font-variant-numeric: tabular-nums; font-size: 13.5px; white-space: nowrap; }
+  .arc-dial { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: center; margin-top: 6px; }
+  .arc-dial svg { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; touch-action: none; cursor: pointer; user-select: none; }
+  .arc-dial .knob { cursor: grab; } .arc-dial .knob:focus { outline: none; } .arc-dial .knob:focus circle { stroke: var(--a-yellow); stroke-width: 4; }
+  .arc-dial svg.drag, .arc-dial svg.drag .knob { cursor: grabbing; }
+  .arc-parts { display: grid; gap: 6px; }
+  .arc-part { display: grid; grid-template-columns: 14px 1fr auto; gap: 4px 10px; align-items: center; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.04); }
+  .arc-part i { width: 14px; height: 14px; border-radius: 3px; }
+  .arc-part b { font-size: 18px; font-variant-numeric: tabular-nums; } .arc-part small { grid-column: 2 / -1; color: var(--a-dim); font-size: 12.5px; margin-top: -4px; }
   .arc-odds { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: rgba(34,228,255,.07); font-size: 14px; }
   .arc-meter { position: relative; height: 12px; border: 2px solid var(--a-dim); border-radius: 4px; margin: 6px 0 2px; overflow: hidden; }
   .arc-meter i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--a-green); transition: width .15s; }
@@ -232,7 +253,7 @@
   @keyframes arcWalk { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
   .arc-noanim *, .arc-noanim .arc-screen { animation: none !important; transition: none !important; }
   .arc-noanim .arc-paper { display: none; }
-  @media (max-width: 480px) { .arc-slider { grid-template-columns: 62px 1fr 92px; gap: 6px; } .arc-hero, .arc-hero.big { grid-template-columns: 76px 1fr; } .arc-market .icon { font-size: 28px; } }
+  @media (max-width: 480px) { .arc-dial { grid-template-columns: 1fr; } .arc-hero, .arc-hero.big { grid-template-columns: 76px 1fr; } .arc-market .icon { font-size: 28px; } }
   .lang button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; padding: 5px 11px; cursor: pointer; }
   .lang button.sel { background: var(--blue); color: #fff; }
 </style>
@@ -2180,7 +2201,23 @@ function arcGuy(mood) {
 const arcMoodNow = () => arc.hearts >= 3 ? "happy" : arc.hearts === 2 ? "nervous" : "panic";
 
 // ---- game flow ----
+// The money in the top bar counts from the last shown value to the new one (green up, red down), in `ms` milliseconds.
+let arcShown = null, arcMoneyTok = 0;
+function arcSetMoney(v, ms) {
+  const el = $("arcScore"), from = arcShown === null ? v : arcShown, tok = ++arcMoneyTok;
+  arcShown = v;
+  if (reduceMotion() || Math.abs(v - from) < 0.5) { el.textContent = money(v); return; }
+  if (ms >= 500) { el.classList.remove("up", "down"); void el.offsetWidth; el.classList.add(v > from ? "up" : "down"); }
+  const t0 = performance.now(), step = now => {
+    if (tok !== arcMoneyTok) return;
+    const k = clamp((now - t0) / ms, 0, 1), e = 1 - (1 - k) ** 3;   // a frame's time can be a bit before t0
+    el.textContent = money(from + (v - from) * e);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 function arcStart() {
+  arcShown = null;
   Object.assign(arc, { year: 1, hearts: ARC_HEARTS, money: ARC_START, quant: ARC_START, bank: ARC_START, hist: [], w: [0.3, 0.1, 0.3, 0.3],
                        mood: arcPick(["calm", "normal", "normal", "inflation"]), broke: false });
   arc.phase = "plan"; arcBossPlan();
@@ -2238,6 +2275,7 @@ function arcChartSvg(s, upto, startYou) {
 }
 function arcDrawYear() {
   const s = arc.sim, m = arc.month, now = s.you[m], up = now >= arc.money;
+  arcSetMoney(now, ARC_MONTH_MS * 0.9);                            // the big money ticks with the months
   $("arcChartBox").innerHTML = arcChartSvg(s, m, arc.money) +
     `<span class="arc-month">${tx(ARC_MONTHS, ARC_MONTHS_TR)[Math.max(0, m - 1)]}</span>` +
     `<span class="arc-now ${up ? "arc-good" : "arc-bad"}">${money(now)}</span>` +
@@ -2257,10 +2295,12 @@ function arcHistTable() {
 }
 function renderArcade() {
   const best = arcBest(), sel = arc.phase === "start";
-  $("arcScore").textContent = sel ? "" : money(arc.money);
+  if (sel) $("arcScore").textContent = ""; else arcSetMoney(arc.money, 900);
   $("arcLevel").textContent = sel ? "" : `${tx("Year", "Yıl")} ${arc.year}/${ARC_YEARS}`;
   const full = Math.max(0, arc.hearts);
-  $("arcLives").innerHTML = sel ? "" : "♥".repeat(full) + (arc.broke ? `<span class="broke">💔</span>` + "♡".repeat(Math.max(0, ARC_HEARTS - full - 1)) : "♡".repeat(ARC_HEARTS - full));
+  const heart = cls => `<span class="h ${cls}">${cls === "empty" ? "♡" : "♥"}</span>`;
+  $("arcLives").innerHTML = sel ? "" : heart(full === 1 ? "danger" : "").repeat(full) +
+    (arc.broke ? `<span class="broke">💔</span>` + heart("empty").repeat(Math.max(0, ARC_HEARTS - full - 1)) : heart("empty").repeat(ARC_HEARTS - full));
   $("arcLives").title = tx(`${full} hearts left`, `${full} can kaldı`);
   $("arcHi").textContent = best ? `${tx("Best", "Rekor")} ${money(best)}` : "";
   $("arcade").classList.toggle("arc-noanim", reduceMotion());
@@ -2286,11 +2326,11 @@ function renderArcade() {
         <tr><td>${aName(3)}</td><td>${signed(M.r)}</td><td>±0%</td></tr></table>
       <p class="arc-dim">${tx(`Crash chance this year: ${pct(M.shock, 0)}. Gold moves on its own; bonds often rise when stocks fall.`,
                               `Bu yıl çöküş ihtimali: ${pct(M.shock, 0)}. Altın kendi başına hareket eder; hisseler düşerken tahviller çoğu zaman yükselir.`)}</p>
-      ${[0, 1, 2].map(i => `<div class="arc-slider"><span>${aName(i)}</span><input id="arcS${i}" type="range" min="0" max="100" step="1" value="${Math.round(100 * arc.w[i])}"
-        aria-label="${aName(i)} (%)" style="accent-color:${ASSETS[i].color}"><b id="arcV${i}"></b></div>`).join("")}
-      <div class="arc-slider"><span>${aName(3)}</span><span class="arc-dim">${tx("the rest", "kalanı")}</span><b id="arcV3"></b></div>
+      <p class="arc-dim">${tx("Drag the dots around the circle to split your money (or click the ring).", "Paranı bölmek için noktaları çemberin etrafında sürükle (ya da halkaya tıkla).")}</p>
+      <div class="arc-dial">${arcDialSvg()}<div class="arc-parts">${[0, 1, 2, 3].map(i => `<div class="arc-part"><i style="background:${ARC_DIAL[i]}"></i>
+        <span>${aName(i)}</span><b id="arcV${i}"></b><small id="arcM${i}"></small></div>`).join("")}</div></div>
       <div class="arc-odds" id="arcOdds"></div>` + go(tx(`▶ Play year ${arc.year}`, `▶ ${arc.year}. yılı oyna`), "play");
-    for (const i of [0, 1, 2]) $("arcS" + i).addEventListener("input", () => arcSlide(i));
+    arcDialWire();
     arcUpdate();
   } else if (arc.phase === "play") {
     const M = MOODS[arc.mood];
@@ -2315,6 +2355,9 @@ function renderArcade() {
         ${h.crash ? tx(" There was a crash this year.", " Bu yıl bir çöküş oldu.") : ""}</p>` +
       go(arc.year >= ARC_YEARS ? tx("See my review ▶", "Değerlendirmemi gör ▶") : tx(`Year ${arc.year + 1} ▶`, `${arc.year + 1}. yıl ▶`), "next");
     if (h.lost) scr.classList.add("hit");
+    const sc = $("arcScore");                                       // the year's result flashes on the big money
+    sc.classList.remove("up", "down"); void sc.offsetWidth;
+    if (!reduceMotion()) sc.classList.add(h.lost ? "down" : "up");
   } else if (arc.phase === "fired") {
     scr.classList.add("arc-fired");
     const papers = [8, 22, 38, 55, 70, 86].map((x, i) => `<span class="arc-paper" style="left:${x}%;animation-delay:${(i * 0.45).toFixed(2)}s">${i % 2 ? "📄" : "💸"}</span>`).join("");
@@ -2337,29 +2380,91 @@ function renderArcade() {
         `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${arc.money >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>` +
       arcHistTable() + go(tx("▶ Play again", "▶ Tekrar oyna"), "start");
   }
-  const focus = scr.querySelector(arc.phase === "plan" ? "#arcS0" : ".arc-go");
+  const focus = scr.querySelector(arc.phase === "plan" ? "#arcK0" : ".arc-go");
   if (focus) focus.focus({ preventScroll: true });
 }
-// The same slider rule as your guess: a slider first takes from the savings account, then from the other two.
-function arcSlide(id) {
-  const v = i => +$("arcS" + i).value, others = [0, 1, 2].filter(i => i !== id).sort((a, b) => v(b) - v(a));
-  const tot = v(others[0]) + v(others[1]), excess = v(id) - (100 - tot);
-  if (excess > 0) {
-    const cut = Math.min(v(others[0]), Math.ceil(excess * v(others[0]) / tot));
-    $("arcS" + others[0]).value = v(others[0]) - cut;
-    $("arcS" + others[1]).value = v(others[1]) - (excess - cut);
-  }
-  arcUpdate();
+// The split as a donut you turn: three dots cut the ring at a <= b <= c (percent, clockwise from the top), so the slices
+// are stocks a, gold b - a, bonds c - b and the savings account 100 - c. Drag a dot, click the ring to move the nearest
+// dot there, or use the arrow keys on a dot.
+const ARC_DIAL = ["#4d8dff", "#ffc93a", "#2de0c5", "#9c98c8"], ARC_R = 82, ARC_C = 115;
+const arcCuts = () => { const p = arc.w.map(x => Math.round(100 * x)); return [p[0], p[0] + p[1], p[0] + p[1] + p[2]]; };
+const arcAt = (v, r = ARC_R) => [ARC_C + r * Math.sin(2 * Math.PI * v / 100), ARC_C - r * Math.cos(2 * Math.PI * v / 100)];
+function arcArc(v0, v1) {
+  if (v1 - v0 < 0.01) return "";
+  if (v1 - v0 > 99.99) { const [x0, y0] = arcAt(0), [x1, y1] = arcAt(50); return `M${x0} ${y0}A${ARC_R} ${ARC_R} 0 1 1 ${x1} ${y1}A${ARC_R} ${ARC_R} 0 1 1 ${x0} ${y0}`; }
+  const [x0, y0] = arcAt(v0), [x1, y1] = arcAt(v1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${ARC_R} ${ARC_R} 0 ${v1 - v0 > 50 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function arcDialSvg() {
+  return `<svg viewBox="0 0 230 230" id="arcDial" aria-label="${tx("your split", "dağılımın")}">
+    <circle cx="${ARC_C}" cy="${ARC_C}" r="${ARC_R}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="40"/>
+    ${[0, 1, 2, 3].map(i => `<path id="arcP${i}" fill="none" stroke="${ARC_DIAL[i]}" stroke-width="40"/>`).join("")}
+    <text x="${ARC_C}" y="${ARC_C - 2}" text-anchor="middle" font-size="24" font-weight="900" fill="#ffe23a" id="arcMid"></text>
+    <text x="${ARC_C}" y="${ARC_C + 17}" text-anchor="middle" font-size="11" fill="#9c98c8">${tx("typical year", "tipik yıl")}</text>
+    ${[0, 1, 2].map(i => `<g class="knob" id="arcK${i}" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100"
+      aria-label="${aName(i)} | ${aName(i + 1)}"><circle r="12" fill="#f4f4f8" stroke="${ARC_DIAL[i]}" stroke-width="3"/></g>`).join("")}</svg>`;
+}
+function arcSetCuts(c) { arc.w = [c[0] / 100, (c[1] - c[0]) / 100, (c[2] - c[1]) / 100, (100 - c[2]) / 100]; arcUpdate(); }
+// Move dot k to value v, kept between its neighbours. A jump of more than half the ring means the pointer crossed the top.
+function arcMoveCut(k, v) {
+  const c = arcCuts(), lo = k ? c[k - 1] : 0, hi = k < 2 ? c[k + 1] : 100;
+  if (Math.abs(v - c[k]) > 50) v = c[k] > 50 ? 100 : 0;
+  c[k] = clamp(Math.round(v), lo, hi);
+  arcSetCuts(c);
+}
+function arcDialWire() {
+  const svg = $("arcDial");
+  const valueOf = e => {
+    const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 230 - ARC_C, y = (e.clientY - r.top) / r.height * 230 - ARC_C;
+    return (Math.atan2(x, -y) / (2 * Math.PI) * 100 + 100) % 100;
+  };
+  let drag = null;                                                 // { k }, or { tied, from } until the first move picks one
+  svg.addEventListener("pointerdown", e => {
+    const v = valueOf(e), c = arcCuts(), d = k => Math.min(Math.abs(v - c[k]), 100 - Math.abs(v - c[k]));
+    const best = Math.min(...[0, 1, 2].map(d)), near = [0, 1, 2].filter(k => d(k) - best < 0.5);
+    const tied = near.filter(k => c.filter(x => x === c[k]).length > 1);
+    drag = tied.length > 1 ? { tied, from: v } : { k: near[0] };
+    if (drag.k !== undefined && !e.target.closest(".knob")) arcMoveCut(drag.k, v);   // a click on the ring moves the nearest dot there
+    try { svg.setPointerCapture(e.pointerId); } catch (err) { /* a synthetic pointer */ } svg.classList.add("drag"); e.preventDefault();
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const v = valueOf(e);
+    if (drag.k === undefined) {                                    // dots on top of each other: the direction of the move decides
+      let dv = v - drag.from;
+      if (dv > 50) dv -= 100; if (dv < -50) dv += 100;
+      if (Math.abs(dv) < 0.5) return;
+      drag = { k: dv > 0 ? Math.max(...drag.tied) : Math.min(...drag.tied) };
+    }
+    arcMoveCut(drag.k, v);
+  });
+  const end = () => { drag = null; svg.classList.remove("drag"); };
+  svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+  for (const k of [0, 1, 2]) $("arcK" + k).addEventListener("keydown", e => {
+    const step = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 5, PageDown: -5 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    arcMoveCut(k, arcCuts()[k] + step);
+  });
 }
 // Live odds of the split (not the verdict, that comes after the year): the chance of a losing year and a typical year.
 function arcUpdate() {
-  const s = [0, 1, 2].map(i => +$("arcS" + i).value);
-  arc.w = [s[0] / 100, s[1] / 100, s[2] / 100, (100 - s[0] - s[1] - s[2]) / 100];
-  for (const i of [0, 1, 2, 3]) $("arcV" + i).textContent = `${pct(arc.w[i], 0)} · ${money(arc.money * arc.w[i])}`;
+  const c = arcCuts(), edges = [0, ...c, 100];
+  for (const i of [0, 1, 2, 3]) {
+    $("arcP" + i).setAttribute("d", arcArc(edges[i], edges[i + 1]));
+    $("arcV" + i).textContent = pct(arc.w[i], 0);
+    $("arcM" + i).textContent = money(arc.money * arc.w[i]);
+  }
+  for (const k of [0, 1, 2]) {
+    const [x, y] = arcAt(c[k]), knob = $("arcK" + k);
+    knob.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+    knob.setAttribute("aria-valuenow", c[k]); knob.setAttribute("aria-valuetext", `${aName(k)} ${pct(arc.w[k], 0)}`);
+  }
   const o = arcOdds(arc.w, arc.mood), cls = o.p > 0.3 ? "over" : o.p > 0.15 ? "warn" : "";
   $("arcOdds").innerHTML = tx(`💔 Chance of losing money this year: <b class="${cls === "over" ? "arc-bad" : cls ? "arc-warn" : "arc-good"}">${pct(o.p, 0)}</b> · typical year <b>${signed(Math.exp(o.g) - 1)}</b> (${money(arc.money * (Math.exp(o.g) - 1))})`,
                               `💔 Bu yıl para kaybetme ihtimali: <b class="${cls === "over" ? "arc-bad" : cls ? "arc-warn" : "arc-good"}">${pct(o.p, 0)}</b> · tipik yıl <b>${signed(Math.exp(o.g) - 1)}</b> (${money(arc.money * (Math.exp(o.g) - 1))})`) +
     `<div class="arc-meter" aria-hidden="true"><i class="${cls}" style="width:${100 * clamp(o.p / 0.5, 0, 1)}%"></i></div>`;
+  $("arcMid").textContent = signed(Math.exp(o.g) - 1);
 }
 $("arcScreen").addEventListener("click", e => {
   const b = e.target.closest("[data-act]");
