@@ -194,15 +194,29 @@
   .arc-center { text-align: center; }
   .arc-blink { color: var(--a-yellow); font-weight: 700; letter-spacing: .1em; animation: arcBlink 1s steps(2, start) infinite; }
   @keyframes arcBlink { to { visibility: hidden; } }
-  .arc-hero { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
-  .arc-hero.big { grid-template-columns: 130px 1fr; }
+  /* You on the left, the boss on the right; the boss's speech bubble points at him. */
+  .arc-hero { display: grid; grid-template-columns: 96px 1fr 84px; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .arc-hero.big { grid-template-columns: 120px 1fr 104px; }
   .arc-guy svg { width: 100%; height: auto; display: block; }
   .arc-guy.bob svg { animation: arcBob 1.6s ease-in-out infinite; }
   .arc-guy.type svg { animation: arcBob .35s ease-in-out infinite; }
   @keyframes arcBob { 50% { transform: translateY(-3px); } }
   .arc-bubble { position: relative; background: #f4f4f8; color: #0b0820; border-radius: 12px; padding: 10px 12px; font-size: 14px; font-weight: 600; line-height: 1.4; }
-  .arc-bubble::before { content: ""; position: absolute; left: -9px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-right-color: #f4f4f8; border-left: 0; }
+  .arc-bubble::before { content: ""; position: absolute; right: -9px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-left-color: #f4f4f8; border-right: 0; }
   .arc-bubble b { color: #c2185b; }
+  .arc-boss { display: grid; justify-items: center; gap: 4px; }
+  .arc-boss svg { width: 100%; height: auto; display: block; }
+  .arc-boss.angry svg { animation: arcRage .5s ease-in-out infinite; transform-origin: 50% 100%; }
+  .arc-boss.happy svg { animation: arcBob 1.2s ease-in-out infinite; }
+  @keyframes arcRage { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-1px); } }
+  .arc-boss .tag { padding: 1px 8px; border: 1.5px solid rgba(255,77,77,.7); border-radius: 999px; color: var(--a-red); font-size: 10.5px; font-weight: 800;
+                   letter-spacing: .05em; text-transform: uppercase; }
+  .arc-auto { display: flex; gap: 12px; align-items: center; margin-top: 8px; padding: 12px 14px; border: 2px solid var(--a-cyan); border-radius: 12px; background: rgba(34,228,255,.07); }
+  .arc-auto .i { font-size: 34px; line-height: 1; }
+  .arc-ball-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .arc-mini { padding: 6px 14px; border: 2px solid #b48cff; border-radius: 8px; background: rgba(180,140,255,.15); color: var(--a-text); font: inherit; font-weight: 800; cursor: pointer; }
+  .arc-mini.ghost { border-color: var(--a-dim); background: transparent; color: var(--a-dim); }
+  .arc-mini:focus-visible { outline: 2px solid var(--a-yellow); outline-offset: 2px; }
   .arc-market { display: grid; grid-template-columns: auto 1fr auto; gap: 0 12px; align-items: center; border: 2px solid var(--a-cyan); border-radius: 12px;
                 padding: 8px 12px; box-shadow: 0 0 12px rgba(34,228,255,.35); }
   .arc-market .icon { grid-row: span 2; font-size: 34px; }
@@ -212,18 +226,21 @@
   .arcade th, .arcade td { padding: 5px 6px; border-bottom: 1px solid rgba(156,152,200,.25); text-align: right; font-variant-numeric: tabular-nums; }
   .arcade th { color: var(--a-dim); font-weight: 600; font-size: 12px; }
   .arcade th:first-child, .arcade td:first-child { text-align: left; }
-  .arc-dial { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: center; margin-top: 6px; }
-  .arc-dial svg { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; touch-action: none; cursor: pointer; user-select: none; }
-  .arc-dial .knob { cursor: grab; } .arc-dial .knob:focus { outline: none; } .arc-dial .knob:focus circle { stroke: var(--a-yellow); stroke-width: 4; }
-  .arc-dial svg.drag, .arc-dial svg.drag .knob { cursor: grabbing; }
-  .arc-parts { display: grid; gap: 6px; }
-  .arc-part { display: grid; grid-template-columns: 14px 1fr auto; gap: 4px 10px; align-items: center; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.04); }
-  .arc-part i { width: 14px; height: 14px; border-radius: 3px; }
-  .arc-part b { font-size: 18px; font-variant-numeric: tabular-nums; } .arc-part small { grid-column: 2 / -1; color: var(--a-dim); font-size: 12.5px; margin-top: -4px; }
-  .arc-odds { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: rgba(34,228,255,.07); font-size: 14px; }
-  .arc-meter { position: relative; height: 12px; border: 2px solid var(--a-dim); border-radius: 4px; margin: 6px 0 2px; overflow: hidden; }
-  .arc-meter i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--a-green); transition: width .15s; }
-  .arc-meter i.warn { background: var(--a-yellow); } .arc-meter i.over { background: var(--a-red); }
+  .arc-more { margin: 6px 0; padding: 6px 12px; border: 1px solid rgba(156,152,200,.3); border-radius: 10px; }
+  .arc-more summary { color: var(--a-dim); font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  /* The split: one row per asset with − / + and a bar; the savings account row shows the rest. */
+  .arc-split { display: grid; gap: 6px; margin-top: 4px; user-select: none; }
+  .arc-row { display: grid; grid-template-columns: minmax(130px, 1.1fr) 2fr 84px; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.04); }
+  .arc-row .nm b { display: block; font-size: 15px; } .arc-row .nm small { color: var(--a-dim); font-size: 11.5px; }
+  .arc-row .ctl { display: flex; align-items: center; gap: 8px; } .arc-row.rest .ctl { padding: 0 44px; }
+  .arc-pm { flex: none; width: 36px; height: 36px; border: 2px solid var(--a-pink); border-radius: 8px; background: rgba(255,62,165,.1); color: var(--a-text);
+            font: 800 20px/1 ui-monospace, Consolas, monospace; cursor: pointer; }
+  .arc-pm:hover, .arc-pm:focus-visible { box-shadow: 0 0 10px rgba(255,62,165,.6); outline: none; }
+  .arc-pm[aria-disabled="true"] { opacity: .3; box-shadow: none; cursor: default; }
+  .arc-track { position: relative; flex: 1; height: 18px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; touch-action: pan-y; }
+  .arc-track[id] { cursor: pointer; } .arc-track:focus-visible { outline: 2px solid var(--a-yellow); outline-offset: 2px; }
+  .arc-track i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; transition: width .12s; }
+  .arc-row .val { text-align: right; } .arc-row .val b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; } .arc-row .val small { color: var(--a-dim); font-size: 12px; }
   .arc-go { display: block; width: 100%; margin-top: 14px; padding: 12px; border: 2px solid var(--a-green); border-radius: 10px; background: transparent;
             color: var(--a-green); font: 700 18px ui-monospace, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;
             text-shadow: 0 0 8px rgba(57,255,20,.6); box-shadow: 0 0 12px rgba(57,255,20,.3); }
@@ -231,8 +248,8 @@
   .arc-go.ghost { border-color: var(--a-dim); color: var(--a-dim); text-shadow: none; box-shadow: none; font-size: 14px; padding: 8px; }
   .arc-chart { position: relative; border: 2px solid rgba(156,152,200,.35); border-radius: 10px; padding: 6px; margin: 8px 0 4px; }
   .arc-chart svg { width: 100%; height: auto; display: block; }
-  .arc-month { position: absolute; top: 8px; left: 12px; color: var(--a-yellow); font-weight: 800; letter-spacing: .1em; }
-  .arc-now { position: absolute; top: 8px; right: 12px; font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .arc-month { position: absolute; top: 8px; left: 12px; padding: 0 6px; border-radius: 4px; background: rgba(7,5,26,.75); color: var(--a-yellow); font-weight: 800; letter-spacing: .1em; }
+  .arc-month.big { font-size: 17px; text-transform: uppercase; } .arc-month.arc-good { color: var(--a-green); } .arc-month.arc-bad { color: var(--a-red); }
   .arc-flash { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-6deg); padding: 4px 14px; border: 3px solid var(--a-red); border-radius: 8px;
                background: rgba(7,5,26,.85); color: var(--a-red); font-size: 26px; font-weight: 900; letter-spacing: .1em; animation: arcPop .4s ease both; }
   @keyframes arcPop { from { transform: translate(-50%, -50%) scale(3) rotate(-6deg); opacity: 0; } to { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; } }
@@ -307,7 +324,8 @@
   .arc-badge { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border-radius: 8px; background: rgba(255,255,255,.04); font-size: 22px; text-align: center; }
   .arc-badge small { color: var(--a-text); font-size: 10.5px; line-height: 1.2; }
   .arc-badge.locked { opacity: .35; filter: grayscale(1); } .arc-badge.new { outline: 2px solid var(--a-yellow); box-shadow: 0 0 12px rgba(255,226,58,.5); }
-  @media (max-width: 480px) { .arc-dial { grid-template-columns: 1fr; } .arc-hero, .arc-hero.big { grid-template-columns: 76px 1fr; } .arc-market .icon { font-size: 28px; } .arc-ev-opts { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .arc-row { grid-template-columns: 1fr auto; } .arc-row .ctl { grid-column: 1 / -1; grid-row: 2; } }
+  @media (max-width: 480px) { .arc-hero, .arc-hero.big { grid-template-columns: 62px 1fr 56px; gap: 8px; } .arc-market .icon { font-size: 28px; } .arc-ev-opts { grid-template-columns: 1fr; } }
   .lang button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; padding: 5px 11px; cursor: pointer; }
   .lang button.sel { background: var(--blue); color: #fff; }
 </style>
@@ -2153,9 +2171,11 @@ const ARC_MONTHS_TR = ["OCA", "ŞUB", "MAR", "NİS", "MAY", "HAZ", "TEM", "AĞU"
 // The career ladder: one step up for every year that beats the savings account. [icon, English, Turkish]
 const ARC_RANKS = [["🪪", "Intern", "Stajyer"], ["📊", "Analyst", "Analist"], ["💼", "Associate", "Kıdemli Analist"],
                    ["🎩", "Vice President", "Başkan Yardımcısı"], ["🏢", "Director", "Direktör"], ["👑", "Partner", "Ortak"]];
-// cards: true while unused, else the year it was used. hedged / ball: this year's insurance and crystal-ball answer.
+// cards: true while unused, else the year it was used. pick: this year's insurance and copy cards, switched on until
+// the year starts (then spent). askBall: the crystal ball's "are you sure?". hedged / ball: this year's insurance and
+// crystal-ball answer.
 const arc = { phase: "start", year: 1, hearts: ARC_HEARTS, money: ARC_START, quant: ARC_START, bank: ARC_START, mood: "normal",
-              w: [0.3, 0.1, 0.3, 0.3], rank: 0, cards: {}, hedged: false, ball: null, next: null, sim: null, event: null, fast: false,
+              w: [0.3, 0.1, 0.3, 0.3], rank: 0, cards: {}, pick: {}, askBall: false, hedged: false, ball: null, next: null, sim: null, event: null, fast: false,
               hist: [], newBadges: [], token: 0, evToken: 0, boss: null, month: 0, broke: false, newsAt: -1 };
 const arcPick = a => a[Math.floor(Math.random() * a.length)];
 const arcMonth = m => tx(ARC_MONTHS, ARC_MONTHS_TR)[Math.max(1, m) - 1];
@@ -2436,6 +2456,34 @@ function arcGuy(mood, rank = 0) {
     <circle cx="30" cy="52" r="3.5" fill="#f2c39b" stroke="#0b0820" stroke-width="1.5"/><circle cx="70" cy="52" r="3.5" fill="#f2c39b" stroke="#0b0820" stroke-width="1.5"/>
     ${brows}${eyes}${specs}${mouth}${drops}${box}${star}</svg>`;
 }
+// The boss (inline SVG): older, bald with grey sides, a big moustache, a dark suit. stern / angry (red face) / happy.
+function arcBossSvg(mood) {
+  const angry = mood === "angry", happy = mood === "happy", skin = angry ? "#f19a7f" : "#e8b48a";
+  const brows = angry ? `<path d="M34 40 L46 45 M66 40 L54 45" stroke="#4b5563" stroke-width="3.6" stroke-linecap="round"/>`
+    : happy ? `<path d="M35 42 Q40 38 46 41 M54 41 Q60 38 65 42" stroke="#4b5563" stroke-width="3.4" fill="none" stroke-linecap="round"/>`
+    : `<path d="M35 42.5 L46 43 M54 43 L65 42.5" stroke="#4b5563" stroke-width="3.6" stroke-linecap="round"/>`;
+  const eyes = happy ? `<path d="M38 49 Q41.5 46 45 49 M55 49 Q58.5 46 62 49" stroke="#0b0820" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    : angry ? `<path d="M38 49.5 L45 48 M55 48 L62 49.5" stroke="#0b0820" stroke-width="2.8" stroke-linecap="round"/>`
+    : `<circle cx="41.5" cy="48.5" r="2.2" fill="#0b0820"/><circle cx="58.5" cy="48.5" r="2.2" fill="#0b0820"/>`;
+  const mouth = angry ? `<ellipse cx="50" cy="66" rx="6.5" ry="4.5" fill="#7a1022" stroke="#0b0820" stroke-width="1.6"/>`
+    : happy ? `<path d="M43 64 Q50 71 57 64" stroke="#0b0820" stroke-width="2.2" fill="#fff" stroke-linecap="round"/>`
+    : `<path d="M45 66 H55" stroke="#0b0820" stroke-width="2.2" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 100 120" role="img" aria-label="${tx("the boss", "patron")}">
+    <path d="M12 120 V97 Q12 78 33 74 H67 Q88 78 88 97 V120Z" fill="#2b2d42" stroke="#0b0820" stroke-width="2"/>
+    <path d="M38 75 L50 93 L62 75Z" fill="#fff" stroke="#0b0820" stroke-width="1.5"/>
+    <path d="M47 77 L53 77 L55 82 L50 100 L45 82Z" fill="#b91c1c" stroke="#0b0820" stroke-width="1.5"/>
+    <path d="M33 74 L45 97 L38 81Z M67 74 L55 97 L62 81Z" fill="#1f2033" stroke="#0b0820" stroke-width="1.2"/>
+    <rect x="44" y="64" width="12" height="11" fill="${skin}" stroke="#0b0820" stroke-width="2"/>
+    <circle cx="50" cy="48" r="21" fill="${skin}" stroke="#0b0820" stroke-width="2"/>
+    <circle cx="29" cy="51" r="3.6" fill="${skin}" stroke="#0b0820" stroke-width="1.5"/><circle cx="71" cy="51" r="3.6" fill="${skin}" stroke="#0b0820" stroke-width="1.5"/>
+    <path d="M30 52 Q27 39 34 33 Q33 44 37 50Z M70 52 Q73 39 66 33 Q67 44 63 50Z" fill="#9ca3af" stroke="#0b0820" stroke-width="1.5"/>
+    <path d="M42 31 Q48 28 55 30" stroke="#fff" stroke-width="2" fill="none" opacity=".55" stroke-linecap="round"/>
+    ${brows}${eyes}
+    <path d="M50 50 Q47 56 50 58" stroke="#0b0820" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${mouth}
+    <path d="M36 61 Q43 55 50 59 Q57 55 64 61 Q57 64 50 62 Q43 64 36 61Z" fill="#6b7280" stroke="#0b0820" stroke-width="1.5"/>
+    ${angry ? `<text x="70" y="30" font-size="16">💢</text>` : happy ? `<text x="72" y="32" font-size="14">👍</text>` : ""}</svg>`;
+}
 const arcMoodNow = () => arc.hearts >= 3 ? "happy" : arc.hearts === 2 ? "nervous" : "panic";
 
 // ---- game flow ----
@@ -2462,20 +2510,31 @@ function arcStart() {
 }
 // A year's luck is drawn when the year starts, so the crystal ball can tell the truth.
 function arcNewYear() {
-  Object.assign(arc, { phase: "plan", next: arcSimYear(arc.mood), hedged: false, ball: null, event: null, fast: false });
+  Object.assign(arc, { phase: "plan", next: arcSimYear(arc.mood), pick: { hedge: false, copy: false }, askBall: false, hedged: false, ball: null,
+                       event: null, fast: false });
   arcBossPlan();
 }
 const arcWFromCuts = c => [c[0] / 100, (c[1] - c[0]) / 100, (c[2] - c[1]) / 100, (100 - c[2]) / 100];
-function arcUseCard(id) {
+// Cards: insurance and copy switch on and off until the year starts, and are spent only then. The crystal ball asks
+// first, because nobody can un-see the future.
+function arcCard(id) {
   if (arc.phase !== "plan" || arc.cards[id] !== true) return;
-  arc.cards[id] = arc.year;
+  const on = id === "ball" ? (arc.askBall = !arc.askBall) : (arc.pick[id] = !arc.pick[id]);
+  arcSfx(on ? "card" : "click");
+}
+function arcLookBall() {
+  if (arc.phase !== "plan" || arc.cards.ball !== true) return;
+  Object.assign(arc, { askBall: false, ball: arc.next.crashMonth });
+  arc.cards.ball = arc.year;
   arcSfx("card");
-  if (id === "ball") { arc.ball = arc.next.crashMonth; if (arc.ball) arcBadge("oracle"); }
-  else if (id === "hedge") arc.hedged = true;
-  else { arc.w = arcQuant(arc.mood).w.slice(); arc.w = arcWFromCuts(arcCuts()); }   // whole percents, like the dial
+  if (arc.ball) arcBadge("oracle");
 }
 function arcPlay() {
-  const q = arcQuant(arc.mood), sim = arc.next, you = arcPath(arc.money, arc.w, sim.px);
+  const q = arcQuant(arc.mood), sim = arc.next;
+  if (arc.pick.copy) { arc.cards.copy = arc.year; arc.w = arcWFromCuts(arcCutsOf(q.w)); }   // whole percents, like the dial
+  if (arc.pick.hedge) { arc.cards.hedge = arc.year; arc.hedged = true; }
+  arc.askBall = false;
+  const you = arcPath(arc.money, arc.w, sim.px);
   arc.sim = { ...sim, qw: q.w, you, you0: you.slice(), quant: arcPath(arc.quant, q.w, sim.px), bank: arcPath(arc.bank, [0, 0, 0, 1], sim.px),
               news: arcNews(sim), choice: null, asked: false };
   Object.assign(arc, { phase: "play", month: 0, fast: false, event: null, newsAt: -1 });
@@ -2526,8 +2585,9 @@ function arcChoose(choice, froze = false) {
 }
 function arcFinishYear() {
   const s = arc.sim, me = arcOdds(arc.w, arc.mood), qo = arcOdds(s.qw, arc.mood), premium = arc.hedged ? ARC_PREMIUM * arc.money : 0;
-  const h = { year: arc.year, mood: arc.mood, w: arc.w.slice(), qw: s.qw, crash: s.crashMonth > 0, choice: s.choice, premium,
-              start: arc.money, you: s.you[12] - premium, hold: s.you0[12] - premium, qStart: arc.quant, quant: s.quant[12],
+  s.you[12] -= premium;                                            // the insurance is paid at the end of the year
+  const h = { year: arc.year, mood: arc.mood, w: arc.w.slice(), qw: s.qw, crash: s.crashMonth > 0, choice: s.choice, premium, copied: arc.cards.copy === arc.year,
+              start: arc.money, you: s.you[12], hold: s.you0[12] - premium, qStart: arc.quant, quant: s.quant[12],
               bStart: arc.bank, bank: s.bank[12], verdict: arcVerdict(me, qo), me, qo };
   h.down = h.you < h.start - 0.5;
   h.saved = h.down && arc.hedged;
@@ -2563,8 +2623,14 @@ function arcNext() {
     return;
   }
   arc.year++;
-  arc.mood = nextRegime(Math.random, arc.mood);
+  arc.mood = arcNextMood();
   arcNewYear();
+}
+// The game's markets: a different one every year, and the ones not seen yet this game first, so five years show all four.
+// (The page's real-life test keeps the slower, realistic TRANSITION chain.)
+function arcNextMood() {
+  const others = REGIME_KEYS.filter(k => k !== arc.mood), fresh = others.filter(k => !arc.hist.some(h => h.mood === k));
+  return arcPick(fresh.length ? fresh : others);
 }
 function arcSaveBest() {
   if (arc.phase !== "fired" && arc.money > arcBest()) try { localStorage.setItem(ARC_BEST, String(Math.round(arc.money))); } catch (e) { /* not remembered */ }
@@ -2585,23 +2651,27 @@ function arcEndFx() {
 }
 
 // ---- drawing ----
-// The year's chart: your money, the Quant's and the savings account's, up to month `upto`. After you sell or buy the
-// dip, a faint line shows where just holding would have gone.
+// The year's chart, the same while the year plays and for the result: your money, the Quant's and the savings account's
+// up to month `upto`, each line labelled at its tip with how much it is up or down (labels pushed apart so they never
+// overlap). The scale is the whole year's, so nothing jumps while the months play.
 function arcChartSvg(s, upto, startYou) {
-  const ghost = s.choice && s.choice.choice !== "hold";
-  const W = 300, H = 120, all = [...s.you, ...s.quant, ...s.bank, ...(ghost ? s.you0 : [])], lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.12 || 1;
-  const X = t => 8 + (W - 16) * t / 12, Y = v => H - 8 - (H - 16) * (v - lo + pad) / (hi - lo + 2 * pad);
-  const line = (a, color, dash, width, extra = "") => `<polyline points="${a.slice(0, upto + 1).map((v, t) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}"
-    fill="none" stroke="${color}" stroke-width="${width}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linejoin="round" stroke-linecap="round" ${extra}/>`;
-  const base = `<line x1="8" x2="${W - 8}" y1="${Y(startYou).toFixed(1)}" y2="${Y(startYou).toFixed(1)}" stroke="#ff4d4d" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`;
-  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${base}${line(s.bank, ARC_COLORS.bank, "2 3", 1.5)}${line(s.quant, ARC_COLORS.quant, "6 4", 2)}` +
-    (ghost ? line(s.you0, ARC_COLORS.you, "3 4", 1.5, `opacity=".35"`) : "") + `${line(s.you, ARC_COLORS.you, "", 3)}</svg>`;
+  const W = 368, H = 150, R = 262, all = [...s.you, ...s.quant, ...s.bank], lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.1 || 1;
+  const X = t => 8 + (R - 8) * t / 12, Y = v => H - 10 - (H - 20) * (v - lo + pad) / (hi - lo + 2 * pad);
+  const lines = [[s.bank, ARC_COLORS.bank, "2 3", 1.5, tx("Savings", "Mevduat")], [s.quant, ARC_COLORS.quant, "6 4", 2, "Quant"], [s.you, ARC_COLORS.you, "", 3, tx("You", "Sen")]];
+  const path = ([a, color, dash, width]) => `<polyline points="${a.slice(0, upto + 1).map((v, t) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}"
+    fill="none" stroke="${color}" stroke-width="${width}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linejoin="round" stroke-linecap="round"/>`;
+  const tags = lines.map(([a, color, , , name]) => ({ y: Y(a[upto]), color, text: `${name} ${signed(a[upto] / a[0] - 1)}` })).sort((a, b) => a.y - b.y);
+  for (let k = 1; k < tags.length; k++) tags[k].y = Math.max(tags[k].y, tags[k - 1].y + 14);
+  const over = tags[tags.length - 1].y - (H - 8), under = 12 - tags[0].y + Math.max(0, over);
+  for (const t of tags) t.y += -Math.max(0, over) + Math.max(0, under);
+  const base = `<line x1="8" x2="${R}" y1="${Y(startYou).toFixed(1)}" y2="${Y(startYou).toFixed(1)}" stroke="#ff4d4d" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${base}${lines.map(path).join("")}` +
+    tags.map(t => `<text x="${(X(upto) + 6).toFixed(1)}" y="${(t.y + 4).toFixed(1)}" fill="${t.color}" font-size="11.5" font-weight="800">${t.text}</text>`).join("") + `</svg>`;
 }
 function arcDrawYear(fx = false) {
-  const s = arc.sim, m = arc.month, now = s.you[m], up = now >= arc.money, box = $("arcChartBox");
-  arcSetMoney(now, ARC_MONTH_MS * 0.9);                            // the big money ticks with the months
+  const s = arc.sim, m = arc.month, box = $("arcChartBox");
+  arcSetMoney(s.you[m], ARC_MONTH_MS * 0.9);                       // the big money ticks with the months
   box.innerHTML = arcChartSvg(s, m, arc.money) + `<span class="arc-month">${arcMonth(m)}</span>` +
-    `<span class="arc-now ${up ? "arc-good" : "arc-bad"}">${money(now)}</span>` +
     (s.crashMonth && m >= s.crashMonth && m < s.crashMonth + 3 ? `<span class="arc-flash">📉 ${tx("CRASH!", "ÇÖKÜŞ!")}</span>` : "");
   let t = m;                                                       // the latest headline stays until a newer one
   while (t > 0 && !s.news[t]) t--;
@@ -2612,34 +2682,45 @@ function arcDrawYear(fx = false) {
     if (!reduceMotion()) { box.classList.remove("quake"); void box.offsetWidth; box.classList.add("quake"); }
   } else arcSfx("tick");
 }
-const arcSplit = w => [0, 1, 2, 3].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${aLow(i)}`).join(" · ");
 const arcRet = (a, b) => `${signed(b / a - 1)}`;
-const arcLegend = () => `<div class="arc-legend"><span><i style="background:${ARC_COLORS.you}"></i>${tx("You", "Sen")}</span>
-  <span><i style="background:${ARC_COLORS.quant}"></i>${tx("The Quant", "Quant")}</span><span><i style="background:${ARC_COLORS.bank}"></i>${aName(3)}</span>
-  <span><i style="background:#ff4d4d"></i>${tx("where you started", "başladığın yer")}</span></div>`;
+const arcLegend = () => `<div class="arc-legend"><span><i style="background:#ff4d4d"></i>${tx("where you started", "başladığın yer")}</span></div>`;
 const arcLadder = () => `<div class="arc-ladder">${ARC_RANKS.map((R, i) =>
   `<span class="${i <= arc.rank ? "on" : ""} ${i === arc.rank ? "me" : ""}">${R[0]} ${tx(R[1], R[2])}</span>`).join("<i>›</i>")}</div>`;
 function arcHistTable() {
-  const icon = h => (h.lost ? " 💔" : h.saved ? " 🛡️" : "") + (h.promoted ? " ⬆️" : "") + (h.choice ? " " + { sell: "😱", hold: "💎", dip: "🚀" }[h.choice.choice] : "");
+  const icon = h => (h.lost ? " 💔" : h.saved ? " 🛡️" : "") + (h.promoted ? " ⬆️" : "") + (h.copied ? " 🤖" : "") + (h.choice ? " " + { sell: "😱", hold: "💎", dip: "🚀" }[h.choice.choice] : "");
   return `<table><tr><th>${tx("Year", "Yıl")}</th><th>${tx("Market", "Piyasa")}</th><th>${tx("You", "Sen")}</th><th>${tx("The Quant", "Quant")}</th><th>${tx("Your split", "Dağılımın")}</th></tr>` +
     arc.hist.map(h => `<tr><td>${h.year}${icon(h)}</td><td>${MOODS[h.mood].icon} ${moodName(h.mood)}${h.crash ? " 📉" : ""}</td>
       <td class="${h.down ? "arc-bad" : "arc-good"}">${arcRet(h.start, h.you)}</td><td>${arcRet(h.qStart, h.quant)}</td><td class="${h.verdict.cls}">${h.verdict.text}</td></tr>`).join("") + `</table>`;
 }
 function arcCardsHtml() {
   const card = (id, icon, name, sub) => {
-    const free = arc.cards[id] === true, now = arc.cards[id] === arc.year;
-    return `<button type="button" class="arc-card ${now ? "on" : ""}" data-act="card-${id}" ${free ? "" : "disabled"}><span class="i">${icon}</span><b>${name}</b>
-      <small>${now ? (id === "hedge" ? tx("ON this year", "bu yıl AÇIK") : tx("used this year", "bu yıl kullanıldı")) : free ? sub : tx("used", "kullanıldı")}</small></button>`;
+    const free = arc.cards[id] === true, on = free && (id === "ball" ? arc.askBall : arc.pick[id]), now = arc.cards[id] === arc.year;
+    const note = on ? (id === "ball" ? tx("are you sure?", "emin misin?") : tx("ON · click to cancel", "AÇIK · iptal için tıkla"))
+      : now ? tx("used this year", "bu yıl kullanıldı") : free ? sub : tx("used", "kullanıldı");
+    return `<button type="button" class="arc-card ${on || now ? "on" : ""}" data-act="card-${id}" aria-pressed="${on}" ${free ? "" : "disabled"}>
+      <span class="i">${icon}</span><b>${name}</b><small>${note}</small></button>`;
   };
-  return `<p class="arc-dim">🃏 ${tx("One-time cards, one of each per game:", "Tek kullanımlık kartlar, her oyunda birer tane:")}</p><div class="arc-cards">` +
+  return `<p class="arc-dim">🃏 ${tx("One-time cards, one of each per game. Insurance and copy are spent when the year starts, so you can still change your mind.",
+                                 "Tek kullanımlık kartlar, her oyunda birer tane. Sigorta ve kopya yıl başlayınca harcanır, o zamana kadar vazgeçebilirsin.")}</p><div class="arc-cards">` +
     card("ball", "🔮", tx("Crystal ball", "Kristal küre"), tx("is a crash coming?", "çöküş geliyor mu?")) +
     card("hedge", "🛡️", tx("Insurance", "Sigorta"), tx(`no 💔 this year, costs ${pct(ARC_PREMIUM, 0)}`, `bu yıl 💔 yok, bedeli ${pct(ARC_PREMIUM, 0)}`)) +
-    card("copy", "🤖", tx("Copy the Quant", "Quant'ı kopyala"), tx("use its split", "onun dağılımını kullan")) + `</div>` +
+    card("copy", "🤖", tx("Copy the Quant", "Quant'ı kopyala"), tx("it picks your split", "dağılımını o seçer")) + `</div>` +
+    (!arc.askBall ? "" : `<div class="arc-ball">🔮 ${tx("Look into the crystal ball? It works once per game, and you can't un-see the future.",
+                                                          "Kristal küreye bakılsın mı? Her oyunda bir kez çalışır ve gördüğün geleceği unutamazsın.")}
+      <div class="arc-ball-btns"><button type="button" class="arc-mini" data-act="ball-look">🔮 ${tx("Look", "Bak")}</button>
+        <button type="button" class="arc-mini ghost" data-act="ball-cancel">${tx("Not now", "Şimdi değil")}</button></div></div>`) +
     (arc.ball === null ? "" : `<div class="arc-ball">${arc.ball
       ? tx(`🔮 The ball shows a <b>CRASH in ${arcMonth(arc.ball)}</b>! Stocks will fall 25% that month.`, `🔮 Küre <b>${arcMonth(arc.ball)} ayında bir ÇÖKÜŞ</b> gösteriyor! Hisseler o ay %25 düşecek.`)
       : tx("🔮 Clear skies: <b>no crash</b> this year. Normal ups and downs still happen.", "🔮 Gökyüzü açık: bu yıl <b>çöküş yok</b>. Normal iniş çıkışlar yine olur.")}</div>`) +
-    (arc.hedged ? `<p class="arc-dim">🛡️ ${tx(`Insurance is on: a losing year costs no heart this year. It costs ${money(ARC_PREMIUM * arc.money)} at the end of the year.`,
+    (arc.pick.hedge ? `<p class="arc-dim">🛡️ ${tx(`Insurance is on: a losing year costs no heart this year. It costs ${money(ARC_PREMIUM * arc.money)} at the end of the year.`,
                                             `Sigorta açık: bu yıl kayıplı bir yıl can götürmez. Bedeli yıl sonunda ${money(ARC_PREMIUM * arc.money)}.`)}</p>` : "");
+}
+// With the copy card on, the Quant picks this year's split (the autopilot). It shows only after the year, so the card
+// cannot be peeked at and then switched off.
+function arcAutoHtml() {
+  return `<div class="arc-auto"><span class="i" aria-hidden="true">🤖</span><div><b>${tx("Autopilot on", "Otomatik pilot açık")}</b><br>
+    ${tx("The Quant picks your split this year; you see it after the year. Click the card again to split the money yourself.",
+         "Bu yıl dağılımını Quant seçiyor; yıldan sonra görürsün. Parayı kendin bölmek için karta tekrar tıkla.")}</div></div>`;
 }
 // The decision when the clock stops: each choice with its chance of still ending the year green.
 function arcEventHtml() {
@@ -2672,13 +2753,14 @@ function renderArcade() {
   const scr = $("arcScreen"), go = (label, act, cls = "") => `<button type="button" class="arc-go ${cls}" data-act="${act}">${label}</button>`;
   const who = (face, cls = "bob") => `<div class="arc-who"><div class="arc-guy ${cls}">${arcGuy(face, arc.rank)}</div>
     <span class="arc-rank">${ARC_RANKS[arc.rank][0]}&nbsp;${arcRankName(arc.rank)}</span></div>`;
-  const hero = (face, line, cls = "", fast = false) => `<div class="arc-hero ${cls}">${who(face, fast ? "type" : "bob")}
-    <div class="arc-bubble"><b>${tx("BOSS", "PATRON")}:</b> ${line}</div></div>`;
+  const boss = mood => `<div class="arc-boss ${mood}">${arcBossSvg(mood)}<span class="tag">${tx("Boss", "Patron")}</span></div>`;
+  const hero = (face, line, bossMood = "stern", cls = "", fast = false) => `<div class="arc-hero ${cls}">${who(face, fast ? "type" : "bob")}
+    <div class="arc-bubble"><b>${tx("BOSS", "PATRON")}:</b> ${line}</div>${boss(bossMood)}</div>`;
   scr.classList.remove("hit", "arc-fired");
   if (arc.phase === "start") {
     scr.innerHTML = `<h2 id="arcTitle">${tx("Fund Manager", "Fon Yöneticisi")}</h2>` +
       hero("happy", tx(`Welcome, intern! Here is a client's <b>${money(ARC_START)}</b>. Manage it for <b>${ARC_YEARS} years</b>. Lose money and you get a strike. Three strikes and you're <b>FIRED</b>.`,
-                       `Hoş geldin, stajyer! İşte bir müşterinin <b>${money(ARC_START)}</b> parası. Onu <b>${ARC_YEARS} yıl</b> yönet. Para kaybedersen ihtar alırsın. Üç ihtarda <b>KOVULURSUN</b>.`), "big") +
+                       `Hoş geldin, stajyer! İşte bir müşterinin <b>${money(ARC_START)}</b> parası. Onu <b>${ARC_YEARS} yıl</b> yönet. Para kaybedersen ihtar alırsın. Üç ihtarda <b>KOVULURSUN</b>.`), "happy", "big") +
       `<ul class="arc-rules">
         <li>💔 ${tx("A year that loses money costs a heart. Lose all three and you're fired.", "Para kaybettiren her yıl bir can götürür. Üçü de giderse kovulursun.")}</li>
         <li>⬆️ ${tx("A year that beats the savings account is a promotion: Intern → Partner.", "Mevduatı geçen her yıl bir terfidir: Stajyer → Ortak.")}</li>
@@ -2690,25 +2772,21 @@ function renderArcade() {
       <p class="arc-center arc-blink">${tx("Insert coin", "Jeton at")}</p>` + go(tx("▶ Start the job", "▶ İşe başla"), "start");
   } else if (arc.phase === "plan") {
     const M = MOODS[arc.mood], rows = [0, 1, 2].map(i => `<tr><td>${aName(i)}</td><td>${signed(M.mu[i])}</td><td>±${pct(M.sig[i], 0)}</td></tr>`).join("");
-    scr.innerHTML = `<h2 id="arcTitle" class="hidden">${tx(`Year ${arc.year}`, `Yıl ${arc.year}`)}</h2>` + hero(arcMoodNow(), arc.boss()) +
+    scr.innerHTML = `<h2 id="arcTitle" class="hidden">${tx(`Year ${arc.year}`, `Yıl ${arc.year}`)}</h2>` + hero(arcMoodNow(), arc.boss(), arc.hearts === 1 ? "angry" : "stern") +
       `<div class="arc-market"><span class="icon" aria-hidden="true">${M.icon}</span><b>${moodName(arc.mood)}</b>
         <span class="yr">${tx("YEAR", "YIL")} ${arc.year}</span><span>${tx(M.text, M.tr.text)}</span></div>
-      <table><tr><th>${tx("This year", "Bu yıl")}</th><th>${tx("Average", "Ortalama")}</th><th>${tx("Swings (σ)", "Dalgalanma (σ)")}</th></tr>${rows}
-        <tr><td>${aName(3)}</td><td>${signed(M.r)}</td><td>±0%</td></tr></table>
-      <p class="arc-dim">${tx(`Crash chance this year: ${pct(M.shock, 0)}. Gold moves on its own; bonds often rise when stocks fall.`,
-                              `Bu yıl çöküş ihtimali: ${pct(M.shock, 0)}. Altın kendi başına hareket eder; hisseler düşerken tahviller çoğu zaman yükselir.`)}</p>` +
-      arcCardsHtml() +
-      `<p class="arc-dim">${tx("Drag the dots around the circle to split your money (or click the ring).", "Paranı bölmek için noktaları çemberin etrafında sürükle (ya da halkaya tıkla).")}</p>
-      <div class="arc-dial">${arcDialSvg()}<div class="arc-parts">${[0, 1, 2, 3].map(i => `<div class="arc-part"><i style="background:${ARC_DIAL[i]}"></i>
-        <span>${aName(i)}</span><b id="arcV${i}"></b><small id="arcM${i}"></small></div>`).join("")}</div></div>
-      <div class="arc-odds" id="arcOdds"></div>` + go(tx(`▶ Play year ${arc.year}`, `▶ ${arc.year}. yılı oyna`), "play");
-    arcDialWire();
-    arcUpdate();
+      <details class="arc-more"><summary>📊 ${tx("More about this market", "Bu piyasa hakkında daha fazlası")}</summary>
+        <table><tr><th>${tx("This year", "Bu yıl")}</th><th>${tx("Average", "Ortalama")}</th><th>${tx("Swings (σ)", "Dalgalanma (σ)")}</th></tr>${rows}
+          <tr><td>${aName(3)}</td><td>${signed(M.r)}</td><td>±0%</td></tr></table>
+        <p class="arc-dim">${tx(`Crash chance this year: ${pct(M.shock, 0)}. Gold moves on its own; bonds often rise when stocks fall.`,
+                                `Bu yıl çöküş ihtimali: ${pct(M.shock, 0)}. Altın kendi başına hareket eder; hisseler düşerken tahviller çoğu zaman yükselir.`)}</p></details>` +
+      arcCardsHtml() + (arc.pick.copy ? arcAutoHtml() : arcSplitHtml()) + go(tx(`▶ Play year ${arc.year}`, `▶ ${arc.year}. yılı oyna`), "play");
+    if (!arc.pick.copy) { arcSplitWire(); arcUpdate(); }
   } else if (arc.phase === "play") {
     const M = MOODS[arc.mood], ev = arc.event;
     scr.innerHTML = `<h2 id="arcTitle" class="hidden">${tx(`Year ${arc.year}`, `Yıl ${arc.year}`)}</h2>` +
-      (ev ? hero("panic", tx(ev.boss[0], ev.boss[1]), "", true)
-          : hero(arcMoodNow(), tx(`${M.icon} Year ${arc.year} is running… fingers crossed.`, `${M.icon} ${arc.year}. yıl işliyor… şansın bol olsun.`), "", true)) +
+      (ev ? hero("panic", tx(ev.boss[0], ev.boss[1]), "angry", "", true)
+          : hero(arcMoodNow(), tx(`${M.icon} Year ${arc.year} is running… fingers crossed.`, `${M.icon} ${arc.year}. yıl işliyor… şansın bol olsun.`), "stern", "", true)) +
       `<div class="arc-chart" id="arcChartBox"></div>
       <div class="arc-ticker"><span class="tag">${tx("NEWS", "HABER")}</span><span id="arcNews"></span></div>` + arcLegend() +
       (ev ? arcEventHtml() : go(tx("Skip ▶▶", "Atla ▶▶"), "skip", "ghost"));
@@ -2724,21 +2802,14 @@ function renderArcade() {
            `${ch.choice === "sell" ? "😱 Hepsini sattın" : "🚀 Hepsini hisseye koydun"} (${arcMonth(ch.month)}). Sadece tutsaydın ${money(h.hold)} ile bitirirdin; hareket etmek sana <b class="${diff >= 0 ? "arc-good" : "arc-bad"}">${money(Math.abs(diff))}</b> ${diff >= 0 ? "kazandırdı" : "kaybettirdi"}.`)}</p>`;
     const noPromo = h.down || h.promoted ? "" : `<p class="arc-dim">${tx(`No promotion: the savings account made ${signed(h.bank / h.bStart - 1)}, you made ${signed(h.you / h.start - 1)}.`,
                                                                         `Terfi yok: mevduat ${signed(h.bank / h.bStart - 1)} yaptı, sen ${signed(h.you / h.start - 1)}.`)}</p>`;
-    scr.innerHTML = `<h2 id="arcTitle" class="${h.down ? "lose" : ""}">${title}</h2>` +
-      (h.promoted ? `<div class="arc-stamp">⬆️ ${ARC_RANKS[arc.rank][0]} ${arcRankName(arc.rank)}</div>` : "") +
-      hero(h.lost ? arcMoodNow() : h.down ? "nervous" : h.promoted || h.you / h.start > h.quant / h.qStart ? "win" : "happy", arc.boss()) +
-      `<div class="arc-chart">${arcChartSvg(arc.sim, 12, h.start)}</div>` + arcLegend() +
-      `<table><tr><th></th><th>${tx("This year", "Bu yıl")}</th><th>${tx("Money now", "Şimdiki para")}</th></tr>
-        <tr><td><b style="color:${ARC_COLORS.you}">${tx("You", "Sen")}</b>${h.lost ? " 💔" : h.saved ? " 🛡️" : ""}<br><span class="arc-dim">${arcSplit(h.w)}</span></td>
-          <td class="${h.down ? "arc-bad" : "arc-good"}">${arcRet(h.start, h.you)}</td><td>${money(h.you)}</td></tr>
-        ${h.premium ? `<tr><td>🛡️ ${tx("Insurance", "Sigorta")}</td><td class="arc-bad">−${pct(ARC_PREMIUM, 0)}</td><td class="arc-bad">−${money(h.premium)}</td></tr>` : ""}
-        <tr><td><b style="color:${ARC_COLORS.quant}">${tx("The Quant", "Quant")}</b><br><span class="arc-dim">${arcSplit(h.qw)}</span></td>
-          <td>${arcRet(h.qStart, h.quant)}</td><td>${money(h.quant)}</td></tr>
-        <tr><td>${aName(3)}</td><td>${arcRet(h.bStart, h.bank)}</td><td>${money(h.bank)}</td></tr></table>` + recap + noPromo +
+    const said = `${tx("You", "Sen")} ${arcRet(h.start, h.you)}, Quant ${arcRet(h.qStart, h.quant)}, ${tx("Savings", "Mevduat")} ${arcRet(h.bStart, h.bank)}`;
+    scr.innerHTML = `<h2 id="arcTitle" class="hidden">${title}</h2>` +
+      hero(h.lost ? arcMoodNow() : h.down ? "nervous" : h.promoted || h.you / h.start > h.quant / h.qStart ? "win" : "happy", arc.boss(), h.lost ? "angry" : h.promoted ? "happy" : "stern") +
+      `<div class="arc-chart" role="img" aria-label="${said}">${arcChartSvg(arc.sim, 12, h.start)}<span class="arc-month big ${h.down ? "arc-bad" : "arc-good"}">${title}</span></div>` +
+      arcLegend() + (h.promoted ? `<div class="arc-stamp">⬆️ ${ARC_RANKS[arc.rank][0]} ${arcRankName(arc.rank)}</div>` : "") + recap + noPromo +
+      (h.premium ? `<p class="arc-dim">🛡️ ${tx(`Insurance cost ${money(h.premium)}${h.saved ? " and saved your heart" : ""}.`, `Sigorta ${money(h.premium)} tuttu${h.saved ? " ve canını kurtardı" : ""}.`)}</p>` : "") +
+      (h.copied ? `<p>🤖 ${tx("Autopilot: this year the Quant picked your split.", "Otomatik pilot: bu yıl dağılımını Quant seçti.")}</p>` : "") +
       `<p><span class="arc-tag ${h.verdict.cls}">${h.verdict.text}</span> ${h.verdict.why}</p>
-      <p class="arc-dim">${tx(`Your split: ${pct(h.me.p, 0)} chance of a losing year, typical year ${signed(Math.exp(h.me.g) - 1)}. The Quant's: ${pct(h.qo.p, 0)}, ${signed(Math.exp(h.qo.g) - 1)}.`,
-                              `Dağılımın: kayıplı yıl ihtimali ${pct(h.me.p, 0)}, tipik yıl ${signed(Math.exp(h.me.g) - 1)}. Quant'ınki: ${pct(h.qo.p, 0)}, ${signed(Math.exp(h.qo.g) - 1)}.`)}
-        ${h.crash ? tx(" There was a crash this year.", " Bu yıl bir çöküş oldu.") : ""}</p>
       <p class="arc-quant">🤖 QUANT: ${h.qline()}</p>` +
       go(arc.year >= ARC_YEARS ? tx("See my review ▶", "Değerlendirmemi gör ▶") : tx(`Year ${arc.year + 1} ▶`, `${arc.year + 1}. yıl ▶`), "next");
   } else if (arc.phase === "fired") {
@@ -2746,7 +2817,7 @@ function renderArcade() {
     const papers = [8, 22, 38, 55, 70, 86].map((x, i) => `<span class="arc-paper" style="left:${x}%;animation-delay:${(i * 0.45).toFixed(2)}s">${i % 2 ? "📄" : "💸"}</span>`).join("");
     scr.innerHTML = papers + `<h2 id="arcTitle">${tx("You are fired!", "Kovuldun!")}</h2>` +
       `<div class="arc-hero big">${who("fired", "arc-walk")}
-        <div class="arc-bubble"><b>${tx("BOSS", "PATRON")}:</b> ${tx("Three losing years. Pack your desk. Security will walk you out.", "Üç kayıplı yıl. Masanı topla. Güvenlik seni dışarı çıkaracak.")}</div></div>` +
+        <div class="arc-bubble"><b>${tx("BOSS", "PATRON")}:</b> ${tx("Three losing years. Pack your desk. Security will walk you out.", "Üç kayıplı yıl. Masanı topla. Güvenlik seni dışarı çıkaracak.")}</div>${boss("angry")}</div>` +
       `<div class="arc-big arc-bad">${money(arc.money)}<small>${tx(`left after ${arc.year} year${arc.year > 1 ? "s" : ""} (the Quant: ${money(arc.quant)})`, `${arc.year} yıl sonra kalan (Quant: ${money(arc.quant)})`)}</small></div>` +
       arcLadder() + arcHistTable() + arcShelf() +
       `<p class="arc-dim">${tx("Tip: in a crisis, stocks are the danger. Gold and bonds that don't fall together keep the year green.",
@@ -2754,107 +2825,86 @@ function renderArcade() {
   } else {
     const r = arc.rank, R = ARC_RANKS[r], beat = arc.money > arc.quant;
     scr.innerHTML = `<h2 id="arcTitle" class="${r ? "" : "lose"}">${r ? tx(`You made it to ${R[1]}!`, `${R[2]} oldun!`) : tx("Still an intern…", "Hâlâ stajyersin…")}</h2>` +
-      arcLadder() + hero(r >= 3 || beat ? "win" : r ? "happy" : "nervous", tx(ARC_BOSS_END[r][0], ARC_BOSS_END[r][1]), "big") +
+      arcLadder() + hero(r >= 3 || beat ? "win" : r ? "happy" : "nervous", tx(ARC_BOSS_END[r][0], ARC_BOSS_END[r][1]), r >= 3 || beat ? "happy" : "stern", "big") +
       `<div class="arc-big" style="color:${ARC_COLORS.you}">${money(arc.money)}<small>${tx(`after ${ARC_YEARS} years · the Quant ${money(arc.quant)} · savings ${money(arc.bank)}`,
         `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${arc.money >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>
       <p class="arc-center arc-quant">${beat ? tx(`🤖 You beat the Quant by ${money(arc.money - arc.quant)}!`, `🤖 Quant'ı ${money(arc.money - arc.quant)} farkla geçtin!`)
         : tx(`🤖 The Quant made ${money(arc.quant - arc.money)} more. Study its splits.`, `🤖 Quant ${money(arc.quant - arc.money)} daha fazla kazandı. Dağılımlarını incele.`)}</p>` +
       arcHistTable() + arcShelf() + go(tx("▶ Play again", "▶ Tekrar oyna"), "start");
   }
-  const focus = scr.querySelector(arc.event ? "[data-act=ev-hold]" : arc.phase === "plan" ? "#arcK0" : ".arc-go");
+  const focus = scr.querySelector(arc.event ? "[data-act=ev-hold]" : arc.phase === "plan" ? "#arcT0" : ".arc-go");
   if (focus) focus.focus({ preventScroll: true });
 }
-// The split as a donut you turn: three dots cut the ring at a <= b <= c (percent, clockwise from the top), so the slices
-// are stocks a, gold b - a, bonds c - b and the savings account 100 - c. Drag a dot, click the ring to move the nearest
-// dot there, or use the arrow keys on a dot.
-const ARC_DIAL = ["#4d8dff", "#ffc93a", "#2de0c5", "#9c98c8"], ARC_R = 82, ARC_C = 115;
-const arcCuts = () => { const p = arc.w.map(x => Math.round(100 * x)); return [p[0], p[0] + p[1], p[0] + p[1] + p[2]]; };
-const arcAt = (v, r = ARC_R) => [ARC_C + r * Math.sin(2 * Math.PI * v / 100), ARC_C - r * Math.cos(2 * Math.PI * v / 100)];
-function arcArc(v0, v1) {
-  if (v1 - v0 < 0.01) return "";
-  if (v1 - v0 > 99.99) { const [x0, y0] = arcAt(0), [x1, y1] = arcAt(50); return `M${x0} ${y0}A${ARC_R} ${ARC_R} 0 1 1 ${x1} ${y1}A${ARC_R} ${ARC_R} 0 1 1 ${x0} ${y0}`; }
-  const [x0, y0] = arcAt(v0), [x1, y1] = arcAt(v1);
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${ARC_R} ${ARC_R} 0 ${v1 - v0 > 50 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+// The split: one row per asset with − and + (5% a click) and a bar you can click or drag; whatever is not used stays in
+// the savings account. Each row says how the asset does in this market on average and how risky it is.
+const ARC_STEP = 5, ARC_ICONS = ["📈", "🥇", "📜", "🏦"], ARC_SPLIT_COLORS = ["#4d8dff", "#ffc93a", "#2de0c5", "#9c98c8"];
+const arcCutsOf = w => [Math.round(100 * w[0]), Math.round(100 * (w[0] + w[1])), Math.round(100 * (w[0] + w[1] + w[2]))];
+const arcPcts = () => { const c = arcCutsOf(arc.w); return [c[0], c[1] - c[0], c[2] - c[1], 100 - c[2]]; };   // whole percents
+const arcRisk = sig => "●".repeat(sig < 0.05 ? 1 : sig < 0.1 ? 2 : sig < 0.15 ? 3 : 4).padEnd(4, "○");
+function arcSplitHtml() {
+  const M = MOODS[arc.mood];
+  const hint = i => i < 3 ? tx(`${signed(M.mu[i], 0)} a year · risk ${arcRisk(M.sig[i])}`, `yılda ${signed(M.mu[i], 0)} · risk ${arcRisk(M.sig[i])}`)
+                          : tx(`${signed(M.r, 1)} a year · no risk`, `yılda ${signed(M.r, 1)} · risksiz`);
+  const pm = (i, d) => `<button type="button" class="arc-pm" data-pm="${i}" data-d="${d}" aria-label="${d > 0 ? tx(`more ${aLow(i)}`, `daha fazla ${aLow(i)}`) : tx(`less ${aLow(i)}`, `daha az ${aLow(i)}`)}">${d > 0 ? "+" : "−"}</button>`;
+  const row = i => `<div class="arc-row${i === 3 ? " rest" : ""}"><div class="nm"><b>${ARC_ICONS[i]} ${aName(i)}</b><small>${hint(i)}</small></div>
+    <div class="ctl">${i < 3 ? pm(i, -1) : ""}<div class="arc-track" ${i < 3 ? `id="arcT${i}" tabindex="0" role="slider" aria-label="${aName(i)} (%)" aria-valuemin="0" aria-valuemax="100"` : ""}>
+      <i id="arcF${i}" style="background:${ARC_SPLIT_COLORS[i]}"></i></div>${i < 3 ? pm(i, 1) : ""}</div>
+    <div class="val"><b id="arcV${i}"></b><small id="arcM${i}"></small></div></div>`;
+  return `<p class="arc-dim">${tx(`Split your ${money(arc.money)}: each + or − moves 5% (or click a bar). What you don't use stays in the savings account.`,
+                                 `${money(arc.money)} paranı böl: her + ya da − %5 oynatır (ya da bir çubuğa tıkla). Kullanmadığın kısım mevduatta kalır.`)}</p>
+    <div class="arc-split" id="arcSplit">${[0, 1, 2, 3].map(row).join("")}</div>`;
 }
-function arcDialSvg() {
-  return `<svg viewBox="0 0 230 230" id="arcDial" aria-label="${tx("your split", "dağılımın")}">
-    <circle cx="${ARC_C}" cy="${ARC_C}" r="${ARC_R}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="40"/>
-    ${[0, 1, 2, 3].map(i => `<path id="arcP${i}" fill="none" stroke="${ARC_DIAL[i]}" stroke-width="40"/>`).join("")}
-    <text x="${ARC_C}" y="${ARC_C - 2}" text-anchor="middle" font-size="24" font-weight="900" fill="#ffe23a" id="arcMid"></text>
-    <text x="${ARC_C}" y="${ARC_C + 17}" text-anchor="middle" font-size="11" fill="#9c98c8">${tx("typical year", "tipik yıl")}</text>
-    ${[0, 1, 2].map(i => `<g class="knob" id="arcK${i}" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100"
-      aria-label="${aName(i)} | ${aName(i + 1)}"><circle r="12" fill="#f4f4f8" stroke="${ARC_DIAL[i]}" stroke-width="3"/></g>`).join("")}</svg>`;
+// Asset i to v percent, paid from (or given back to) the savings account.
+function arcSetPct(i, v) {
+  const p = arcPcts(), nv = clamp(Math.round(v), 0, p[i] + p[3]);
+  if (nv === p[i]) return;
+  p[3] -= nv - p[i]; p[i] = nv;
+  arc.w = p.map(x => x / 100);
+  arcSfx("tick");
+  arcUpdate();
 }
-function arcSetCuts(c) { arc.w = arcWFromCuts(c); arcUpdate(); }
-// Move dot k to value v, kept between its neighbours. A jump of more than half the ring means the pointer crossed the top.
-// Every 5% the dial clicks.
-function arcMoveCut(k, v) {
-  const c = arcCuts(), lo = k ? c[k - 1] : 0, hi = k < 2 ? c[k + 1] : 100, old = c[k];
-  if (Math.abs(v - c[k]) > 50) v = c[k] > 50 ? 100 : 0;
-  c[k] = clamp(Math.round(v), lo, hi);
-  if (Math.floor(c[k] / 5) !== Math.floor(old / 5)) arcSfx("tick");
-  arcSetCuts(c);
-}
-function arcDialWire() {
-  const svg = $("arcDial");
-  const valueOf = e => {
-    const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 230 - ARC_C, y = (e.clientY - r.top) / r.height * 230 - ARC_C;
-    return (Math.atan2(x, -y) / (2 * Math.PI) * 100 + 100) % 100;
-  };
-  let drag = null;                                                 // { k }, or { tied, from } until the first move picks one
-  svg.addEventListener("pointerdown", e => {
-    const v = valueOf(e), c = arcCuts(), d = k => Math.min(Math.abs(v - c[k]), 100 - Math.abs(v - c[k]));
-    const best = Math.min(...[0, 1, 2].map(d)), near = [0, 1, 2].filter(k => d(k) - best < 0.5);
-    const tied = near.filter(k => c.filter(x => x === c[k]).length > 1);
-    drag = tied.length > 1 ? { tied, from: v } : { k: near[0] };
-    if (drag.k !== undefined && !e.target.closest(".knob")) arcMoveCut(drag.k, v);   // a click on the ring moves the nearest dot there
-    try { svg.setPointerCapture(e.pointerId); } catch (err) { /* a synthetic pointer */ } svg.classList.add("drag"); e.preventDefault();
+function arcSplitWire() {
+  const box = $("arcSplit");
+  let drag = null;
+  const setFrom = e => { const r = drag.getBoundingClientRect(); arcSetPct(+drag.id.slice(4), Math.round(clamp((e.clientX - r.left) / r.width, 0, 1) * 100 / ARC_STEP) * ARC_STEP); };
+  box.addEventListener("click", e => { const b = e.target.closest("[data-pm]"); if (b) arcSetPct(+b.dataset.pm, arcPcts()[+b.dataset.pm] + ARC_STEP * b.dataset.d); });
+  box.addEventListener("pointerdown", e => {
+    const t = e.target.closest(".arc-track[id]");
+    if (!t) return;
+    drag = t; setFrom(e);
+    try { t.setPointerCapture(e.pointerId); } catch (err) { /* a synthetic pointer */ }
   });
-  svg.addEventListener("pointermove", e => {
-    if (!drag) return;
-    const v = valueOf(e);
-    if (drag.k === undefined) {                                    // dots on top of each other: the direction of the move decides
-      let dv = v - drag.from;
-      if (dv > 50) dv -= 100; if (dv < -50) dv += 100;
-      if (Math.abs(dv) < 0.5) return;
-      drag = { k: dv > 0 ? Math.max(...drag.tied) : Math.min(...drag.tied) };
-    }
-    arcMoveCut(drag.k, v);
-  });
-  const end = () => { drag = null; svg.classList.remove("drag"); };
-  svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
-  for (const k of [0, 1, 2]) $("arcK" + k).addEventListener("keydown", e => {
-    const step = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 5, PageDown: -5 }[e.key];
-    if (!step) return;
+  box.addEventListener("pointermove", e => { if (drag) setFrom(e); });
+  const end = () => { drag = null; };
+  box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
+  for (const i of [0, 1, 2]) $("arcT" + i).addEventListener("keydown", e => {
+    const p = arcPcts(), to = { ArrowRight: p[i] + ARC_STEP, ArrowUp: p[i] + ARC_STEP, ArrowLeft: p[i] - ARC_STEP, ArrowDown: p[i] - ARC_STEP, Home: 0, End: p[i] + p[3] }[e.key];
+    if (to === undefined) return;
     e.preventDefault();
-    arcMoveCut(k, arcCuts()[k] + step);
+    arcSetPct(i, to);
   });
 }
-// Live odds of the split (not the verdict, that comes after the year): the chance of a losing year and a typical year.
+// Bars, percents and money of the split; − is greyed out at 0%, + when the savings account is empty.
 function arcUpdate() {
-  const c = arcCuts(), edges = [0, ...c, 100];
+  const p = arcPcts();
   for (const i of [0, 1, 2, 3]) {
-    $("arcP" + i).setAttribute("d", arcArc(edges[i], edges[i + 1]));
-    $("arcV" + i).textContent = pct(arc.w[i], 0);
-    $("arcM" + i).textContent = money(arc.money * arc.w[i]);
+    $("arcF" + i).style.width = `${p[i]}%`;
+    $("arcV" + i).textContent = pct(p[i] / 100, 0);
+    $("arcM" + i).textContent = money(arc.money * p[i] / 100);
   }
-  for (const k of [0, 1, 2]) {
-    const [x, y] = arcAt(c[k]), knob = $("arcK" + k);
-    knob.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-    knob.setAttribute("aria-valuenow", c[k]); knob.setAttribute("aria-valuetext", `${aName(k)} ${pct(arc.w[k], 0)}`);
+  for (const i of [0, 1, 2]) {
+    $("arcT" + i).setAttribute("aria-valuenow", p[i]);
+    for (const b of $("arcSplit").querySelectorAll(`[data-pm="${i}"]`)) b.setAttribute("aria-disabled", String(b.dataset.d < 0 ? p[i] === 0 : p[3] === 0));
   }
-  const o = arcOdds(arc.w, arc.mood), cls = o.p > 0.3 ? "over" : o.p > 0.15 ? "warn" : "";
-  $("arcOdds").innerHTML = tx(`💔 Chance of losing money this year: <b class="${cls === "over" ? "arc-bad" : cls ? "arc-warn" : "arc-good"}">${pct(o.p, 0)}</b> · typical year <b>${signed(Math.exp(o.g) - 1)}</b> (${money(arc.money * (Math.exp(o.g) - 1))})`,
-                              `💔 Bu yıl para kaybetme ihtimali: <b class="${cls === "over" ? "arc-bad" : cls ? "arc-warn" : "arc-good"}">${pct(o.p, 0)}</b> · tipik yıl <b>${signed(Math.exp(o.g) - 1)}</b> (${money(arc.money * (Math.exp(o.g) - 1))})`) +
-    `<div class="arc-meter" aria-hidden="true"><i class="${cls}" style="width:${100 * clamp(o.p / 0.5, 0, 1)}%"></i></div>`;
-  $("arcMid").textContent = signed(Math.exp(o.g) - 1);
 }
 $("arcScreen").addEventListener("click", e => {
   const b = e.target.closest("[data-act]");
   if (!b || b.disabled) return;
   const act = b.dataset.act;
   if (act.startsWith("ev-")) { arcChoose(act.slice(3)); return; }
-  if (act.startsWith("card-")) { arcUseCard(act.slice(5)); renderArcade(); return; }
+  if (act.startsWith("card-")) { arcCard(act.slice(5)); arcRefocus(act); return; }
+  if (act === "ball-look") { arcLookBall(); arcRefocus("play"); return; }
+  if (act === "ball-cancel") { arc.askBall = false; arcSfx("click"); arcRefocus("card-ball"); return; }
   if (act === "play") { arcPlay(); arcSfx("click"); renderArcade(); arcRun(); return; }
   if (act === "skip") { arc.fast = true; arcRun(); return; }
   if (act === "start") { arcStart(); arcSfx("start"); }
@@ -2863,6 +2913,12 @@ $("arcScreen").addEventListener("click", e => {
   $("arcade").scrollTop = 0;
   if (act === "next" && arc.phase === "end") arcEndFx();
 });
+// Redraws the plan and keeps the keyboard focus on the same control (or on the play button).
+function arcRefocus(act) {
+  renderArcade();
+  const el = $("arcScreen").querySelector(`[data-act="${act}"]:not(:disabled)`) || $("arcScreen").querySelector("[data-act=play]");
+  if (el) el.focus({ preventScroll: true });
+}
 $("arcSound").addEventListener("click", () => {
   arcAudio.on = !arcAudio.on;
   try { localStorage.setItem(ARC_SOUND_KEY, arcAudio.on ? "on" : "off"); } catch (e) { /* not remembered */ }
