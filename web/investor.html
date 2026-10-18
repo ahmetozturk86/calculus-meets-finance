@@ -95,6 +95,14 @@
   .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 14px; text-align: center; }
   .drop.over { border-color: var(--blue); background: var(--soft); }
+  .uploads { display: grid; gap: 8px; }
+  .upl { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; text-align: left; padding: 10px 12px; }
+  .upl > span:first-child { font-weight: 650; white-space: nowrap; }
+  .upl input[type=file] { min-width: 0; width: 100%; font-size: 14px; }
+  .upl .status { grid-column: 1 / -1; margin: 0; }
+  .upl .status:empty { display: none; }
+  .x { border: 0; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; padding: 2px 8px; }
+  @media (max-width: 480px) { .upl { grid-template-columns: 1fr auto; } .upl input[type=file] { grid-column: 1 / -1; grid-row: 2; } }
   .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; } .warn { color: var(--amber); font-weight: 700; }
   .plan { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center; }
   @media (max-width: 620px) { .plan { grid-template-columns: 1fr; } #donut { max-width: 220px; margin: 0 auto; } }
@@ -173,6 +181,7 @@
     <div class="markets" id="moodPick"></div>
     <small id="moodText"></small>
     <small id="moodNote"></small>
+    <small id="detectNote"></small>
   </div>
 
   <div class="block">
@@ -224,7 +233,14 @@
           <div class="input"><input id="sig" type="number" min="1" max="80" step="0.1" value="20"><i data-i18n="perYear">% a year</i></div></label>
       </div>
       <small data-i18n="stockNote">Calm, crisis and high-inflation markets are better or worse versions of these numbers. Gold and bonds use typical
-      long-run values (table below). Upload real prices below to estimate the stock numbers from data.</small>
+      long-run values (table below) unless you upload their prices. Upload real prices below to estimate the numbers from data.</small>
+      <h3 data-i18n="bondHead">Bonds today</h3>
+      <div class="grid">
+        <label class="field"><span data-i18n="fYield">Bond yield today (optional)</span>
+          <div class="input"><input id="bondYield" type="number" min="-5" max="50" step="0.1" placeholder="—" inputmode="decimal"><i data-i18n="perYear">% a year</i></div></label>
+      </div>
+      <small data-i18n="yieldNote">What a government bond pays a year if you buy it today, for example the 10-year yield. It is the best guess for what
+      bonds earn from now on, so it replaces the bonds' average return in today's market. Leave it empty to use the table or your data.</small>
       <p><button class="btn ghost" id="resetParams" data-i18n="reset">Reset all to the example</button></p>
 
       <h3 data-i18n="surprises">Surprises in the real-life test</h3>
@@ -238,19 +254,31 @@
           <input id="crashSize" type="range" min="0.1" max="0.45" step="0.05" value="0.25"></label>
       </div>
 
-      <h3 data-i18n="dataHead">Use real stock prices (optional)</h3>
-      <p class="muted" style="margin-top:0" data-i18n="dataIntro">Upload a CSV with a date column and a price column, for example an index exported from investing.com or Yahoo Finance.
-      <b>The file is read only inside this page and never uploaded anywhere.</b> No data? Try <code>sample_prices.csv</code> from the same folder.</p>
-      <div class="drop" id="drop">
-        <input id="file" type="file" accept=".csv,.txt,text/csv">
-        <div class="muted" data-i18n="dragHere">or drag a file here</div>
+      <h3 data-i18n="dataHead">Use real prices (optional)</h3>
+      <p class="muted" style="margin-top:0" data-i18n="dataIntro">Upload a CSV with a date column and a price column for each asset you have, for example an index
+      exported from investing.com or Yahoo Finance. One file with a column for each asset (named for example Stocks, Gold and Bonds) works too.
+      <b>The files are read only inside this page and never uploaded anywhere.</b> No data? Try <code>sample_prices.csv</code> from the same folder.</p>
+      <div class="uploads">
+        <div class="drop upl" data-asset="0"><span><i class="dot" style="background:var(--blue)"></i><span data-i18n="gStock">Stocks</span></span>
+          <input id="file0" type="file" accept=".csv,.txt,text/csv" aria-label="stock prices (CSV)" data-i18n-aria="file0Aria">
+          <button class="x hidden" type="button" id="clear0" aria-label="remove the stock prices" data-i18n-aria="clear0Aria">✕</button>
+          <div class="status" id="dataStatus0"></div></div>
+        <div class="drop upl" data-asset="1"><span><i class="dot" style="background:var(--goldc)"></i><span data-i18n="gGold">Gold</span></span>
+          <input id="file1" type="file" accept=".csv,.txt,text/csv" aria-label="gold prices (CSV)" data-i18n-aria="file1Aria">
+          <button class="x hidden" type="button" id="clear1" aria-label="remove the gold prices" data-i18n-aria="clear1Aria">✕</button>
+          <div class="status" id="dataStatus1"></div></div>
+        <div class="drop upl" data-asset="2"><span><i class="dot" style="background:var(--bond)"></i><span data-i18n="gBond">Bonds</span></span>
+          <input id="file2" type="file" accept=".csv,.txt,text/csv" aria-label="bond prices (CSV)" data-i18n-aria="file2Aria">
+          <button class="x hidden" type="button" id="clear2" aria-label="remove the bond prices" data-i18n-aria="clear2Aria">✕</button>
+          <div class="status" id="dataStatus2"></div></div>
       </div>
-      <div class="status" id="dataStatus"></div>
+      <small data-i18n="dragHere">You can also drag a file onto a row.</small>
       <div id="dataSummary" class="hidden">
-        <div class="stats" id="dataStats"></div>
+        <div class="scroll"><table id="dataTable"></table></div>
+        <small id="dataTrust"></small>
+        <small id="dataCorr"></small>
         <div class="chart" id="priceChart"></div>
-        <div class="buttons"><button class="btn ghost" id="useEstimates" data-i18n="useEstimates">Put the estimated μ and σ back in</button>
-           <button class="btn ghost" id="clearData" data-i18n="clearData">Remove data</button></div>
+        <div class="buttons"><button class="btn ghost" id="useEstimates" data-i18n="useEstimates">Put the estimated stock μ and σ back in</button></div>
       </div>
       <p class="muted" id="dataNote"></p>
 
@@ -277,6 +305,7 @@
   </div>
   <div class="tiles" id="planTiles"></div>
   <p id="planWhy"></p>
+  <p class="muted" id="planNear"></p>
   <div id="vsBlock">
     <h3 data-i18n="vsHead">Your guess vs the math</h3>
     <div class="scroll"><table id="vsMath"></table></div>
@@ -464,16 +493,17 @@ function quantileLinear(sorted, q) {
 // ---- Module 5 (src/portfolio.py): more assets ----
 // A fixed mix d of stocks, gold and bonds (d >= 0, sum 1) is one fund with mu_d = r + d.(mu - r) and
 // sigma_d = sqrt(d'Cd). Module 4 gives the fund's best share f = min(f*, f_VaR, 1); trying every fund on a 1% grid
-// and keeping the fastest-growing one gives the best mix (no borrowing, no short selling). `m` = {mu: [3], sig: [3], rc}.
-const RHO = [[1, 0, -0.2], [0, 1, 0.3], [-0.2, 0.3, 1]];         // correlations of stocks, gold, bonds
+// and keeping the fastest-growing one gives the best mix (no borrowing, no short selling). `m` = {mu: [3], sig: [3], rc, rho}.
+const RHO = [[1, 0, -0.2], [0, 1, 0.3], [-0.2, 0.3, 1]];         // typical correlations of stocks, gold, bonds (uploaded data can replace them)
 const STEPS = 100;
 const MIX_GRID = [];                                              // same order as portfolio.mix_grid(3)
 for (let i = 0; i <= STEPS; i++) for (let j = 0; j <= STEPS - i; j++) MIX_GRID.push([i / STEPS, j / STEPS, (STEPS - i - j) / STEPS]);
 function fundOf(d, m) {
+  const rho = m.rho || RHO;
   let mu = m.rc, v = 0;
   for (let i = 0; i < 3; i++) {
     mu += d[i] * (m.mu[i] - m.rc);
-    for (let j = 0; j < 3; j++) v += d[i] * d[j] * RHO[i][j] * m.sig[i] * m.sig[j];
+    for (let j = 0; j < 3; j++) v += d[i] * d[j] * rho[i][j] * m.sig[i] * m.sig[j];
   }
   return { mu, sig: Math.sqrt(v), r: m.rc };
 }
@@ -486,16 +516,25 @@ function fundFraction(d, L, m, alpha, z = normPpf(alpha)) {
   const f = Math.min(fStar, v.f, 1);
   return { f, g: growthRate(f, fd.mu, fd.sig, r), history: v.history, status: v.status, fund: fd, fStar, fVar: v.f, varFun };
 }
+// `near` is how far each share can move among the splits that grow almost as fast (within NEAR a year): the top is flat,
+// so the exact numbers matter less than the rough split (portfolio.near_optimal_ranges).
+const NEAR = 0.001;
 function bestMix(m, L, alpha) {
-  const z = normPpf(alpha);
+  const z = normPpf(alpha), fs = new Float64Array(MIX_GRID.length), gs = new Float64Array(MIX_GRID.length);
   let best = { f: 0, g: m.rc, d: null };
-  for (const d of MIX_GRID) {
+  MIX_GRID.forEach((d, k) => {
     const res = fundFraction(d, L, m, alpha, z);
+    fs[k] = res.f; gs[k] = res.g;
     if (res.g > best.g + 1e-15) best = { ...res, d };
-  }
+  });
   const w = best.d ? best.d.map(x => x * best.f) : [0, 0, 0];
   const v = best.d ? best.varFun(best.f) : 1 - Math.exp(m.rc), es = best.d ? esOf(best.g, best.f * best.fund.sig, alpha) : v;
-  return { ...best, w: [...w, 1 - best.f], var: v, es };
+  const near = m.rc >= best.g - NEAR ? [[0, 0], [0, 0], [0, 0], [1, 1]] : [[1, 0], [1, 0], [1, 0], [1, 0]];   // all savings counts too
+  MIX_GRID.forEach((d, k) => {
+    if (gs[k] < best.g - NEAR) return;
+    [d[0] * fs[k], d[1] * fs[k], d[2] * fs[k], 1 - fs[k]].forEach((x, i) => { near[i][0] = Math.min(near[i][0], x); near[i][1] = Math.max(near[i][1], x); });
+  });
+  return { ...best, w: [...w, 1 - best.f], var: v, es, near };
 }
 
 // =====================================================================
@@ -636,20 +675,25 @@ const CRASH_SAFE = [1.05, 1.03];                                   // what a mar
 // lam_s = lam * shock_s / shock_normal (at most one per year, probability 1 - e^(-lam_s)) and multiply the assets by
 // `crash` (stocks 1 + J, gold and bonds CRASH_SAFE). Each drift is lowered by ln(1 + p (crash_i - 1)), so every asset's
 // average yearly return is still e^avg, the number in the table (Module 4b): crashes change the shape, not the average.
+// Uploaded gold or bond prices (p.est) replace the table like the stock numbers do: they are a normal market's values and
+// the other states are shifted the same way. A typed bond yield (p.bondY) is today's, so it belongs to the picked market,
+// like the interest rate. p.rho (the correlations) is the same in every state.
 function marketStates(p, lam, J) {
   const n = MOODS.normal, c = MOODS[p.mood], out = {};
   for (const k of REGIME_KEYS) {
     const m = MOODS[k], mucAvg = p.mu + (m.muc[0] - n.muc[0]), rc = Math.max(0, p.r + m.rc - c.rc);
-    const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE], avg = [mucAvg, m.muc[1], m.muc[2]];
+    const other = i => i === 2 && p.bondY !== null ? p.bondY + m.muc[2] - c.muc[2] : p.est[i] ? p.est[i].mu + m.muc[i] - n.muc[i] : m.muc[i];
+    const sigOf = i => p.est[i] ? p.est[i].sig * m.sig[i] / n.sig[i] : m.sig[i];
+    const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE], avg = [mucAvg, other(1), other(2)];
     out[k] = { key: k, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg, avg,
                mu: avg.map(x => Math.exp(x) - 1),
                muc: avg.map((x, i) => x - Math.log(1 + shock * (crash[i] - 1))),       // drifts between crashes
-               sig: [p.sig * m.sig[0] / n.sig[0], m.sig[1], m.sig[2]] };
+               sig: [p.sig * m.sig[0] / n.sig[0], sigOf(1), sigOf(2)], rho: p.rho };
   }
   return out;
 }
 // The bell-curve numbers of one state for the math (no crashes: each asset's full average drift).
-const mathState = s => ({ mu: s.avg, sig: s.sig, rc: s.rc });
+const mathState = s => ({ mu: s.avg, sig: s.sig, rc: s.rc, rho: s.rho });
 const CRASH_EVERY = [0, 5, 10, 20, 50];             // years between crashes on average (0 = never)
 function crashSettings() {
   const every = CRASH_EVERY[+$("crashEvery").value];
@@ -681,7 +725,7 @@ function portfolioVar(w, mood, alpha) {
   let g = mood.rc, v = 0;
   for (let i = 0; i < 3; i++) {
     g += w[i] * (mood.muc[i] - mood.rc);
-    for (let j = 0; j < 3; j++) v += w[i] * w[j] * RHO[i][j] * mood.sig[i] * mood.sig[j];
+    for (let j = 0; j < 3; j++) v += w[i] * w[j] * mood.rho[i][j] * mood.sig[i] * mood.sig[j];
   }
   return 1 - Math.exp(g - 0.5 * v - normPpf(alpha) * Math.sqrt(v));
 }
@@ -698,7 +742,7 @@ function riskEstimate(w, mix, alpha) {
     let m = mood.rc, v = 0;
     for (let i = 0; i < 3; i++) {
       m += w[i] * (mood.muc[i] - mood.rc);
-      for (let j = 0; j < 3; j++) v += w[i] * w[j] * RHO[i][j] * mood.sig[i] * mood.sig[j];
+      for (let j = 0; j < 3; j++) v += w[i] * w[j] * mood.rho[i][j] * mood.sig[i] * mood.sig[j];
     }
     m -= 0.5 * v;
     const sd = Math.max(Math.sqrt(v), 1e-9);                       // all in the savings account: (almost) no spread
@@ -718,7 +762,7 @@ function bestMixCrash(s, L, alpha) {
   let best = { g: s.rc, w: [0, 0, 0, 1], t: 0, d: null };
   for (const d of MIX_GRID_COARSE) {
     let a = 0, v = 0;
-    for (let i = 0; i < 3; i++) { a += d[i] * (s.muc[i] - s.rc); for (let j = 0; j < 3; j++) v += d[i] * d[j] * RHO[i][j] * s.sig[i] * s.sig[j]; }
+    for (let i = 0; i < 3; i++) { a += d[i] * (s.muc[i] - s.rc); for (let j = 0; j < 3; j++) v += d[i] * d[j] * s.rho[i][j] * s.sig[i] * s.sig[j]; }
     const c = d[0] * s.crash[0] + d[1] * s.crash[1] + d[2] * s.crash[2] - 1;
     const G = t => s.rc + t * a - 0.5 * t * t * v + s.shock * Math.log(1 + t * c), dG = t => a - t * v + s.shock * c / (1 + t * c);
     const tG = dG(0) <= 0 ? 0 : dG(1) >= 0 ? 1 : bisection(dG, 0, 1, 1e-9)[0];
@@ -732,7 +776,7 @@ function bestMixCrash(s, L, alpha) {
 
 // All years of a future, drawn up front: monthly growth factors of the four assets, inflation and a life event.
 function generateYears(set, seed) {
-  const rng = mulberry32(seed), C = cholesky(RHO), dt = 1 / 12;
+  const rng = mulberry32(seed), C = cholesky(set.states[set.mood].rho), dt = 1 / 12;
   const real = set.useData ? shuffleWith(rng, [...set.dataYears]) : null;
   const n = real ? Math.min(set.length, real.length) : set.length, years = [];
   let regime = set.mood;
@@ -826,7 +870,7 @@ const bandLegend = () => [{ color: "var(--band-calm)", label: tx("calm year", "s
 // =====================================================================
 const ui = { mood: "normal", risk: "balanced", filled: null, typed: false };  // filled: the market whose typical rates were filled in
                                                                     // typed: the person typed their own interest or inflation
-const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
+const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25, bondYield: "" };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
   // People type ordinary yearly rates; the math uses continuous rates (Module 1), so r and mu are ln(1 + typed rate).
@@ -834,6 +878,10 @@ function params() {
               infl: clamp(num("infl", 3), -5, 50) / 100, mood: ui.mood, alpha: +$("alpha").value,
               mu: Math.log(1 + clamp(num("mu", 10.5), -50, 80) / 100), sig: clamp(num("sig", 20), 1, 80) / 100,
               years: +$("years").value, fMax: 1, T: 1 };
+  const y = parseFloat($("bondYield").value);
+  p.bondY = Number.isFinite(y) ? Math.log(1 + clamp(y, -5, 50) / 100) : null;   // today's bond yield, if typed
+  p.est = series.map((s, i) => s && i ? { mu: usedMu(i, s, p), sig: s.sig } : null);   // uploaded gold and bond prices
+  p.rho = dataRho && dataRho.rho ? dataRho.rho : RHO;
   p.L = riskLimit(p, ui.risk);                                      // the bad-year loss limit behind the choice
   return p;
 }
@@ -857,7 +905,7 @@ function pickMood(key) {
   onInputChange();
 }
 for (const b of document.querySelectorAll("#riskPick .opt")) b.addEventListener("click", () => { ui.risk = b.dataset.risk; onInputChange(); });
-for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
+for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "bondYield", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
   $(id).addEventListener("input", onInputChange);
 for (const id of ["r", "infl"]) $(id).addEventListener("input", () => { ui.typed = true; ui.filled = null; onInputChange(); });
 $("resetParams").addEventListener("click", () => {
@@ -901,11 +949,14 @@ const calcLabel = () => { $("calc").textContent = $("results").classList.contain
 // =====================================================================
 // CSV upload (read locally with FileReader; nothing leaves the page)
 // =====================================================================
-let data = null;
-// Errors carry both languages, and the status line is kept as a function so it can be redrawn in the other language.
+// Uploaded prices of stocks, gold and bonds (an index into ASSETS). The stock file also drives the history check and the
+// real years of the real-life test; all files give the average returns, the risks and how the assets move together.
+const series = [null, null, null];
+let dataRho = null;                                               // correlations measured from the files (estimateRho)
+// Errors carry both languages, and each status line is kept as a function so it can be redrawn in the other language.
 const fail = (en, tr) => { const e = new Error(en); e.tr = tr; throw e; };
-let statusFn = null;
-const setStatus = fn => { statusFn = fn; $("dataStatus").innerHTML = fn ? fn() : ""; };
+const statusFns = [null, null, null];
+const setStatus = (i, fn) => { statusFns[i] = fn; $("dataStatus" + i).innerHTML = fn ? fn() : ""; };
 function splitCsvLine(line, delim) {
   const out = []; let cur = "", q = false;
   for (let i = 0; i < line.length; i++) {
@@ -948,6 +999,8 @@ function toTime([y, mo, d]) {
   return Date.UTC(y, mo - 1, d);
 }
 const norm = s => s.toLowerCase().replace(/["\s]/g, "").replace(/ı/g, "i").replace(/ş/g, "s").replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o");
+// Column names that say which asset a column is, for one file with a column per asset (after norm).
+const ASSET_WORDS = [/stock|equit|hisse|sp500|s&p|spx|msci|nasdaq|bist|xu100/, /gold|altin|xau|gld/, /bond|tahvil|treasur|tlt|agg|bnd|ief|govt/];
 
 function parsePriceCsv(text) {
   text = text.replace(/^﻿/, "");
@@ -962,6 +1015,30 @@ function parsePriceCsv(text) {
   const names = header.map(norm);
   let dateCol = names.findIndex(n => n.includes("date") || n.includes("tarih"));
   if (dateCol < 0) dateCol = 0;
+  // dd/mm/yyyy vs mm/dd/yyyy: if any first number is above 12 it must be the day.
+  const slashOrder = rows.some(r => { const m = (r[dateCol] || "").match(/^"?(\d{1,2})[/-](\d{1,2})[/-]\d{4}/); return m && +m[1] > 12; }) ? "dmy" : "mdy";
+  const readCol = col => {
+    const pts = []; let skipped = 0;
+    for (const r of rows) {
+      const parts = r[dateCol] !== undefined ? parseDateParts(r[dateCol], slashOrder) : null;
+      const t = parts ? toTime(parts) : NaN, p = parseNumber(r[col], delim);
+      if (Number.isFinite(t) && Number.isFinite(p)) pts.push({ t, p }); else skipped++;
+    }
+    if (pts.some(x => x.p <= 0)) fail("Prices must be positive. Check that you picked a price column, not a change column.",
+                                      "Fiyatlar pozitif olmalı. Değişim sütunu değil, fiyat sütunu seçtiğinden emin ol.");
+    pts.sort((a, b) => a.t - b.t);
+    const uniq = pts.filter((x, i) => i === 0 || x.t !== pts[i - 1].t);
+    if (uniq.length < 30) fail(`Only ${uniq.length} usable rows were found; at least 30 prices are needed.`,
+                               `Yalnızca ${uniq.length} kullanılabilir satır bulundu; en az 30 fiyat gerekiyor.`);
+    return { pts: uniq, skipped, priceName: hasHeader ? header[col].replace(/"/g, "") : null, priceCol: col };
+  };
+  // One file with a column per asset (at least two columns named like stocks, gold or bonds).
+  const assetCols = [];
+  if (hasHeader) ASSET_WORDS.forEach((re, asset) => {
+    const col = names.findIndex((n, i) => i !== dateCol && re.test(n));
+    if (col >= 0 && !assetCols.some(x => x.col === col)) assetCols.push({ asset, col });
+  });
+  if (assetCols.length >= 2) return { multi: assetCols.map(({ asset, col }) => ({ asset, ...readCol(col) })) };
   const wanted = ["adjclose", "close", "price", "simdi", "kapanis", "son", "value"];
   let priceCol = -1;
   for (const w of wanted) { priceCol = names.findIndex((n, i) => i !== dateCol && n.replace(/[^a-z]/g, "") === w); if (priceCol >= 0) break; }
@@ -975,21 +1052,7 @@ function parsePriceCsv(text) {
   }
   if (priceCol < 0) fail("Could not find a price column. Use a column named Close or Price.",
                          "Fiyat sütunu bulunamadı. Adı Close, Price, Kapanış ya da Şimdi olan bir sütun kullan.");
-  // dd/mm/yyyy vs mm/dd/yyyy: if any first number is above 12 it must be the day.
-  const slashOrder = rows.some(r => { const m = (r[dateCol] || "").match(/^"?(\d{1,2})[/-](\d{1,2})[/-]\d{4}/); return m && +m[1] > 12; }) ? "dmy" : "mdy";
-  const pts = []; let skipped = 0;
-  for (const r of rows) {
-    const parts = r[dateCol] !== undefined ? parseDateParts(r[dateCol], slashOrder) : null;
-    const t = parts ? toTime(parts) : NaN, p = parseNumber(r[priceCol], delim);
-    if (Number.isFinite(t) && Number.isFinite(p)) pts.push({ t, p }); else skipped++;
-  }
-  if (pts.some(x => x.p <= 0)) fail("Prices must be positive. Check that you picked a price column, not a change column.",
-                                    "Fiyatlar pozitif olmalı. Değişim sütunu değil, fiyat sütunu seçtiğinden emin ol.");
-  pts.sort((a, b) => a.t - b.t);
-  const uniq = pts.filter((x, i) => i === 0 || x.t !== pts[i - 1].t);
-  if (uniq.length < 30) fail(`Only ${uniq.length} usable rows were found; at least 30 prices are needed.`,
-                             `Yalnızca ${uniq.length} kullanılabilir satır bulundu; en az 30 fiyat gerekiyor.`);
-  return { pts: uniq, skipped, priceName: hasHeader ? header[priceCol].replace(/"/g, "") : null, priceCol };
+  return readCol(priceCol);
 }
 
 // Estimate GBM parameters: sigma = sd(log returns)/sqrt(dt), mu = mean(log returns)/dt + sigma^2/2.
@@ -1018,36 +1081,101 @@ const fmtSpan = ([t0, t1]) => `${fmtDate(t0)} – ${fmtDate(t1)}`;
 // The estimate mu is a continuous drift; the input shows it as the average yearly return e^mu - 1.
 const setStock = (mu, sig) => { $("mu").value = (100 * clamp(Math.exp(mu) - 1, -0.5, 0.8)).toFixed(1); $("sig").value = (100 * clamp(sig, 0.01, 0.8)).toFixed(1); };
 
-function loadCsvText(text, name) {
-  try {
-    const parsed = parsePriceCsv(text), est = estimate(parsed.pts);
-    data = { name, ...parsed, ...est };
-    setStock(est.mu, est.sig);
-    const col = () => parsed.priceName ?? tx(`column ${parsed.priceCol + 1}`, `${parsed.priceCol + 1}. sütun`);
-    setStatus(() => tx(`<span class="ok">✓ Loaded ${name}</span> using the “${col()}” column.`, `<span class="ok">✓ ${name} yüklendi</span>, “${col()}” sütunu kullanıldı.`) +
-      (parsed.skipped ? ` <span class="warn">${tx(`${parsed.skipped} row(s) could not be read and were skipped.`, `${parsed.skipped} satır okunamadı ve atlandı.`)}</span>` : "") +
-      (est.windows.length < 10 ? ` <span class="warn">${tx("Less than ~2 years of data: the history check needs more.", "2 yıldan az veri: geçmiş kontrolü için daha fazlası gerekiyor.")}</span>` : ""));
-  } catch (e) {
-    data = null;
-    setStatus(() => `<span class="bad">✗ ${tx(e.message, e.tr || e.message)}</span>`);
+// Average returns are hard to measure: the data's average is uncertain by about sigma / sqrt(years), so 20 years of stocks
+// with sigma = 20% still leave about 4.5% a year. The plan therefore mixes it with a typical long-run value, weighting both by
+// how sure they are (precision weights): the long-run value counts as known to about PRIOR_SD a year, so the longer the data,
+// the more it is trusted. Risk sigma is measured well from many small moves, so it comes straight from the data.
+const PRIOR_SD = 0.03;
+// The typical normal-market average of asset i, as a premium over the savings rate (so it suits any currency): stocks
+// the example's 10.5% vs 3%, gold and bonds the normal market's table values vs its savings rate.
+function longRunMu(i, p) {
+  const n = MOODS.normal, rNormal = p.r + n.rc - MOODS[p.mood].rc;
+  return rNormal + (i === 0 ? Math.log(1 + DEFAULTS.mu / 100) - Math.log(1 + DEFAULTS.r / 100) : n.muc[i] - n.rc);
+}
+const dataWeight = est => PRIOR_SD ** 2 / (PRIOR_SD ** 2 + est.sig ** 2 / Math.max(est.spanYears, 1e-9));
+const usedMu = (i, est, p) => { const w = dataWeight(est); return w * est.mu + (1 - w) * longRunMu(i, p); };
+
+// How the uploaded assets move together: monthly log returns (the last price of each month, so any price frequency works)
+// on the months all files share, pulled toward the typical RHO like the averages (weight n / (n + 36) for n months).
+function estimateRho() {
+  const have = [0, 1, 2].filter(i => series[i]);
+  if (have.length < 2) return null;
+  const months = have.map(i => { const m = new Map(); for (const x of series[i].pts) { const d = new Date(x.t); m.set(d.getUTCFullYear() * 12 + d.getUTCMonth(), x.p); } return m; });
+  const keys = [...months[0].keys()].filter(k => months.every(m => m.has(k))).sort((a, b) => a - b), rets = have.map(() => []);
+  for (let j = 1; j < keys.length; j++) if (keys[j] === keys[j - 1] + 1) months.forEach((m, a) => rets[a].push(Math.log(m.get(keys[j]) / m.get(keys[j - 1]))));
+  const n = rets[0].length;
+  if (n < 12) return { n, rho: null };
+  const mean = x => x.reduce((a, b) => a + b, 0) / x.length;
+  const corr = (x, y) => { const mx = mean(x), my = mean(y); let sxy = 0, sxx = 0, syy = 0;
+    x.forEach((xi, k) => { sxy += (xi - mx) * (y[k] - my); sxx += (xi - mx) ** 2; syy += (y[k] - my) ** 2; });
+    return sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : 0; };
+  const w = n / (n + 36), rho = RHO.map(r => [...r]), pairs = [];
+  for (let a = 0; a < have.length; a++) for (let b = a + 1; b < have.length; b++) {
+    const i = have[a], j = have[b], raw = corr(rets[a], rets[b]);
+    rho[i][j] = rho[j][i] = w * raw + (1 - w) * RHO[i][j];
+    pairs.push([i, j, raw]);
   }
+  const ok = cholesky(rho).every(row => row.every(Number.isFinite));       // a valid correlation matrix (it always is when all three are measured)
+  return { n, w, pairs, rho: ok ? rho : null };
+}
+
+// Today's market from the stock prices: how much they swung in the last 3 months compared with the whole file, and how
+// far they are below their high of the past year (a fall of 20% is the usual meaning of a bear market). Needs daily or
+// weekly prices. High typed inflation counts too, since prices of stocks alone cannot show it.
+function detectMarket(s, p) {
+  if (!s || s.gap > 10 || s.spanYears < 1) return null;
+  const YEAR = 365.25 * 864e5, last = s.pts[s.n - 1], recent = s.pts.filter(x => x.t >= last.t - 91 * 864e5);
+  if (recent.length < 9) return null;
+  const lr = []; for (let i = 1; i < recent.length; i++) lr.push(Math.log(recent[i].p / recent[i - 1].p));
+  const m = lr.reduce((a, b) => a + b, 0) / lr.length, sd = Math.sqrt(lr.reduce((a, b) => a + (b - m) ** 2, 0) / (lr.length - 1));
+  const vol = sd / Math.sqrt((last.t - recent[0].t) / YEAR / lr.length);
+  const drop = 1 - last.p / Math.max(...s.pts.filter(x => x.t >= last.t - 365 * 864e5).map(x => x.p)), ratio = vol / s.sig;
+  const key = drop >= 0.2 || ratio >= 1.5 ? "crisis" : p.infl >= 0.06 ? "inflation" : ratio <= 0.85 && drop <= 0.05 ? "calm" : "normal";
+  return { key, vol, drop, sig: s.sig, end: last.t, old: Date.now() - last.t > 60 * 864e5 };
+}
+
+function addSeries(i, name, parsed) {
+  const est = estimate(parsed.pts);
+  series[i] = { name, ...parsed, ...est };
+  if (i === 0) {                                                  // the stock inputs show the numbers the plan uses
+    setStock(usedMu(0, est, params()), est.sig);
+    const det = detectMarket(series[0], params());
+    if (det) pickMood(det.key);                                   // today's market, read from the prices (it can be changed)
+  }
+  const col = () => parsed.priceName ?? tx(`column ${parsed.priceCol + 1}`, `${parsed.priceCol + 1}. sütun`);
+  setStatus(i, () => tx(`<span class="ok">✓ Loaded ${name}</span> using the “${col()}” column.`, `<span class="ok">✓ ${name} yüklendi</span>, “${col()}” sütunu kullanıldı.`) +
+    (parsed.skipped ? ` <span class="warn">${tx(`${parsed.skipped} row(s) could not be read and were skipped.`, `${parsed.skipped} satır okunamadı ve atlandı.`)}</span>` : "") +
+    (i === 0 && est.windows.length < 10 ? ` <span class="warn">${tx("Less than ~2 years of data: the history check needs more.", "2 yıldan az veri: geçmiş kontrolü için daha fazlası gerekiyor.")}</span>` : ""));
+}
+// `asset` is the row the file was given to; a file with a column per asset fills every row it has.
+function loadCsvText(text, name, asset = 0) {
+  try {
+    const parsed = parsePriceCsv(text);
+    for (const c of parsed.multi || [{ asset, ...parsed }]) addSeries(c.asset, name, c);
+  } catch (e) {
+    series[asset] = null;
+    setStatus(asset, () => `<span class="bad">✗ ${tx(e.message, e.tr || e.message)}</span>`);
+  }
+  dataRho = estimateRho();
   onInputChange();
 }
-function readFile(file) {
+function readFile(file, i) {
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { setStatus(() => `<span class="bad">✗ ${tx("The file is larger than 10 MB.", "Dosya 10 MB'tan büyük.")}</span>`); return; }
+  if (file.size > 10 * 1024 * 1024) { setStatus(i, () => `<span class="bad">✗ ${tx("The file is larger than 10 MB.", "Dosya 10 MB'tan büyük.")}</span>`); return; }
   const reader = new FileReader();
-  reader.onload = () => loadCsvText(String(reader.result), file.name);
-  reader.onerror = () => setStatus(() => `<span class="bad">✗ ${tx("Could not read the file.", "Dosya okunamadı.")}</span>`);
+  reader.onload = () => loadCsvText(String(reader.result), file.name, i);
+  reader.onerror = () => setStatus(i, () => `<span class="bad">✗ ${tx("Could not read the file.", "Dosya okunamadı.")}</span>`);
   reader.readAsText(file);
 }
-$("file").addEventListener("change", e => readFile(e.target.files[0]));
-const drop = $("drop");
-drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
-drop.addEventListener("dragleave", () => drop.classList.remove("over"));
-drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFile(e.dataTransfer.files[0]); });
-$("useEstimates").addEventListener("click", () => { if (data) { setStock(data.mu, data.sig); onInputChange(); } });
-$("clearData").addEventListener("click", () => { data = null; $("file").value = ""; setStatus(null); onInputChange(); });
+for (const i of [0, 1, 2]) {
+  const row = document.querySelector(`.upl[data-asset="${i}"]`);
+  $("file" + i).addEventListener("change", e => readFile(e.target.files[0], i));
+  row.addEventListener("dragover", e => { e.preventDefault(); row.classList.add("over"); });
+  row.addEventListener("dragleave", () => row.classList.remove("over"));
+  row.addEventListener("drop", e => { e.preventDefault(); row.classList.remove("over"); readFile(e.dataTransfer.files[0], i); });
+  $("clear" + i).addEventListener("click", () => { series[i] = null; $("file" + i).value = ""; setStatus(i, null); dataRho = estimateRho(); onInputChange(); });
+}
+$("useEstimates").addEventListener("click", () => { if (series[0]) { setStock(usedMu(0, series[0], params()), series[0].sig); onInputChange(); } });
 
 // =====================================================================
 // The answer, computed once per change of the inputs
@@ -1098,12 +1226,12 @@ let cur = null;
 function compute() {
   const p = params(), c = crashSettings(), states = marketStates(p, c.lam, c.J), st = states[p.mood], m = mathState(st);
   const stockP = { ...p, mu: st.mucAvg, sig: st.sig[0], r: st.rc };      // stocks + savings account in today's market
-  const key = [m.mu, m.sig, m.rc, p.L, p.alpha].join("|");
+  const key = [m.mu, m.sig, m.rc, m.rho, p.L, p.alpha].join("|");
   const plan = cached(mixCache, "p" + key, () => bestMix(m, p.L, p.alpha));
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
   const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
   return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J), top: riskTop(p).top,
-           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, p.alpha) } : null, data,
+           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, p.alpha) } : null, data: series[0],
            changing: $("changing").checked, events: $("events").checked };
 }
 
@@ -1132,7 +1260,7 @@ const mixText = w => {
 // The plan with no limit at all is the fastest-growing mix without borrowing, and "Bold" stops at its bad-year loss.
 function riskTop(p) {
   const c = crashSettings(), m = mathState(marketStates(p, c.lam, c.J)[p.mood]);
-  const top = cached(mixCache, "top" + [m.mu, m.sig, m.rc, p.alpha].join("|"), () => bestMix(m, 1, p.alpha));
+  const top = cached(mixCache, "top" + [m.mu, m.sig, m.rc, m.rho, p.alpha].join("|"), () => bestMix(m, 1, p.alpha));
   return { top, m };
 }
 // The loss limit behind each choice. Careful and Balanced are the person's own limits, the same in every market: how
@@ -1177,6 +1305,15 @@ function renderInputs() {
   $("moodNote").innerHTML = !ui.filled ? ""
     : tx(`We filled in a typical interest rate and inflation for a <b>${moodLow(ui.filled)}</b> market. Type your own if they are different.`,
          `${capFirst(MOODS[ui.filled].tr.a)} için tipik bir faiz ve enflasyon yazdık. Seninkiler farklıysa kendin gir.`);
+  const det = detectMarket(series[0], p), sx = det && det.drop < 0.005;
+  $("detectNote").innerHTML = !det ? "" : tx(`From your stock prices, today looks like <b>${moodA(det.key)}</b>: in the last 3 months stocks swung
+      ${pct(det.vol, 0)} a year (usually ${pct(det.sig, 0)}) and are ${sx ? "at" : `${pct(det.drop, 0)} below`} their high of the past year` +
+      (det.key === "inflation" ? `, and your inflation of ${pct(p.infl, 1)} is high.` : ".") +
+      (det.key !== p.mood ? ` You picked ${moodLow(p.mood)} instead.` : "") + (det.old ? ` Your data ends in ${fmtDate(det.end)}, so this describes the market then.` : ""),
+    `Hisse fiyatlarına göre bugün <b>${MOODS[det.key].tr.a}</b> gibi görünüyor: son 3 ayda hisseler yılda ${pct(det.vol, 0)} dalgalandı
+      (genelde ${pct(det.sig, 0)}) ve son bir yılın ${sx ? "zirvesindeler" : `zirvesinin ${pct(det.drop, 0)} altındalar`}` +
+      (det.key === "inflation" ? `; ayrıca ${pct(p.infl, 1)} enflasyonun yüksek.` : ".") +
+      (det.key !== p.mood ? ` Sen ise “${moodName(p.mood)}” seçtin.` : "") + (det.old ? ` Verin ${fmtDate(det.end)} tarihinde bitiyor, yani bu o zamanki piyasayı anlatıyor.` : ""));
   $("saveSym").textContent = sym();
   const gw = guessW();
   $("guessBox").classList.toggle("hidden", !$("useGuess").checked);
@@ -1208,7 +1345,7 @@ function renderInputs() {
     REGIME_KEYS.map(k => `<tr><td>${moodName(k)}</td>${TRANSITION[k].map(q => `<td>${pct(q, 0)}</td>`).join("")}</tr>`).join("");
   $("transNote").textContent = tx("Typical length: ", "Tipik süre: ") + REGIME_KEYS.map((k, i) => { const len = fix(1 / (1 - TRANSITION[k][i]), 1);
     return tx(`${moodLow(k)} about ${len} years`, `${moodLow(k)} yaklaşık ${len} yıl`); }).join(", ") + ".";
-  const nData = data ? data.years.length : 0;
+  const nData = series[0] ? series[0].years.length : 0;
   $("dataNote").innerHTML = nData < 5 ? ""
     : tx(`The real-life test uses <b>your uploaded stock years</b> (${nData} real years, shuffled). Their crashes are real ones, so no extra
        crashes are added, and gold, bonds, savings and inflation stay at the picked market's values (no market changes on top of real years).
@@ -1219,21 +1356,54 @@ function renderInputs() {
 }
 
 function renderData() {
-  $("dataSummary").classList.toggle("hidden", !data);
-  if (!data) return;
-  $("dataStats").innerHTML = [
-    [fmtSpan([data.pts[0].t, data.pts[data.n - 1].t]), tx(`${fix(data.spanYears, 1)} years of ${freqText(data.gap)} prices (${data.n} points)`,
-                                                          `${fix(data.spanYears, 1)} yıllık ${freqText(data.gap)} fiyat (${data.n} nokta)`)],
-    [pct(Math.exp(data.mu) - 1), tx("estimated average return per year", "tahmini yıllık ortalama getiri")],
-    [pct(data.sig), tx("estimated volatility σ per year", "tahmini yıllık oynaklık σ")],
-    [pct(data.pts[data.n - 1].p / data.pts[0].p - 1, 0), tx("total price change", "toplam fiyat değişimi")]
-  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
-  const YEAR = 365.25 * 864e5, yr = t => 1970 + t / YEAR;
-  const pts = data.pts.map(x => ({ x: yr(x.t), y: x.p })), ps = data.pts.map(x => x.p);
-  const lo = Math.min(...ps), hi = Math.max(...ps);
-  drawChart($("priceChart"), { x: [pts[0].x, pts[pts.length - 1].x], y: [Math.max(0, lo - 0.05 * (hi - lo)), hi + 0.05 * (hi - lo)],
-    series: [{ pts, color: "var(--blue)", width: 1.6 }], xFmt: t => Math.floor(t), yFmt: v => v.toLocaleString(locale()),
-    xLabel: tx("year", "yıl"), yLabel: tx("price", "fiyat"), aria: tx("price history", "fiyat geçmişi") });
+  const have = [0, 1, 2].filter(i => series[i]);
+  for (const i of [0, 1, 2]) $("clear" + i).classList.toggle("hidden", !series[i]);
+  $("dataSummary").classList.toggle("hidden", !have.length);
+  if (!have.length) return;
+  const p = params(), yieldUsed = i => i === 2 && p.bondY !== null;
+  $("useEstimates").classList.toggle("hidden", !series[0]);
+  const rows = [
+    [tx("Prices", "Fiyatlar"), s => `${fmtSpan([s.pts[0].t, s.pts[s.n - 1].t])}<br><span class="muted">${tx(`${fix(s.spanYears, 1)} years, ${freqText(s.gap)}`, `${fix(s.spanYears, 1)} yıl, ${freqText(s.gap)}`)}</span>`],
+    [tx("Average return in the data", "Verideki ortalama getiri"), s => pct(Math.exp(s.mu) - 1)],
+    [tx("Average return the plan uses (normal market)", "Planın kullandığı ortalama getiri (normal piyasa)"), (s, i) =>
+      yieldUsed(i) ? tx(`your bond yield, ${pct(Math.exp(p.bondY) - 1)} today`, `tahvil faizin, bugün ${pct(Math.exp(p.bondY) - 1)}`) : pct(Math.exp(i ? p.est[i].mu : p.mu) - 1)],
+    [tx("Risk σ: how much a year swings", "Risk σ: bir yılda ne kadar dalgalanır"), s => pct(s.sig)],
+    [tx("Total price change", "Toplam fiyat değişimi"), s => pct(s.pts[s.n - 1].p / s.pts[0].p - 1, 0)]];
+  $("dataTable").innerHTML = `<tr><th></th>${have.map(i => `<th>${aName(i)}</th>`).join("")}</tr>` +
+    rows.map(([name, f]) => `<tr><td>${name}</td>${have.map(i => `<td>${f(series[i], i)}</td>`).join("")}</tr>`).join("");
+  const trusted = have.filter(i => !yieldUsed(i)).map(i => tx(`${aLow(i)} ${pct(dataWeight(series[i]), 0)}`, `${aLow(i)} için ${pct(dataWeight(series[i]), 0)}`));
+  $("dataTrust").innerHTML = !trusted.length ? "" : tx(`Average returns are hard to measure: even 20 years of stock prices leave the average uncertain by about 4% a year.
+    So the plan mixes the data's average with a typical long-run value (a premium over your savings rate) and trusts the data more the longer it is.
+    The data's share here: ${trusted.join(", ")}. Risk σ is measured well, so it comes straight from the data.`,
+    `Ortalama getiriyi ölçmek zordur: 20 yıllık hisse fiyatları bile ortalamayı yılda yaklaşık %4 belirsiz bırakır. Bu yüzden plan, verinin
+    ortalamasını tipik bir uzun dönem değerle (mevduat faizinin üstünde bir prim) karıştırır ve veri ne kadar uzunsa ona o kadar çok güvenir.
+    Burada verinin payı: ${trusted.join(", ")}. Risk σ iyi ölçülür, bu yüzden doğrudan veriden gelir.`);
+  const r = dataRho, sg = x => (x < 0 ? "−" : "+") + fix(Math.abs(x), 2);
+  $("dataCorr").innerHTML = !r ? "" : !r.rho
+    ? tx(`Your files share only ${r.n} months, too few to measure how the assets move together, so typical values are used.`,
+         `Dosyaların yalnızca ${r.n} ortak ayı var; varlıkların birlikte nasıl hareket ettiğini ölçmek için çok az, bu yüzden tipik değerler kullanılıyor.`)
+    : tx(`How they move together (correlation from ${r.n} shared months; +1 = always together, 0 = unrelated, −1 = opposite): `,
+         `Birlikte nasıl hareket ediyorlar (${r.n} ortak aydan korelasyon; +1 = hep birlikte, 0 = ilgisiz, −1 = ters): `) +
+      r.pairs.map(([i, j, raw]) => `${aLow(i)}–${aLow(j)} ${sg(raw)} (${tx("the plan uses", "planda")} ${sg(r.rho[i][j])})`).join(", ") +
+      tx(". Short data is pulled toward typical values the same way.", ". Kısa veri aynı şekilde tipik değerlere doğru çekilir.");
+  const YEAR = 365.25 * 864e5, yr = t => 1970 + t / YEAR, yearTick = t => Math.abs(t - Math.round(t)) < 1e-6 ? Math.round(t) : "";   // whole years only
+  if (have.length === 1) {
+    const s = series[have[0]], pts = s.pts.map(x => ({ x: yr(x.t), y: x.p })), ps = s.pts.map(x => x.p);
+    const lo = Math.min(...ps), hi = Math.max(...ps);
+    drawChart($("priceChart"), { x: [pts[0].x, pts[pts.length - 1].x], y: [Math.max(0, lo - 0.05 * (hi - lo)), hi + 0.05 * (hi - lo)],
+      series: [{ pts, color: ASSETS[have[0]].color, width: 1.6 }], xFmt: yearTick, yFmt: v => v.toLocaleString(locale()),
+      xLabel: tx("year", "yıl"), yLabel: tx("price", "fiyat"), aria: tx("price history", "fiyat geçmişi") });
+    return;
+  }
+  // Several files: each one's growth from 100 at its first price, thinned to about 800 points a line.
+  const lines = have.map(i => { const s = series[i], k = Math.ceil(s.n / 800);
+    return { pts: s.pts.filter((x, j) => j % k === 0 || j === s.n - 1).map(x => ({ x: yr(x.t), y: 100 * x.p / s.pts[0].p })), color: ASSETS[i].color, width: 1.6 }; });
+  const xs = lines.flatMap(l => l.pts.map(q => q.x)), ys = lines.flatMap(l => l.pts.map(q => q.y));
+  const lo = Math.min(...ys), hi = Math.max(...ys);
+  drawChart($("priceChart"), { x: [Math.min(...xs), Math.max(...xs)], y: [Math.max(0, lo - 0.05 * (hi - lo)), hi + 0.05 * (hi - lo)],
+    series: lines, xFmt: yearTick, yFmt: v => v.toLocaleString(locale()), xLabel: tx("year", "yıl"),
+    yLabel: tx("value, starting at 100", "değer, 100'den başlayarak"), aria: tx("price history", "fiyat geçmişi"),
+    legend: have.map(i => ({ color: ASSETS[i].color, label: aName(i) })) });
 }
 
 // Typical money after n years in today's money: grows at the median rate e^g, minus inflation, plus the yearly saving.
@@ -1291,6 +1461,12 @@ function renderPlan() {
                                  ` Bu, aynı kayıp sınırıyla yalnızca hisse ve mevduat kullanmaktan (${pct(sol.fOpt, 0)} hisse) <b>yılda ${signed(gain, 2)}</b> daha fazla.`);
   }
   $("planWhy").innerHTML = why;
+  const span = ([lo, hi]) => Math.round(100 * lo) === Math.round(100 * hi) ? pct(lo, 0) : tx(`${fix(100 * lo, 0)}–${pct(hi, 0)}`, `%${fix(100 * lo, 0)}–${fix(100 * hi, 0)}`);
+  const ranges = [0, 1, 2, 3].filter(i => plan.near[i][1] >= 0.005).map(i => `${span(plan.near[i])} ${aLow(i)}`);
+  $("planNear").innerHTML = !plan.d ? "" : tx(`Splits that grow almost as fast (at most ${pct(NEAR, 1)} a year slower, with the same loss limit) have
+    ${list(ranges)}. So treat the exact numbers as a rough guide.`,
+    `Neredeyse aynı hızda büyüyen dağılımlar (yılda en fazla ${pct(NEAR, 1)} daha yavaş, aynı kayıp sınırıyla) ${list(ranges)} içerir.
+    Yani rakamları kesin değil, kaba bir rehber olarak gör.`);
   renderVsMath();
   const showCrash = crashPlan && c.every;
   $("planCrash").classList.toggle("hidden", !showCrash);
@@ -1740,19 +1916,25 @@ const I18N_TR = {
   gStock: "Hisseler", gGold: "Altın", gBond: "Tahviller", gDep: "Mevduat", theRest: "kalanı",
   gStockAria: "tahminin: hisseler (%)", gGoldAria: "tahminin: altın (%)", gBondAria: "tahminin: tahviller (%)",
   stockHead: "Normal bir piyasada hisseler", fMu: "Ortalama getiri (μ)", fSig: "Risk: bir yılda ne kadar dalgalanır (σ)",
-  stockNote: "Sakin, kriz ve yüksek enflasyonlu piyasalar bu rakamların daha iyi ya da daha kötü hâlleridir. Altın ve tahvil tipik uzun dönem " +
-    "değerlerini kullanır (aşağıdaki tablo). Hisse rakamlarını veriden tahmin etmek için aşağıya gerçek fiyatları yükle.",
+  stockNote: "Sakin, kriz ve yüksek enflasyonlu piyasalar bu rakamların daha iyi ya da daha kötü hâlleridir. Fiyatlarını yüklemediğin sürece altın ve " +
+    "tahvil tipik uzun dönem değerlerini kullanır (aşağıdaki tablo). Rakamları veriden tahmin etmek için aşağıya gerçek fiyatları yükle.",
+  bondHead: "Bugün tahviller", fYield: "Bugünkü tahvil faizi (isteğe bağlı)",
+  yieldNote: "Bugün alırsan bir devlet tahvilinin yılda ödediği faiz, örneğin 10 yıllık tahvilin faizi. Tahvillerin bundan sonra ne kazanacağına dair " +
+    "en iyi tahmin budur, bu yüzden bugünkü piyasada tahvillerin ortalama getirisinin yerine geçer. Tabloyu ya da verini kullanmak için boş bırak.",
   reset: "Hepsini örneğe sıfırla",
   surprises: "Gerçek hayat testindeki sürprizler",
   changing: "Piyasalar zamanla değişir<small>Sakin yıllar, krizler ve yüksek enflasyon, gerçek hayattaki gibi birbirini izler.</small>",
   events: "Hayat olayları<small>Bazı yıllarda acil durumlar, primler ve zamlar olur.</small>",
   crashEvery: "Nadir çöküş:", crashSize: "Çöküş büyüklüğü:",
   crashEveryNote: "Hissenin ortalama getirisi aynı kalır; yalnızca kötü yıllar daha kötü olur. Krizler daha çok çöküş getirir.",
-  dataHead: "Gerçek hisse fiyatlarını kullan (isteğe bağlı)",
-  dataIntro: "Tarih sütunu ve fiyat sütunu olan bir CSV yükle, örneğin investing.com ya da Yahoo Finance'ten indirilmiş bir endeks. " +
-    "<b>Dosya yalnızca bu sayfanın içinde okunur ve hiçbir yere yüklenmez.</b> Verin yok mu? Aynı klasördeki <code>sample_prices.csv</code> dosyasını dene.",
-  dragHere: "ya da dosyayı buraya sürükle",
-  useEstimates: "Tahmin edilen μ ve σ'yı geri koy", clearData: "Veriyi kaldır",
+  dataHead: "Gerçek fiyatları kullan (isteğe bağlı)",
+  dataIntro: "Elindeki her varlık için tarih sütunu ve fiyat sütunu olan bir CSV yükle, örneğin investing.com ya da Yahoo Finance'ten indirilmiş bir endeks. " +
+    "Her varlık için bir sütunu olan tek bir dosya da olur (sütun adları örneğin Hisse, Altın ve Tahvil). " +
+    "<b>Dosyalar yalnızca bu sayfanın içinde okunur ve hiçbir yere yüklenmez.</b> Verin yok mu? Aynı klasördeki <code>sample_prices.csv</code> dosyasını dene.",
+  file0Aria: "hisse fiyatları (CSV)", file1Aria: "altın fiyatları (CSV)", file2Aria: "tahvil fiyatları (CSV)",
+  clear0Aria: "hisse fiyatlarını kaldır", clear1Aria: "altın fiyatlarını kaldır", clear2Aria: "tahvil fiyatlarını kaldır",
+  dragHere: "Bir dosyayı bir satırın üstüne de sürükleyebilirsin.",
+  useEstimates: "Tahmin edilen hisse μ ve σ'sını geri koy",
   marketsUsed: "Kullanılan piyasalar (temsilî, tahmin değil)", transHead: "Piyasa bir yıldan diğerine nasıl değişir",
   calcNote: "Girdilerini değiştirdin. Sonuçları güncellemek için butona yeniden bas.",
   vsHead: "Tahminin mi, matematik mi?",
@@ -1805,7 +1987,7 @@ function setLang(lang) {
   LANG = lang;
   try { localStorage.setItem("investorLang", lang); } catch (e) { /* the choice is just not remembered */ }
   applyLang();
-  setStatus(statusFn);
+  for (const i of [0, 1, 2]) setStatus(i, statusFns[i]);
   renderInputs();
   renderData();
   if (!cur) return;
