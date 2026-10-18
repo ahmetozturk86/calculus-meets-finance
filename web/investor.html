@@ -11,7 +11,8 @@
     --green: #15803d; --green-soft: rgba(21,128,61,0.14); --amber: #d97706; --ink: #111827; --gray: #94a3b8;
     --goldc: #c08a00; --gold-ui: #a16207; --bond: #0f9488; --dep: #64748b; --purple: #7c3aed;
     --band-calm: rgba(21,128,61,0.09); --band-crisis: rgba(220,38,38,0.11); --band-infl: rgba(217,119,6,0.14);
-    --shadow: 0 1px 2px rgba(15,23,42,0.04);
+    --shadow: 0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -16px rgba(15,23,42,0.22);
+    --blob1: rgba(37,99,235,0.15); --blob2: rgba(245,158,11,0.14); --blob3: rgba(20,184,166,0.13); --blob4: rgba(124,58,237,0.11); --doodle: rgba(37,99,235,0.075);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -20,7 +21,8 @@
       --green: #4ade80; --green-soft: rgba(74,222,128,0.14); --amber: #fbbf24; --ink: #e6e9ee; --gray: #6b7686;
       --goldc: #fbbf24; --gold-ui: #fbbf24; --bond: #2dd4bf; --dep: #94a3b8; --purple: #a78bfa;
       --band-calm: rgba(74,222,128,0.08); --band-crisis: rgba(248,113,113,0.12); --band-infl: rgba(251,191,36,0.12);
-      --shadow: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 14px 32px -16px rgba(0,0,0,0.7);
+      --blob1: rgba(96,165,250,0.18); --blob2: rgba(251,191,36,0.09); --blob3: rgba(45,212,191,0.11); --blob4: rgba(167,139,250,0.16); --doodle: rgba(148,163,184,0.07);
     }
   }
   * { box-sizing: border-box; }
@@ -29,8 +31,13 @@
          font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
   .top { padding: 36px 16px 20px; }
-  .top .brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
-  .top h1 { margin: 4px 0 6px; font-size: clamp(26px, 4.5vw, 34px); line-height: 1.15; }
+  /* The brand: a big wordmark in the page's colours, with a logo mark (a rising line). */
+  .top .brand { display: inline-flex; align-items: center; gap: .28em; font-size: clamp(32px, 6vw, 52px); font-weight: 900; letter-spacing: -.02em; line-height: 1.15;
+                color: var(--blue); background: linear-gradient(100deg, var(--blue), var(--purple) 55%, var(--amber)); -webkit-background-clip: text; background-clip: text;
+                -webkit-text-fill-color: transparent; }
+  .top .brand::before { content: ""; flex: none; width: 1.04em; height: 1.04em; border-radius: .28em; box-shadow: 0 8px 18px -8px rgba(124,58,237,.7);
+                        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 16.5 9 11l4 4 7.5-7.5'/%3E%3Cpath d='M15 7.5h5.5V13'/%3E%3C/svg%3E") center / 66% no-repeat, linear-gradient(135deg, #2563eb, #7c3aed 60%, #f59e0b); }
+  .top h1 { margin: 6px 0 6px; font-size: clamp(22px, 3.6vw, 30px); line-height: 1.2; }
   .top p { margin: 0; font-size: 16px; color: var(--muted); }
   main.wrap { padding-bottom: 40px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
@@ -39,7 +46,7 @@
   .muted { color: var(--muted); }
   small, .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
   .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
-  @media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
+  @media (max-width: 480px) { .fields { grid-template-columns: minmax(0, 1fr); } }
   .field > span, .label { display: block; font-weight: 650; font-size: 15px; margin-bottom: 6px; }
   .input { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); padding: 0 12px; transition: border-color .15s; }
   .input:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
@@ -120,13 +127,15 @@
   #donut circle.seg { transition: stroke-dasharray .5s ease, stroke-dashoffset .5s ease; }
   .headline { font-size: clamp(20px, 3.2vw, 26px); font-weight: 800; line-height: 1.25; margin-bottom: 10px; }
   .parts { display: grid; gap: 6px; }
-  .part { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--soft); }
-  .part i { width: 14px; height: 14px; border-radius: 4px; }
+  .part { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--soft); }
+  .part i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-style: normal; font-size: 18px; line-height: 1;
+            background: color-mix(in srgb, var(--c) 18%, transparent); box-shadow: inset 0 0 0 2px var(--c); }
   .part b { font-size: 17px; } .part .amt { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 70px; text-align: right; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0 6px; }
   .tile { background: var(--soft); border-radius: 14px; padding: 12px 14px; }
   .tile b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
   .tile span { font-size: 13px; color: var(--muted); }
+  .tile .ic { display: block; margin-bottom: 4px; font-style: normal; font-size: 20px; line-height: 1; }
   .callout { border-radius: 12px; padding: 12px 14px; margin-top: 12px; background: var(--soft); border-left: 4px solid var(--purple); }
   .callout.amber { border-left-color: var(--amber); }
   .chart svg { width: 100%; height: auto; display: block; }
@@ -373,6 +382,63 @@
   @media (max-width: 480px) { .arc-hero, .arc-hero.big { grid-template-columns: 62px 1fr 56px; gap: 8px; } .arc-market .icon { font-size: 28px; } .arc-ev-opts { grid-template-columns: 1fr; } }
   .lang button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; padding: 5px 11px; cursor: pointer; }
   .lang button.sel { background: var(--blue); color: #fff; }
+  /* ---- Playful but clean: a soft background with faint doodles, emoji on labels and titles, the risk choice as cards,
+     a livelier main button and the plan's reveal. The emoji sit in ::before, keyed on data-i18n / data-risk, so a
+     language switch keeps them; the second content value (after the slash) hides them from screen readers. ---- */
+  body::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+  body::before { background: radial-gradient(44rem 34rem at -8% -10%, var(--blob1), transparent 70%), radial-gradient(40rem 30rem at 108% 0%, var(--blob2), transparent 70%),
+                 radial-gradient(46rem 36rem at 100% 108%, var(--blob3), transparent 70%), radial-gradient(36rem 30rem at -6% 100%, var(--blob4), transparent 70%); }
+  body::after { background: var(--doodle); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 72 42 52 58 62 86 32M74 32h12v12'/%3E%3Ccircle cx='204' cy='46' r='13'/%3E%3Ccircle cx='204' cy='46' r='7.5'/%3E%3Ccircle cx='118' cy='110' r='5'/%3E%3Ccircle cx='142' cy='134' r='5'/%3E%3Cpath d='M146 104 114 140'/%3E%3Cpath d='M224 138q2 12 14 14q-12 2-14 14q-2-12-14-14q12-2 14-14z' fill='%23000' stroke='none'/%3E%3Cpath d='M28 228v-14M40 228v-24M52 228v-34' stroke-width='6'/%3E%3Cpath d='M124 238c20 0 26-34 40-34s20 34 40 34'/%3E%3Cpath d='M88 164v16M80 172h16'/%3E%3Ccircle cx='246' cy='236' r='2.5' fill='%23000' stroke='none'/%3E%3Ccircle cx='112' cy='18' r='2.5' fill='%23000' stroke='none'/%3E%3C/svg%3E") 0 0 / 260px 260px repeat;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 72 42 52 58 62 86 32M74 32h12v12'/%3E%3Ccircle cx='204' cy='46' r='13'/%3E%3Ccircle cx='204' cy='46' r='7.5'/%3E%3Ccircle cx='118' cy='110' r='5'/%3E%3Ccircle cx='142' cy='134' r='5'/%3E%3Cpath d='M146 104 114 140'/%3E%3Cpath d='M224 138q2 12 14 14q-12 2-14 14q-2-12-14-14q12-2 14-14z' fill='%23000' stroke='none'/%3E%3Cpath d='M28 228v-14M40 228v-24M52 228v-34' stroke-width='6'/%3E%3Cpath d='M124 238c20 0 26-34 40-34s20 34 40 34'/%3E%3Cpath d='M88 164v16M80 172h16'/%3E%3Ccircle cx='246' cy='236' r='2.5' fill='%23000' stroke='none'/%3E%3Ccircle cx='112' cy='18' r='2.5' fill='%23000' stroke='none'/%3E%3C/svg%3E") 0 0 / 260px 260px repeat; }
+  @media (max-width: 640px) { .top { padding-top: 70px; } }     /* the big title starts below the game button and the language switch */
+  @media (forced-colors: active) { .top .brand { background: none; -webkit-text-fill-color: currentColor; } }
+  .btn.calc { border: 0; padding: 16px; border-radius: 16px; font-size: 18.5px; background: linear-gradient(135deg, #2563eb, #7c3aed);
+              box-shadow: 0 10px 24px -10px rgba(124,58,237,.7); transition: transform .15s, box-shadow .15s, filter .15s; }
+  .btn.calc:hover { transform: translateY(-2px); filter: brightness(1.07); box-shadow: 0 14px 30px -10px rgba(124,58,237,.85); }
+  .btn.calc:active { transform: scale(.99); }
+  .btn.calc:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+  .risks .opt { flex-direction: column; gap: 2px; padding: 12px 8px 10px; transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
+  .risks .opt::before { font-size: 28px; line-height: 1.1; }
+  .risks .opt:hover { transform: translateY(-2px); box-shadow: 0 8px 16px -10px var(--blue); }
+  .risks .opt.sel { box-shadow: 0 0 0 3px var(--blue-soft); }
+  .risks .opt.sel::before { animation: funPop .4s ease; }
+  @keyframes funPop { 40% { transform: scale(1.3) rotate(-8deg); } }
+  .btn.calc::before { content: "✨ "; content: "✨ " / ""; }
+  [data-risk="careful"]::before { content: "🐢"; content: "🐢" / ""; }
+  [data-risk="balanced"]::before { content: "⚖️"; content: "⚖️" / ""; }
+  [data-risk="bold"]::before { content: "🚀"; content: "🚀" / ""; }
+  [data-i18n="fS"]::before { content: "💰 "; content: "💰 " / ""; }
+  [data-i18n="fSave"]::before { content: "🐷 "; content: "🐷 " / ""; }
+  [data-i18n="fR"]::before { content: "🏦 "; content: "🏦 " / ""; }
+  [data-i18n="fInfl"]::before { content: "🛒 "; content: "🛒 " / ""; }
+  [data-i18n="qYears"]::before { content: "⏳ "; content: "⏳ " / ""; }
+  [data-i18n="qRisk"]::before { content: "🎢 "; content: "🎢 " / ""; }
+  /* the assets have the same icons as ASSETS[i].icon, in place of the colour dot */
+  [data-i18n="gStock"]::before { content: "📈 "; content: "📈 " / ""; }
+  [data-i18n="gGold"]::before { content: "🪙 "; content: "🪙 " / ""; }
+  [data-i18n="gBond"]::before { content: "📜 "; content: "📜 " / ""; }
+  [data-i18n="gDep"]::before { content: "🏦 "; content: "🏦 " / ""; }
+  .dot:has(+ [data-i18n="gStock"], + [data-i18n="gGold"], + [data-i18n="gBond"], + [data-i18n="gDep"]) { display: none; }
+  #plan > h2::before { content: "🎯 "; content: "🎯 " / ""; }
+  #lifeCard > h2::before { content: "🎬 "; content: "🎬 " / ""; }
+  #how > h2::before { content: "🔍 "; content: "🔍 " / ""; }
+  [data-i18n="more"]::before { content: "⚙️ "; content: "⚙️ " / ""; }
+  [data-i18n="vsHead"]::before { content: "🥊 "; content: "🥊 " / ""; }
+  [data-i18n="manyHead"]::before { content: "🎲 "; content: "🎲 " / ""; }
+  [data-i18n="moreStrat"]::before { content: "📊 "; content: "📊 " / ""; }
+  [data-i18n="mixHead"]::before { content: "🧺 "; content: "🧺 " / ""; }
+  [data-i18n="bellHead"]::before { content: "🔔 "; content: "🔔 " / ""; }
+  [data-i18n="ivtHead"]::before { content: "✂️ "; content: "✂️ " / ""; }
+  [data-i18n="crashHead"]::before { content: "💥 "; content: "💥 " / ""; }
+  [data-i18n="histHead"]::before { content: "🕰️ "; content: "🕰️ " / ""; }
+  .game .score::before { content: "🏆 "; content: "🏆 " / ""; }
+  /* The plan's reveal (revealPlan): the donut's pieces sweep in, and the first plan gets confetti in its colours. */
+  @keyframes donutIn { from { stroke-dasharray: 0 430; } }
+  #plan { position: relative; }
+  .confetti { position: absolute; z-index: 2; width: 8px; height: 12px; margin: -6px 0 0 -4px; border-radius: 2px; pointer-events: none; opacity: 0;
+              animation: confettiPop 1.6s cubic-bezier(.2, .8, .3, 1) forwards; }
+  @keyframes confettiPop { 0% { opacity: 1; transform: none; } 35% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(calc(var(--rot) / 2)); }
+                           100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + var(--fall))) rotate(var(--rot)); } }
 </style>
 </head>
 <body>
@@ -887,12 +953,12 @@ function drawDonut(el, parts, big, small) {
 // =====================================================================
 // Markets: the four market states and how they change
 // =====================================================================
-// low: the name inside a sentence; in: "put money in ..." (Turkish: the dative form).
+// low: the name inside a sentence; in: "put money in ..." (Turkish: the dative form); icon: the same emoji as the labels' CSS.
 const ASSETS = [
-  { key: "stock", name: "Stocks", low: "stocks", in: "stocks", color: "var(--blue)", tr: { name: "Hisseler", low: "hisse", in: "hisselere" } },
-  { key: "gold", name: "Gold", low: "gold", in: "gold", color: "var(--goldc)", tr: { name: "Altın", low: "altın", in: "altına" } },
-  { key: "bond", name: "Bonds", low: "bonds", in: "bonds", color: "var(--bond)", tr: { name: "Tahviller", low: "tahvil", in: "tahvillere" } },
-  { key: "dep", name: "Savings account", low: "savings", in: "the savings account", color: "var(--dep)",
+  { key: "stock", name: "Stocks", low: "stocks", in: "stocks", color: "var(--blue)", icon: "📈", tr: { name: "Hisseler", low: "hisse", in: "hisselere" } },
+  { key: "gold", name: "Gold", low: "gold", in: "gold", color: "var(--goldc)", icon: "🪙", tr: { name: "Altın", low: "altın", in: "altına" } },
+  { key: "bond", name: "Bonds", low: "bonds", in: "bonds", color: "var(--bond)", icon: "📜", tr: { name: "Tahviller", low: "tahvil", in: "tahvillere" } },
+  { key: "dep", name: "Savings account", low: "savings", in: "the savings account", color: "var(--dep)", icon: "🏦",
     tr: { name: "Mevduat hesabı", low: "mevduat", in: "mevduat hesabına" } }];
 const aName = i => tx(ASSETS[i].name, ASSETS[i].tr.name), aLow = i => tx(ASSETS[i].low, ASSETS[i].tr.low), aIn = i => tx(ASSETS[i].in, ASSETS[i].tr.in);
 // Illustrative settings (simple yearly rates, roughly like long-run history in developed markets). Not forecasts.
@@ -1571,12 +1637,54 @@ function calculate() {
   calcLabel();
   $("calcNote").classList.add("hidden");
   renderPlan();
+  revealPlan(first);
   renderHow();
   renderHistory();
   renderLife();
   $("plan").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
 }
 $("calc").addEventListener("click", calculate);
+// The plan's reveal after the button: the donut's pieces sweep in one after another and the numbers count up from 0,
+// and the first plan of a visit gets a small burst of confetti in the plan's colours. Nothing moves under reduced motion
+// (or in tests); a language or currency switch redraws the plan without it.
+function revealPlan(first) {
+  if (reduceMotion()) return;
+  $("donut").querySelectorAll("circle.seg").forEach((c, i) => { c.style.animation = `donutIn .7s ease-out ${(0.1 + 0.2 * i).toFixed(1)}s backwards`; });
+  for (const el of document.querySelectorAll("#donut text, #planParts b, #planParts .amt, #planTiles b")) countUp(el, 1100);
+  if (first) planConfetti();
+}
+// Rolls every number in an element's text up from 0, keeping the signs and symbols around it; the last frame is the
+// text itself. If something else changes the text meanwhile, the count stops and leaves it.
+function countUp(el, ms) {
+  const end = el.textContent, parts = end.split(/(\d+(?:[.,]\d+)*)/);   // odd parts are numbers: 7.5, 10,000 (Turkish 7,5, 10.000)
+  if (parts.length < 2) return;
+  const nums = parts.map((s, i) => { if (i % 2 === 0) return null;
+    const plain = LANG === "tr" ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+    return { v: +plain, d: (plain.split(".")[1] || "").length }; });
+  const at = k => parts.map((s, i) => i % 2 === 0 ? s : nums[i].d ? fix(nums[i].v * k, nums[i].d) : num(nums[i].v * k)).join("");
+  let shown = el.textContent = at(0);
+  animate(ms, t => {
+    if (el.textContent !== shown) return;
+    el.textContent = shown = t < 1 ? at(1 - Math.pow(1 - t, 3)) : end;
+  });
+}
+// About 40 pieces in the plan's colours burst from the donut and fall, inside the card (so the page never scrolls sideways).
+function planConfetti() {
+  const box = $("plan"), b = box.getBoundingClientRect(), d = $("donut").getBoundingClientRect();
+  const x0 = d.left - b.left + d.width / 2, y0 = d.top - b.top + d.height / 2;
+  const colors = ASSETS.filter((a, i) => cur.plan.w[i] >= 0.005).map(a => a.color).concat("var(--purple)", "var(--amber)");
+  for (let i = 0; i < 40; i++) {
+    const a = 2 * Math.PI * Math.random(), r = 50 + 110 * Math.random();
+    const x = clamp(x0 + r * Math.cos(a), 8, b.width - 8), y = clamp(y0 + 0.8 * r * Math.sin(a) - 30, 8, b.height - 8);
+    const el = document.createElement("i");
+    el.className = "confetti";
+    el.style.cssText = `left:${x0}px;top:${y0}px;background:${colors[i % colors.length]};--dx:${Math.round(x - x0)}px;--dy:${Math.round(y - y0)}px;` +
+      `--fall:${Math.round(Math.min(60 + 80 * Math.random(), b.height - 8 - y))}px;--rot:${Math.round(720 * Math.random() - 360)}deg;` +
+      `animation-delay:${(0.12 * Math.random()).toFixed(2)}s`;
+    box.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
 const mixText = w => {
   return [0, 1, 2, 3].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${aLow(i)}`).join(" · ");
 };
@@ -1784,7 +1892,7 @@ function renderPlan() {
   drawDonut($("donut"), parts, signed(Math.exp(plan.g) - 1), tx("a year, typical", "yılda, tipik"));
   $("planHead").textContent = plan.d ? tx(`In ${moodA(st.key)}, split your money like this:`, `${capFirst(moodIn(st.key))} paranı şöyle böl:`)
     : tx("Keep everything in the savings account.", "Her şeyi mevduat hesabında tut.");
-  $("planParts").innerHTML = parts.map(x => `<div class="part"><i style="background:${x.color}"></i><span>${aName(x.i)}</span><b>${pct(x.w, 0)}</b>
+  $("planParts").innerHTML = parts.map(x => `<div class="part"><i aria-hidden="true" style="--c:${x.color}">${x.icon}</i><span>${aName(x.i)}</span><b>${pct(x.w, 0)}</b>
     <span class="amt">${money(p.S * x.w)}</span></div>`).join("");
   // The answer in one plain sentence, in money.
   const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + tx(" and ", " ve ") + a[a.length - 1] : a[0];
@@ -1809,7 +1917,7 @@ function renderPlan() {
                                                                   `kötü bir yılda (${every} yılın en kötüsü); sınırın −${pct(p.L, 0)}`)],
     [money(typicalAfter(p, plan.g, n)), tx(`typical money after ${n} years, in today's money (savings account only: ${money(typicalAfter(p, bankG, n))})`,
                                            `${n} yıl sonra tipik paran, bugünün parasıyla (yalnızca mevduat: ${money(typicalAfter(p, bankG, n))})`)]
-  ].map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
+  ].map(([b, s], k) => `<div class="tile"><i class="ic" aria-hidden="true">${["🌱", "🛒", "🌧️", "💰"][k]}</i><b>${b}</b><span>${s}</span></div>`).join("");
   let why;
   if (!plan.d) why = tx(`In this market no mix of stocks, gold and bonds is expected to grow faster than the savings account (${pct(st.r, 1)} a year), so taking risk does not pay.`,
                         `Bu piyasada hiçbir hisse, altın ve tahvil karışımının mevduat hesabından (yılda ${pct(st.r, 1)}) hızlı büyümesi beklenmiyor, bu yüzden risk almak karşılığını vermiyor.`);
