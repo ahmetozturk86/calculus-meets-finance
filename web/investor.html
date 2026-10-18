@@ -471,7 +471,7 @@
       </div>
       <p class="muted" id="dataNote"></p>
 
-      <h3 data-i18n="marketsUsed">The markets used (illustrative, not forecasts)</h3>
+      <h3 data-i18n="marketsUsed">The markets used (your data where uploaded, typical values otherwise; not forecasts)</h3>
       <div class="scroll"><table id="moodTable"></table></div>
       <small id="crashNote"></small>
       <h3 data-i18n="transHead">How the market changes from one year to the next</h3>
@@ -488,6 +488,7 @@
 <section class="card" id="plan">
   <h2 data-i18n="yourPlan">Your plan</h2>
   <p class="lead" id="planSentence"></p>
+  <p class="muted" id="planSource"></p>
   <div class="plan">
     <div id="donut"></div>
     <div><div class="headline" id="planHead"></div><div class="parts" id="planParts"></div></div>
@@ -865,14 +866,15 @@ const CRASH_SAFE = [1.05, 1.03];                                   // what a mar
 // lam_s = lam * shock_s / shock_normal (at most one per year, probability 1 - e^(-lam_s)) and multiply the assets by
 // `crash` (stocks 1 + J, gold and bonds CRASH_SAFE). Each drift is lowered by ln(1 + p (crash_i - 1)), so every asset's
 // average yearly return is still e^avg, the number in the table (Module 4b): crashes change the shape, not the average.
-// Uploaded gold or bond prices (p.est) replace the table like the stock numbers do: they are a normal market's values and
-// the other states are shifted the same way. A typed bond yield (p.bondY) is today's, so it belongs to the picked market,
-// like the interest rate. p.rho (the correlations) is the same in every state.
+// Uploaded gold or bond prices (p.est) replace the table like the stock numbers do. For an asset with uploaded prices
+// (p.fromData) the states change only its risk, not its average: a quiet market tends to stay quiet for a while, but it is
+// not known to earn more, so the average comes from the data alone. A typed bond yield (p.bondY) is today's, so it
+// belongs to the picked market, like the interest rate. p.rho (the correlations) is the same in every state.
 function marketStates(p, lam, J) {
   const n = MOODS.normal, c = MOODS[p.mood], out = {};
   for (const k of REGIME_KEYS) {
-    const m = MOODS[k], mucAvg = p.mu + (m.muc[0] - n.muc[0]), rc = Math.max(0, p.r + m.rc - c.rc);
-    const other = i => i === 2 && p.bondY !== null ? p.bondY + m.muc[2] - c.muc[2] : p.est[i] ? p.est[i].mu + m.muc[i] - n.muc[i] : m.muc[i];
+    const m = MOODS[k], shift = i => p.fromData[i] ? 0 : m.muc[i] - n.muc[i], rc = Math.max(0, p.r + m.rc - c.rc), mucAvg = p.mu + shift(0);
+    const other = i => i === 2 && p.bondY !== null ? p.bondY + m.muc[2] - c.muc[2] : p.est[i] ? p.est[i].mu + shift(i) : m.muc[i];
     const sigOf = i => p.est[i] ? p.est[i].sig * m.sig[i] / n.sig[i] : m.sig[i];
     const shock = 1 - Math.exp(-lam * m.shock / n.shock), crash = [1 + J, ...CRASH_SAFE], avg = [mucAvg, other(1), other(2)];
     out[k] = { key: k, infl: p.infl + m.infl - c.infl, rc, r: Math.exp(rc) - 1, shock, crash, mucAvg, avg,
@@ -1071,6 +1073,7 @@ function params() {
   const y = parseFloat($("bondYield").value);
   p.bondY = Number.isFinite(y) ? Math.log(1 + clamp(y, -5, 50) / 100) : null;   // today's bond yield, if typed
   p.est = series.map((s, i) => s && i ? { mu: usedMu(i, s, p), sig: s.sig } : null);   // uploaded gold and bond prices
+  p.fromData = series.map(s => !!s);                               // the market then changes only these assets' risk
   p.rho = dataRho && dataRho.rho ? dataRho.rho : RHO;
   p.L = riskLimit(p, ui.risk);                                      // the bad-year loss limit behind the choice
   return p;
@@ -1363,7 +1366,11 @@ for (const i of [0, 1, 2]) {
   row.addEventListener("dragover", e => { e.preventDefault(); row.classList.add("over"); });
   row.addEventListener("dragleave", () => row.classList.remove("over"));
   row.addEventListener("drop", e => { e.preventDefault(); row.classList.remove("over"); readFile(e.dataTransfer.files[0], i); });
-  $("clear" + i).addEventListener("click", () => { series[i] = null; $("file" + i).value = ""; setStatus(i, null); dataRho = estimateRho(); onInputChange(); });
+  $("clear" + i).addEventListener("click", () => {
+    series[i] = null; $("file" + i).value = ""; setStatus(i, null); dataRho = estimateRho();
+    if (i === 0) { $("mu").value = DEFAULTS.mu; $("sig").value = DEFAULTS.sig; }   // the stock numbers came from the file
+    onInputChange();
+  });
 }
 $("useEstimates").addEventListener("click", () => { if (series[0]) { setStock(usedMu(0, series[0], params()), series[0].sig); onInputChange(); } });
 
@@ -1421,7 +1428,7 @@ function compute() {
   const crashPlan = st.shock > 0 ? cached(mixCache, "c" + key + st.shock + st.crash, () => bestMixCrash(st, p.L, p.alpha)) : null;
   const sol = solve(stockP), lamS = -Math.log(1 - st.shock), gw = guessW();
   return { p, c, states, st, m, stockP, plan, crashPlan, sol, crash: crashSolve(stockP, sol, lamS, c.J), top: riskTop(p).top,
-           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, p.alpha) } : null, data: series[0],
+           guess: $("useGuess").checked ? { w: gw, ...mixStats(gw, m, p.alpha) } : null, data: series[0], series: [...series],
            changing: $("changing").checked, events: $("events").checked };
 }
 
@@ -1555,7 +1562,7 @@ function renderData() {
   const rows = [
     [tx("Prices", "Fiyatlar"), s => `${fmtSpan([s.pts[0].t, s.pts[s.n - 1].t])}<br><span class="muted">${tx(`${fix(s.spanYears, 1)} years, ${freqText(s.gap)}`, `${fix(s.spanYears, 1)} yıl, ${freqText(s.gap)}`)}</span>`],
     [tx("Average return in the data", "Verideki ortalama getiri"), s => pct(Math.exp(s.mu) - 1)],
-    [tx("Average return the plan uses (normal market)", "Planın kullandığı ortalama getiri (normal piyasa)"), (s, i) =>
+    [tx("Average return the plan uses", "Planın kullandığı ortalama getiri"), (s, i) =>
       yieldUsed(i) ? tx(`your bond yield, ${pct(Math.exp(p.bondY) - 1)} today`, `tahvil faizin, bugün ${pct(Math.exp(p.bondY) - 1)}`) : pct(Math.exp(i ? p.est[i].mu : p.mu) - 1)],
     [tx("Risk σ: how much a year swings", "Risk σ: bir yılda ne kadar dalgalanır"), s => pct(s.sig)],
     [tx("Total price change", "Toplam fiyat değişimi"), s => pct(s.pts[s.n - 1].p / s.pts[0].p - 1, 0)]];
@@ -1564,10 +1571,12 @@ function renderData() {
   const trusted = have.filter(i => !yieldUsed(i)).map(i => tx(`${aLow(i)} ${pct(dataWeight(series[i]), 0)}`, `${aLow(i)} için ${pct(dataWeight(series[i]), 0)}`));
   $("dataTrust").innerHTML = !trusted.length ? "" : tx(`Average returns are hard to measure: even 20 years of stock prices leave the average uncertain by about 4% a year.
     So the plan mixes the data's average with a typical long-run value (a premium over your savings rate) and trusts the data more the longer it is.
-    The data's share here: ${trusted.join(", ")}. Risk σ is measured well, so it comes straight from the data.`,
+    The data's share here: ${trusted.join(", ")}. Risk σ is measured well, so it comes straight from the data. The market you pick
+    changes only how much these assets swing, not their average: a quiet market tends to stay quiet for a while, but it is not known to earn more.`,
     `Ortalama getiriyi ölçmek zordur: 20 yıllık hisse fiyatları bile ortalamayı yılda yaklaşık %4 belirsiz bırakır. Bu yüzden plan, verinin
     ortalamasını tipik bir uzun dönem değerle (mevduat faizinin üstünde bir prim) karıştırır ve veri ne kadar uzunsa ona o kadar çok güvenir.
-    Burada verinin payı: ${trusted.join(", ")}. Risk σ iyi ölçülür, bu yüzden doğrudan veriden gelir.`);
+    Burada verinin payı: ${trusted.join(", ")}. Risk σ iyi ölçülür, bu yüzden doğrudan veriden gelir. Seçtiğin piyasa bu varlıkların
+    yalnızca ne kadar dalgalandığını değiştirir, ortalamasını değil: sakin bir piyasa bir süre sakin kalma eğilimindedir, ama daha çok kazandırdığı bilinmez.`);
   const r = dataRho, sg = x => (x < 0 ? "−" : "+") + fix(Math.abs(x), 2);
   $("dataCorr").innerHTML = !r ? "" : !r.rho
     ? tx(`Your files share only ${r.n} months, too few to measure how the assets move together, so typical values are used.`,
@@ -1651,6 +1660,21 @@ function renderPlan() {
                                  ` Bu, aynı kayıp sınırıyla yalnızca hisse ve mevduat kullanmaktan (${pct(sol.fOpt, 0)} hisse) <b>yılda ${signed(gain, 2)}</b> daha fazla.`);
   }
   $("planWhy").innerHTML = why;
+  // Where the numbers come from: the uploaded prices, a typed bond yield, or the page's typical example values.
+  const src = cur.series, yieldOn = p.bondY !== null;
+  const fromFile = [0, 1, 2].filter(i => src[i] && !(i === 2 && yieldOn)), typical = [0, 1, 2].filter(i => !src[i] && !(i === 2 && yieldOn));
+  const fileText = i => `${aLow(i)} (${src[i].name}, ${fmtSpan([src[i].pts[0].t, src[i].pts[src[i].n - 1].t])})`;
+  $("planSource").innerHTML = !fromFile.length && !yieldOn
+    ? tx(`Based on typical example numbers, not real prices. For a plan from real data, upload prices in <b>More settings</b>.`,
+         `Gerçek fiyatlara değil, tipik örnek rakamlara dayanıyor. Gerçek veriden bir plan için <b>Daha fazla ayar</b> bölümünden fiyat yükle.`)
+    : tx(`Based on ` + [fromFile.length ? `your real prices: ${list(fromFile.map(fileText))}` : "",
+                       yieldOn ? `your bond yield of ${pct(Math.exp(p.bondY) - 1)}` : "",
+                       typical.length ? `typical example numbers for ${list(typical.map(aLow))}` : ""].filter(Boolean).join("; ") +
+         `. Past prices are not a forecast.`,
+         [fromFile.length ? `Gerçek fiyatlarına dayanıyor: ${list(fromFile.map(fileText))}` : "",
+          yieldOn ? `${pct(Math.exp(p.bondY) - 1)} tahvil faizine dayanıyor` : "",
+          typical.length ? `${list(typical.map(aLow))} için tipik örnek rakamlar kullanılıyor` : ""].filter(Boolean).join("; ") +
+         `. Geçmiş fiyatlar geleceğin tahmini değildir.`);
   const span = ([lo, hi]) => Math.round(100 * lo) === Math.round(100 * hi) ? pct(lo, 0) : tx(`${fix(100 * lo, 0)}–${pct(hi, 0)}`, `%${fix(100 * lo, 0)}–${fix(100 * hi, 0)}`);
   const ranges = [0, 1, 2, 3].filter(i => plan.near[i][1] >= 0.005).map(i => `${span(plan.near[i])} ${aLow(i)}`);
   $("planNear").innerHTML = !plan.d ? "" : tx(`Splits that grow almost as fast (at most ${pct(NEAR, 1)} a year slower, with the same loss limit) have
@@ -2984,7 +3008,7 @@ const I18N_TR = {
   clear0Aria: "hisse fiyatlarını kaldır", clear1Aria: "altın fiyatlarını kaldır", clear2Aria: "tahvil fiyatlarını kaldır",
   dragHere: "Bir dosyayı bir satırın üstüne de sürükleyebilirsin.",
   useEstimates: "Tahmin edilen hisse μ ve σ'sını geri koy",
-  marketsUsed: "Kullanılan piyasalar (temsilî, tahmin değil)", transHead: "Piyasa bir yıldan diğerine nasıl değişir",
+  marketsUsed: "Kullanılan piyasalar (yüklediysen senin verin, yoksa tipik değerler; tahmin değil)", transHead: "Piyasa bir yıldan diğerine nasıl değişir",
   calcNote: "Girdilerini değiştirdin. Sonuçları güncellemek için butona yeniden bas.",
   vsHead: "Tahminin mi, matematik mi?",
   lifeHead: "Planın gerçek hayatta", play: "▶ Yılları oynat", skip: "Sona atla", another: "Başka bir gelecek",
