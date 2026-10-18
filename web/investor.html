@@ -192,8 +192,6 @@
   .arc-screen p { margin: 8px 0; }
   .arc-dim { color: var(--a-dim); font-size: 13.5px; }
   .arc-center { text-align: center; }
-  .arc-blink { color: var(--a-yellow); font-weight: 700; letter-spacing: .1em; animation: arcBlink 1s steps(2, start) infinite; }
-  @keyframes arcBlink { to { visibility: hidden; } }
   /* You on the left, the boss on the right; the boss's speech bubble points at him. */
   .arc-hero { display: grid; grid-template-columns: 96px 1fr 84px; gap: 10px; align-items: center; margin-bottom: 10px; }
   .arc-hero.big { grid-template-columns: 120px 1fr 104px; }
@@ -2162,8 +2160,8 @@ function showLifeMany({ per, n, guessAhead, ties, p, game }) {
 // reacting; each year says whether your split was as efficient as its. Badges, the best final money and the sound
 // switch stay in this browser.
 // =====================================================================
-const ARC_YEARS = 5, ARC_HEARTS = 3, ARC_START = 10000, ARC_Q_ALPHA = 0.8, ARC_MONTH_MS = 260, ARC_EVENT_MS = 8000, ARC_PREMIUM = 0.02;
-const ARC_BEST = "investorArcadeBest", ARC_BADGE_KEY = "investorArcadeBadges", ARC_SOUND_KEY = "investorArcadeSound";
+const ARC_YEARS = 5, ARC_HEARTS = 3, ARC_START = 1000000, ARC_Q_ALPHA = 0.8, ARC_MONTH_MS = 260, ARC_EVENT_MS = 8000, ARC_PREMIUM = 0.02;
+const ARC_BEST = "investorArcadeBest1M", ARC_BADGE_KEY = "investorArcadeBadges", ARC_SOUND_KEY = "investorArcadeSound";
 const ARC_CRASH = [0.75, ...CRASH_SAFE];                          // a crash month: stocks −25%, gold and bonds up a little
 const ARC_COLORS = { you: "#39ff14", quant: "#22e4ff", bank: "#9c98c8" };
 const ARC_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -2250,7 +2248,8 @@ const ARC_SFX = {
   alarm: [[880, 0, .12], [660, .14, .12], [880, .28, .12], [660, .42, .12]],
   fired: [[392, 0, .3, "triangle"], [370, .32, .3, "triangle"], [349, .64, .3, "triangle"], [330, .96, 1, "triangle", 1, 250]],
   badge: [[1319, 0, .07, "triangle"], [1568, .07, .07, "triangle"], [2093, .14, .24, "triangle"]],
-  win: [[523, 0, .12], [523, .13, .12], [523, .26, .12], [698, .4, .55]] };
+  win: [[523, 0, .12], [523, .13, .12], [523, .26, .12], [698, .4, .55]],
+  meh: [[392, 0, .14, "triangle"], [370, .16, .28, "triangle"]] };
 function arcSfx(name) {
   if (!arcAudio.on) return;
   try {
@@ -2314,8 +2313,8 @@ const ARC_BADGES = [
   ["storm", "⛈️", "Storm Chaser", "Fırtına Avcısı", "Beat the savings account in a crisis year.", "Bir kriz yılında mevduatı geç."],
   ["oracle", "🔮", "Oracle", "Kâhin", "See a crash coming in the crystal ball.", "Kristal kürede bir çöküşü önceden gör."],
   ["shield", "🛡️", "Insured", "Sigortalı", "Let insurance save a heart.", "Sigorta bir canını kurtarsın."],
-  ["piggy", "🐷", "Piggy Bank", "Kumbara", "Keep everything in savings for a year.", "Bir yıl her şeyi mevduatta tut."],
-  ["bot", "🤖", "Beat the Bot", "Robotu Yen", "End a game with more money than the Quant.", "Oyunu Quant'tan fazla parayla bitir."],
+  ["piggy", "🐷", "Piggy Bank", "Kumbara", "Hide all the money in savings for a year. The boss noticed.", "Bir yıl tüm parayı mevduatta sakla. Patron fark etti."],
+  ["bot", "🤖", "Beat the Bot", "Robotu Yen", "Beat the Quant and get promoted at least once.", "Quant'ı geç ve en az bir kez terfi al."],
   ["partner", "👑", "Partner", "Ortak", "Get promoted every single year.", "Her yıl terfi al."],
   ["fired", "💀", "Fired!", "Kovuldun!", "Get fired. It happens to the best.", "Kovul. En iyilerin bile başına gelir."]];
 function arcBadges() { try { return new Set(JSON.parse(localStorage.getItem(ARC_BADGE_KEY)) || []); } catch (e) { return new Set(); } }
@@ -2348,7 +2347,8 @@ const ARC_BOSS_MOOD = {
               ["Inflation is eating the savings account. Think fast.", "Enflasyon mevduatı yiyor. Hızlı düşün."]] };
 const ARC_BOSS_PANIC = [["DO SOMETHING!", "BİR ŞEY YAP!"], ["Is this a drill?!", "Bu bir tatbikat mı?!"],
                         ["The client is on line one. SCREAMING.", "Müşteri birinci hatta. BAĞIRIYOR."]];
-const ARC_BOSS_END = [["Five years and still an intern? Ouch.", "Beş yıl oldu ve hâlâ stajyer misin? Ah."],
+const ARC_BOSS_END = [["Five years and not one promotion. A savings account could do your job. You're done here.",
+                       "Beş yılda tek bir terfi yok. Senin işini bir mevduat hesabı da yapardı. Burada işin bitti."],
                       ["An Analyst. The savings account is still laughing at you.", "Analist. Mevduat hâlâ sana gülüyor."],
                       ["Associate. Solid, but no corner office yet.", "Kıdemli Analist. Sağlam, ama henüz köşe ofis yok."],
                       ["Vice President! Not bad at all, kid.", "Başkan Yardımcısı! Hiç fena değil, evlat."],
@@ -2364,7 +2364,8 @@ function arcBossYear(h) {
     ? (arc.hearts >= 2 ? [["You LOST the client's money. That's strike one.", "Müşterinin parasını KAYBETTİN. Bu birinci ihtar."]]
                        : [["Strike two! One more losing year and you're OUT!", "İkinci ihtar! Bir kayıplı yıl daha ve KOVULDUN!"]])
     : h.saved ? [["Lucky you had insurance. Don't make it a habit.", "Neyse ki sigortan vardı. Alışkanlık yapma."]]
-    : h.w[3] > 0.999 ? [["All in the savings account? I could hire a savings account.", "Hepsi mevduatta mı? Ben bir mevduat hesabını da işe alabilirdim."]]
+    : h.w[3] > 0.999 ? [["All in the savings account? I could hire a savings account. No promotion.", "Hepsi mevduatta mı? Ben bir mevduat hesabını da işe alabilirdim. Terfi yok."],
+                        ["Playing it safe isn't the job. The client wants growth.", "Temkinli oynamak senin işin değil. Müşteri büyüme istiyor."]]
     : h.promoted ? [[`You beat the savings account. Promoted to ${R[1]}!`, `Mevduatı geçtin. Yeni unvanın: ${R[2]}!`],
                     [`Welcome to the ${R[1]} desk, kid. Don't let it go to your head.`, `${R[2]} masasına hoş geldin, evlat. Şımarma.`]]
     : [["Up, but the savings account did better. No promotion.", "Arttı ama mevduat daha iyisini yaptı. Terfi yok."]];
@@ -2618,8 +2619,10 @@ function arcNext() {
   arc.broke = false;
   if (arc.year >= ARC_YEARS) {
     arc.phase = "end";
-    arcSaveBest();
-    if (arc.money > arc.quant) arcBadge("bot");
+    if (arc.rank) {                                                 // still an intern is a loss: no best, no badge
+      arcSaveBest();
+      if (arc.money > arc.quant) arcBadge("bot");
+    }
     return;
   }
   arc.year++;
@@ -2644,34 +2647,39 @@ function arcYearFx() {
   else if (h.lost) { arcSfx("heart"); if (!reduceMotion()) $("arcScreen").classList.add("hit"); }
   else if (h.saved) arcSfx("shield");
   else if (h.promoted) { arcSfx("promo"); arcConfetti(); }
-  else arcSfx("up");
+  else arcSfx("meh");
 }
+// The end: still an intern is a loss; a high rank, or a promotion and beating the Quant, is a party.
 function arcEndFx() {
-  if (arc.money > arc.quant || arc.rank >= 4) { arcSfx("win"); arcConfetti(90); } else arcSfx("up");
+  if (!arc.rank) arcSfx("heart");
+  else if (arc.rank >= 3 || arc.money > arc.quant) { arcSfx("win"); arcConfetti(90); }
+  else arcSfx("up");
 }
 
 // ---- drawing ----
-// The year's chart, the same while the year plays and for the result: your money, the Quant's and the savings account's
-// up to month `upto`, each line labelled at its tip with how much it is up or down (labels pushed apart so they never
-// overlap). The scale is the whole year's, so nothing jumps while the months play.
-function arcChartSvg(s, upto, startYou) {
-  const W = 368, H = 150, R = 262, all = [...s.you, ...s.quant, ...s.bank], lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.1 || 1;
+// The year's chart, the same while the year plays and for the result. Every line is drawn as a share of where it started
+// this year, so you, the Quant and the savings account always start at the same point, even when your money and theirs
+// differ (in dollars the lines would sit apart, like separate charts). Each line is labelled at its tip with how much it
+// is up or down (labels pushed apart so they never overlap). The scale is the whole year's, so nothing jumps.
+function arcChartSvg(s, upto) {
+  const rel = a => a.map(v => v / a[0]), you = rel(s.you), quant = rel(s.quant), bank = rel(s.bank);
+  const W = 368, H = 150, R = 262, all = [...you, ...quant, ...bank, 1], lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.1 || 0.01;
   const X = t => 8 + (R - 8) * t / 12, Y = v => H - 10 - (H - 20) * (v - lo + pad) / (hi - lo + 2 * pad);
-  const lines = [[s.bank, ARC_COLORS.bank, "2 3", 1.5, tx("Savings", "Mevduat")], [s.quant, ARC_COLORS.quant, "6 4", 2, "Quant"], [s.you, ARC_COLORS.you, "", 3, tx("You", "Sen")]];
+  const lines = [[bank, ARC_COLORS.bank, "2 3", 1.5, tx("Savings", "Mevduat")], [quant, ARC_COLORS.quant, "6 4", 2, "Quant"], [you, ARC_COLORS.you, "", 3, tx("You", "Sen")]];
   const path = ([a, color, dash, width]) => `<polyline points="${a.slice(0, upto + 1).map((v, t) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}"
     fill="none" stroke="${color}" stroke-width="${width}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linejoin="round" stroke-linecap="round"/>`;
-  const tags = lines.map(([a, color, , , name]) => ({ y: Y(a[upto]), color, text: `${name} ${signed(a[upto] / a[0] - 1)}` })).sort((a, b) => a.y - b.y);
+  const tags = lines.map(([a, color, , , name]) => ({ y: Y(a[upto]), color, text: `${name} ${signed(a[upto] - 1)}` })).sort((a, b) => a.y - b.y);
   for (let k = 1; k < tags.length; k++) tags[k].y = Math.max(tags[k].y, tags[k - 1].y + 14);
   const over = tags[tags.length - 1].y - (H - 8), under = 12 - tags[0].y + Math.max(0, over);
   for (const t of tags) t.y += -Math.max(0, over) + Math.max(0, under);
-  const base = `<line x1="8" x2="${R}" y1="${Y(startYou).toFixed(1)}" y2="${Y(startYou).toFixed(1)}" stroke="#ff4d4d" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`;
+  const base = `<line x1="8" x2="${R}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}" stroke="#ff4d4d" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`;
   return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${base}${lines.map(path).join("")}` +
     tags.map(t => `<text x="${(X(upto) + 6).toFixed(1)}" y="${(t.y + 4).toFixed(1)}" fill="${t.color}" font-size="11.5" font-weight="800">${t.text}</text>`).join("") + `</svg>`;
 }
 function arcDrawYear(fx = false) {
   const s = arc.sim, m = arc.month, box = $("arcChartBox");
   arcSetMoney(s.you[m], ARC_MONTH_MS * 0.9);                       // the big money ticks with the months
-  box.innerHTML = arcChartSvg(s, m, arc.money) + `<span class="arc-month">${arcMonth(m)}</span>` +
+  box.innerHTML = arcChartSvg(s, m) + `<span class="arc-month">${arcMonth(m)}</span>` +
     (s.crashMonth && m >= s.crashMonth && m < s.crashMonth + 3 ? `<span class="arc-flash">📉 ${tx("CRASH!", "ÇÖKÜŞ!")}</span>` : "");
   let t = m;                                                       // the latest headline stays until a newer one
   while (t > 0 && !s.news[t]) t--;
@@ -2747,7 +2755,8 @@ function renderArcade() {
   $("arcLives").innerHTML = sel ? "" : heart(full === 1 ? "danger" : "").repeat(full) +
     (arc.broke ? `<span class="broke">💔</span>` + heart("empty").repeat(Math.max(0, ARC_HEARTS - full - 1)) : heart("empty").repeat(ARC_HEARTS - full));
   $("arcLives").title = tx(`${full} hearts left`, `${full} can kaldı`);
-  $("arcHi").textContent = best ? `${tx("Best", "Rekor")} ${money(best)}` : "";
+  const board = sel || arc.phase === "end" || arc.phase === "fired";   // the best only where it matters, so the bar fits one line
+  $("arcHi").textContent = best && board ? `${tx("Best", "Rekor")} ${money(best)}` : "";
   arcSoundBtn();
   $("arcade").classList.toggle("arc-noanim", reduceMotion());
   const scr = $("arcScreen"), go = (label, act, cls = "") => `<button type="button" class="arc-go ${cls}" data-act="${act}">${label}</button>`;
@@ -2763,13 +2772,13 @@ function renderArcade() {
                        `Hoş geldin, stajyer! İşte bir müşterinin <b>${money(ARC_START)}</b> parası. Onu <b>${ARC_YEARS} yıl</b> yönet. Para kaybedersen ihtar alırsın. Üç ihtarda <b>KOVULURSUN</b>.`), "happy", "big") +
       `<ul class="arc-rules">
         <li>💔 ${tx("A year that loses money costs a heart. Lose all three and you're fired.", "Para kaybettiren her yıl bir can götürür. Üçü de giderse kovulursun.")}</li>
-        <li>⬆️ ${tx("A year that beats the savings account is a promotion: Intern → Partner.", "Mevduatı geçen her yıl bir terfidir: Stajyer → Ortak.")}</li>
+        <li>⬆️ ${tx("A year that beats the savings account is a promotion: Intern → Partner. Finish as an intern and you lose.",
+                    "Mevduatı geçen her yıl bir terfidir: Stajyer → Ortak. Stajyer olarak bitirirsen kaybedersin.")}</li>
         <li>🚨 ${tx("Big drops stop the clock: sell, hold or buy the dip. Decide fast!", "Büyük düşüşler saati durdurur: sat, tut ya da düşüşten al. Hızlı karar ver!")}</li>
         <li>🃏 ${tx("Three one-time cards: crystal ball, insurance, copy the Quant.", "Üç tek kullanımlık kart: kristal küre, sigorta, Quant'ı kopyala.")}</li>
         <li>🤖 ${tx("<b style=\"color:#22e4ff\">The Quant</b> plays the most efficient split on the same luck. Beat it!",
                     "<b style=\"color:#22e4ff\">Quant</b> aynı şansla en verimli dağılımı oynar. Onu yen!")}</li></ul>
-      ${arcShelf()}
-      <p class="arc-center arc-blink">${tx("Insert coin", "Jeton at")}</p>` + go(tx("▶ Start the job", "▶ İşe başla"), "start");
+      ${arcShelf()}` + go(tx("▶ Start the job", "▶ İşe başla"), "start");
   } else if (arc.phase === "plan") {
     const M = MOODS[arc.mood], rows = [0, 1, 2].map(i => `<tr><td>${aName(i)}</td><td>${signed(M.mu[i])}</td><td>±${pct(M.sig[i], 0)}</td></tr>`).join("");
     scr.innerHTML = `<h2 id="arcTitle" class="hidden">${tx(`Year ${arc.year}`, `Yıl ${arc.year}`)}</h2>` + hero(arcMoodNow(), arc.boss(), arc.hearts === 1 ? "angry" : "stern") +
@@ -2793,19 +2802,22 @@ function renderArcade() {
     arcDrawYear();
   } else if (arc.phase === "year") {
     const h = arc.hist[arc.hist.length - 1], ch = h.choice, diff = h.you - h.hold;
+    const safe = h.w[3] > 0.999;                                     // everything stayed in the savings account
     const title = h.lost ? tx("You lost money!", "Para kaybettin!") : h.saved ? tx("Insurance saved you!", "Sigorta seni kurtardı!")
-      : h.promoted ? tx("Promoted!", "Terfi!") : tx("Money up!", "Para arttı!");
+      : h.promoted ? tx("Promoted!", "Terfi!") : safe ? tx("Too safe!", "Fazla temkinli!") : tx("No promotion", "Terfi yok");
     const recap = !ch ? "" : `<p>${ch.choice === "hold"
       ? tx(`💎 ${ch.froze ? "Time ran out, so you held" : "You held through the drop"} in ${arcMonth(ch.month)}.`,
            `💎 ${arcMonth(ch.month)} ayındaki düşüşte ${ch.froze ? "süre doldu, yani tuttun" : "tuttun"}.`)
       : tx(`${ch.choice === "sell" ? "😱 You sold everything" : "🚀 You went all in on stocks"} in ${arcMonth(ch.month)}. Just holding would have ended at ${money(h.hold)}, so acting ${diff >= 0 ? "earned" : "cost"} you <b class="${diff >= 0 ? "arc-good" : "arc-bad"}">${money(Math.abs(diff))}</b>.`,
            `${ch.choice === "sell" ? "😱 Hepsini sattın" : "🚀 Hepsini hisseye koydun"} (${arcMonth(ch.month)}). Sadece tutsaydın ${money(h.hold)} ile bitirirdin; hareket etmek sana <b class="${diff >= 0 ? "arc-good" : "arc-bad"}">${money(Math.abs(diff))}</b> ${diff >= 0 ? "kazandırdı" : "kaybettirdi"}.`)}</p>`;
-    const noPromo = h.down || h.promoted ? "" : `<p class="arc-dim">${tx(`No promotion: the savings account made ${signed(h.bank / h.bStart - 1)}, you made ${signed(h.you / h.start - 1)}.`,
-                                                                        `Terfi yok: mevduat ${signed(h.bank / h.bStart - 1)} yaptı, sen ${signed(h.you / h.start - 1)}.`)}</p>`;
+    const noPromo = h.down || h.promoted ? "" : `<p class="arc-dim">${safe
+      ? tx("Everything stayed in the savings account, so you can't beat it: no promotion.", "Her şey mevduatta kaldı, yani onu geçemezsin: terfi yok.")
+      : tx(`No promotion: the savings account made ${signed(h.bank / h.bStart - 1)}, you made ${signed(h.you / h.start - 1)}.`,
+           `Terfi yok: mevduat ${signed(h.bank / h.bStart - 1)} yaptı, sen ${signed(h.you / h.start - 1)}.`)}</p>`;
     const said = `${tx("You", "Sen")} ${arcRet(h.start, h.you)}, Quant ${arcRet(h.qStart, h.quant)}, ${tx("Savings", "Mevduat")} ${arcRet(h.bStart, h.bank)}`;
     scr.innerHTML = `<h2 id="arcTitle" class="hidden">${title}</h2>` +
-      hero(h.lost ? arcMoodNow() : h.down ? "nervous" : h.promoted || h.you / h.start > h.quant / h.qStart ? "win" : "happy", arc.boss(), h.lost ? "angry" : h.promoted ? "happy" : "stern") +
-      `<div class="arc-chart" role="img" aria-label="${said}">${arcChartSvg(arc.sim, 12, h.start)}<span class="arc-month big ${h.down ? "arc-bad" : "arc-good"}">${title}</span></div>` +
+      hero(h.lost ? arcMoodNow() : h.promoted ? "win" : h.down || safe ? "nervous" : "happy", arc.boss(), h.lost || safe ? "angry" : h.promoted ? "happy" : "stern") +
+      `<div class="arc-chart" role="img" aria-label="${said}">${arcChartSvg(arc.sim, 12)}<span class="arc-month big ${h.promoted ? "arc-good" : h.lost ? "arc-bad" : "arc-warn"}">${title}</span></div>` +
       arcLegend() + (h.promoted ? `<div class="arc-stamp">⬆️ ${ARC_RANKS[arc.rank][0]} ${arcRankName(arc.rank)}</div>` : "") + recap + noPromo +
       (h.premium ? `<p class="arc-dim">🛡️ ${tx(`Insurance cost ${money(h.premium)}${h.saved ? " and saved your heart" : ""}.`, `Sigorta ${money(h.premium)} tuttu${h.saved ? " ve canını kurtardı" : ""}.`)}</p>` : "") +
       (h.copied ? `<p>🤖 ${tx("Autopilot: this year the Quant picked your split.", "Otomatik pilot: bu yıl dağılımını Quant seçti.")}</p>` : "") +
@@ -2823,12 +2835,13 @@ function renderArcade() {
       `<p class="arc-dim">${tx("Tip: in a crisis, stocks are the danger. Gold and bonds that don't fall together keep the year green.",
                                "İpucu: krizde tehlike hisselerdir. Birlikte düşmeyen altın ve tahvil yılı yeşil tutar.")}</p>` + go(tx("▶ Find a new job", "▶ Yeni iş bul"), "start");
   } else {
-    const r = arc.rank, R = ARC_RANKS[r], beat = arc.money > arc.quant;
-    scr.innerHTML = `<h2 id="arcTitle" class="${r ? "" : "lose"}">${r ? tx(`You made it to ${R[1]}!`, `${R[2]} oldun!`) : tx("Still an intern…", "Hâlâ stajyersin…")}</h2>` +
-      arcLadder() + hero(r >= 3 || beat ? "win" : r ? "happy" : "nervous", tx(ARC_BOSS_END[r][0], ARC_BOSS_END[r][1]), r >= 3 || beat ? "happy" : "stern", "big") +
-      `<div class="arc-big" style="color:${ARC_COLORS.you}">${money(arc.money)}<small>${tx(`after ${ARC_YEARS} years · the Quant ${money(arc.quant)} · savings ${money(arc.bank)}`,
-        `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${arc.money >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>
-      <p class="arc-center arc-quant">${beat ? tx(`🤖 You beat the Quant by ${money(arc.money - arc.quant)}!`, `🤖 Quant'ı ${money(arc.money - arc.quant)} farkla geçtin!`)
+    const r = arc.rank, R = ARC_RANKS[r], beat = arc.money > arc.quant, party = r >= 3 || (r > 0 && beat);   // still an intern is a loss
+    scr.innerHTML = `<h2 id="arcTitle" class="${r ? "" : "lose"}">${r ? tx(`You made it to ${R[1]}!`, `${R[2]} oldun!`) : tx("Still an intern: you lose", "Hâlâ stajyer: kaybettin")}</h2>` +
+      arcLadder() + hero(party ? "win" : r ? "happy" : "fired", tx(ARC_BOSS_END[r][0], ARC_BOSS_END[r][1]), party ? "happy" : r ? "stern" : "angry", "big") +
+      `<div class="arc-big${r ? "" : " arc-bad"}"${r ? ` style="color:${ARC_COLORS.you}"` : ""}>${money(arc.money)}<small>${tx(`after ${ARC_YEARS} years · the Quant ${money(arc.quant)} · savings ${money(arc.bank)}`,
+        `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${r && arc.money >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>
+      <p class="arc-center arc-quant">${!r ? tx("🤖 You never beat the savings account, so the client found a new fund manager.", "🤖 Mevduatı hiç geçemedin, bu yüzden müşteri yeni bir fon yöneticisi buldu.")
+        : beat ? tx(`🤖 You beat the Quant by ${money(arc.money - arc.quant)}!`, `🤖 Quant'ı ${money(arc.money - arc.quant)} farkla geçtin!`)
         : tx(`🤖 The Quant made ${money(arc.quant - arc.money)} more. Study its splits.`, `🤖 Quant ${money(arc.quant - arc.money)} daha fazla kazandı. Dağılımlarını incele.`)}</p>` +
       arcHistTable() + arcShelf() + go(tx("▶ Play again", "▶ Tekrar oyna"), "start");
   }
