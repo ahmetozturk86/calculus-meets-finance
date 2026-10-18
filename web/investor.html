@@ -824,7 +824,8 @@ const bandLegend = () => [{ color: "var(--band-calm)", label: tx("calm year", "s
 // =====================================================================
 // Inputs
 // =====================================================================
-const ui = { mood: "normal", risk: "balanced", filled: null };     // filled: the market whose typical rates were filled in
+const ui = { mood: "normal", risk: "balanced", filled: null, typed: false };  // filled: the market whose typical rates were filled in
+                                                                    // typed: the person typed their own interest or inflation
 const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStock: 25, gGold: 25, gBond: 25 };
 function params() {
   const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
@@ -843,10 +844,11 @@ for (const [key, m] of Object.entries(MOODS)) {
   b.addEventListener("click", () => pickMood(key));
   $("moodPick").appendChild(b);
 }
-// Picking a market fills in typical interest and inflation for it (shifted from the numbers already typed).
+// Picking a market fills in typical interest and inflation for it (shifted from the numbers already there),
+// unless the person typed their own: then their numbers are kept.
 function pickMood(key) {
   const from = MOODS[ui.mood], to = MOODS[key], p = params();
-  if (key !== ui.mood) {
+  if (key !== ui.mood && !ui.typed) {
     $("r").value = (100 * (Math.exp(Math.max(0, p.r + to.rc - from.rc)) - 1)).toFixed(1);
     $("infl").value = (100 * p.infl + 100 * (to.infl - from.infl)).toFixed(1);
     ui.filled = key;
@@ -857,9 +859,10 @@ function pickMood(key) {
 for (const b of document.querySelectorAll("#riskPick .opt")) b.addEventListener("click", () => { ui.risk = b.dataset.risk; onInputChange(); });
 for (const id of ["S", "save", "r", "infl", "alpha", "mu", "sig", "years", "useGuess", "changing", "events", "crashEvery", "crashSize"])
   $(id).addEventListener("input", onInputChange);
+for (const id of ["r", "infl"]) $(id).addEventListener("input", () => { ui.typed = true; ui.filled = null; onInputChange(); });
 $("resetParams").addEventListener("click", () => {
   for (const [k, v] of Object.entries(DEFAULTS)) $(k).value = v;
-  ui.mood = "normal"; ui.risk = "balanced"; ui.filled = null;
+  ui.mood = "normal"; ui.risk = "balanced"; ui.filled = null; ui.typed = false;
   onInputChange();
 });
 // Your guess: stocks, gold and bonds in whole percent; the savings account gets the rest. A slider first takes from the
