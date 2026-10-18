@@ -488,6 +488,7 @@
       interest and gains. The plan takes them off each return before it looks for the best mix. An empty box means 0.</small>
       <div class="buttons"><button class="btn ghost" type="button" data-fees="usa" data-i18n="feesUsa">Typical USA</button>
         <button class="btn ghost" type="button" data-fees="tr" data-i18n="feesTr">Typical Turkey</button>
+        <button class="btn ghost" type="button" data-fees="oecd" data-i18n="feesOecd">OECD average</button>
         <button class="btn ghost" type="button" data-fees="none" data-i18n="feesNone">None</button></div>
       <div class="scroll"><table class="fees">
           <tr><th></th><th data-i18n="feeCol">Fee, % a year</th><th data-i18n="taxCol">Tax on gains, %</th></tr>
@@ -1144,9 +1145,12 @@ const DEFAULTS = { S: 10000, save: 1000, r: 3, infl: 3, mu: 10.5, sig: 20, gStoc
 // bracket: interest is income, long-term stock gains 15%, gold funds 28% (collectibles); index funds ~0.1% a year
 // (Morningstar: passive average 0.11%), gold funds 0.25% (IAU; GLD 0.40%). Turkey: TL deposit stopaj 17.5% up to 6 months,
 // BIST shares and TEFAS equity funds 0%, gold funds 17.5%, government bonds 10% (over 1 year); the fund fees are estimates
-// (Turkish equity funds charge about 1-3.65% a year).
+// (Turkish equity funds charge about 1-3.65% a year). OECD average: no country's rules, an average of many: long-held share
+// gains ~18% in Europe (Tax Foundation: 17.9%, EU 18.6%) and dividends 25.5% (OECD weighted), so stocks 20%; interest about
+// 25% and gold 20% are estimates (rates differ a lot); index funds ~0.13-0.4% a year in Europe.
 const FEE_PRESETS = { usa: { fee: [0.1, 0.25, 0.1, 0], tax: [15, 28, 22, 22] },
                       tr: { fee: [2, 1, 0, 0], tax: [0, 17.5, 10, 17.5] },
+                      oecd: { fee: [0.2, 0.25, 0.15, 0], tax: [20, 20, 25, 25] },
                       none: { fee: ["", "", "", ""], tax: ["", "", "", ""] } };
 // Typical example numbers per currency: what an empty or untouched box means (all in % a year). The lira has its own:
 // Turkish rates and inflation are many times higher, and stocks, gold and bonds in lira swing more because the lira itself
@@ -1686,11 +1690,13 @@ function renderToday(p, states) {
     tx(`Typical USA: an ordinary taxable account; interest is taxed as income (22% bracket), long-term stock gains 15%, gold funds 28%
       (collectibles); index funds cost about 0.1% a year, gold funds 0.25%. Typical Turkey: deposit stopaj 17.5% (up to 6 months), BIST shares
       and equity funds 0%, gold funds 17.5%, government bonds 10%; the fund fees are estimates (Turkish equity funds charge about 1–3.65% a year).
-      Taxes change often, so check today's rules. The tax takes its share of each year's average gain; risk is left as it is.`,
+      OECD average: an average of many countries, not anyone's real rules: stocks 20% (share gains about 18% in Europe, dividends about 25%),
+      interest 25% and gold 20% (rates differ a lot between countries); fund fees 0.15–0.25%. Taxes change often, so check today's rules. The tax takes its share of each year's average gain; risk is left as it is.`,
        `Tipik ABD: normal vergiye tabi bir hesap; faiz gelir olarak vergilenir (%22 dilimi), uzun vadeli hisse kazancı %15, altın fonları %28
       (koleksiyon ürünü); endeks fonlarının maliyeti yılda yaklaşık %0,1, altın fonlarınınki %0,25. Tipik Türkiye: mevduat stopajı %17,5 (6 aya kadar),
       BIST hisseleri ve hisse yoğun fonlar %0, altın fonları %17,5, devlet tahvili %10; fon ücretleri tahmindir (Türkiye'de hisse fonları yılda
-      yaklaşık %1–3,65 alır). Vergiler sık değişir, bu yüzden bugünkü kuralları kontrol et. Vergi her yılın ortalama kazancından payını alır; risk aynı kalır.`);
+      yaklaşık %1–3,65 alır). OECD ortalaması: tek bir ülkenin gerçek kuralları değil, birçok ülkenin ortalaması: hisseler %20 (Avrupa'da hisse
+      kazancı yaklaşık %18, temettü yaklaşık %25), faiz %25 ve altın %20 (oranlar ülkeden ülkeye çok değişir); fon ücretleri %0,15–0,25. Vergiler sık değişir, bu yüzden bugünkü kuralları kontrol et. Vergi her yılın ortalama kazancından payını alır; risk aynı kalır.`);
   $("goldNote").innerHTML = tx(`<b>Gold</b> needs no number: its price says nothing about its future return. Over long periods gold has kept up with
     inflation, so the plan uses inflation + ${GOLD_PREMIUM}% = <b>${ret(1)}</b> a year.`,
     `<b>Altın</b> için rakam gerekmez: fiyatı gelecekteki getirisi hakkında bir şey söylemez. Uzun dönemde altın enflasyona yetişmiştir,
@@ -3188,7 +3194,7 @@ const I18N_TR = {
   stockNote: "F/K kutusu hisselerin ortalama getirisini, VIX kutusu riskini belirler. Bir kutu boşken buradaki rakam kullanılır (normal bir piyasa için). " +
     "Aşağıya yüklenen hisse fiyatları bunları doldurur.",
   reset: "Hepsini örneğe sıfırla",
-  feesHead: "Ücretler ve vergiler", feesUsa: "Tipik ABD", feesTr: "Tipik Türkiye", feesNone: "Yok",
+  feesHead: "Ücretler ve vergiler", feesUsa: "Tipik ABD", feesTr: "Tipik Türkiye", feesOecd: "OECD ortalaması", feesNone: "Yok",
   feesIntro: "Elinde kalan, piyasanın ödediğinden azdır: fonlar yıllık ücret alır, devlet de faizi ve kazancı vergilendirir. Plan en iyi " +
     "karışımı aramadan önce bunları her getiriden düşer. Boş kutu 0 demektir.",
   feeCol: "Ücret, yıllık %", taxCol: "Kazanç vergisi, %", feeAria: "ücret", taxAria: "vergi",
