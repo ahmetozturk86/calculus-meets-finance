@@ -587,7 +587,7 @@
       <h3 data-i18n="dataHead">Use real prices (optional)</h3>
       <p class="muted" style="margin-top:0" data-i18n="dataIntro">Upload a CSV with a date column and a price column for each asset you have, for example an index
       exported from investing.com or Yahoo Finance. One file with a column for each asset (named for example Stocks, Gold and Bonds) works too.
-      <b>The files are read only inside this page and never uploaded anywhere.</b> No data? Try <code>sample_prices.csv</code> from the same folder.</p>
+      <b>The files are read only inside this page and never uploaded anywhere.</b> No data? Download <a href="sample_prices.csv" download><code>sample_prices.csv</code></a> (simulated prices) and use it here.</p>
       <div class="uploads">
         <div class="drop upl" data-asset="0"><span><i class="dot" style="background:var(--blue)"></i><span data-i18n="gStock">Stocks</span></span>
           <input id="file0" type="file" accept=".csv,.txt,text/csv" aria-label="stock prices (CSV)" data-i18n-aria="file0Aria">
@@ -739,7 +739,8 @@
 </section>
 </div>
 </main>
-<footer data-i18n="footer">An illustrative model for learning, not financial advice. Same math as the <a href="index.html">Limits in Finance</a> project.</footer>
+<footer data-i18n="footer">An illustrative model for learning, not financial advice. Same math as the <a href="index.html">Limits in Finance</a> project ·
+  <a href="https://github.com/ahmetozturk86/limits-in-finance">code on GitHub</a></footer>
 
 <script>
 // =====================================================================
@@ -886,6 +887,8 @@ const sym = () => $("currency").value;
 const money = x => (x < 0 ? "−" : "") + sym() + num(Math.abs(x));
 const inSym = label => sym() ? `${label} (${sym()})` : label;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+// Text from an uploaded file (its name, a column name) is written into HTML, so its <, >, & and quotes are escaped first.
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // ---- SVG charts (no libraries) ----
 function niceTicks(min, max, count = 5) {
@@ -1093,6 +1096,7 @@ function riskEstimate(w, mix, alpha) {
 const MIX_GRID_COARSE = MIX_GRID.filter(d => Math.round(d[0] * STEPS) % 2 === 0 && Math.round(d[1] * STEPS) % 2 === 0);
 function bestMixCrash(s, L, alpha) {
   let best = { g: s.rc, w: [0, 0, 0, 1], t: 0, d: null };
+  if (riskEstimate(best.w, s, alpha) > L) return best;               // even all savings breaks the limit (big fees): no IVT root
   for (const d of MIX_GRID_COARSE) {
     let a = 0, v = 0;
     for (let i = 0; i < 3; i++) { a += d[i] * (s.muc[i] - s.rc); for (let j = 0; j < 3; j++) v += d[i] * d[j] * s.rho[i][j] * s.sig[i] * s.sig[j]; }
@@ -1527,8 +1531,8 @@ function addSeries(i, name, parsed) {
     setStock(usedMu(0, est, params()), est.sig);
     ui.typed.add("mu"); ui.typed.add("sig");
   }
-  const col = () => parsed.priceName ?? tx(`column ${parsed.priceCol + 1}`, `${parsed.priceCol + 1}. sütun`);
-  setStatus(i, () => tx(`<span class="ok">✓ Loaded ${name}</span> using the “${col()}” column.`, `<span class="ok">✓ ${name} yüklendi</span>, “${col()}” sütunu kullanıldı.`) +
+  const col = () => esc(parsed.priceName ?? tx(`column ${parsed.priceCol + 1}`, `${parsed.priceCol + 1}. sütun`)), file = esc(name);
+  setStatus(i, () => tx(`<span class="ok">✓ Loaded ${file}</span> using the “${col()}” column.`, `<span class="ok">✓ ${file} yüklendi</span>, “${col()}” sütunu kullanıldı.`) +
     (parsed.skipped ? ` <span class="warn">${tx(`${parsed.skipped} row(s) could not be read and were skipped.`, `${parsed.skipped} satır okunamadı ve atlandı.`)}</span>` : "") +
     (i === 0 && est.windows.length < 10 ? ` <span class="warn">${tx("Less than ~2 years of data: the history check needs more.", "2 yıldan az veri: geçmiş kontrolü için daha fazlası gerekiyor.")}</span>` : ""));
 }
@@ -1539,7 +1543,7 @@ function loadCsvText(text, name, asset = 0) {
     for (const c of parsed.multi || [{ asset, ...parsed }]) addSeries(c.asset, name, c);
   } catch (e) {
     series[asset] = null;
-    setStatus(asset, () => `<span class="bad">✗ ${tx(e.message, e.tr || e.message)}</span>`);
+    setStatus(asset, () => `<span class="bad">✗ ${esc(tx(e.message, e.tr || e.message))}</span>`);
   }
   dataRho = estimateRho();
   onInputChange();
@@ -1687,6 +1691,21 @@ function planConfetti() {
 const mixText = w => {
   return [0, 1, 2, 3].filter(i => w[i] >= 0.005).map(i => `${pct(w[i], 0)} ${aLow(i)}`).join(" · ");
 };
+const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + tx(" and ", " ve ") + a[a.length - 1] : a[0];
+// A guess can miss the limit by a hair: the plan's split has decimals and the sliders only whole percents (73 / 4 / 23 is
+// 0.005% over when the plan is 72.98 / 4.00 / 22.99 / 0.03). Then the bad-year loss is shown with more decimals, and
+// nearValid finds the fastest-growing whole-percent split next to the guess (1% moved from one share to another) that keeps it.
+const justOver = (x, L) => x.var > L + 1e-9 && x.var < L + 0.0005;
+function nearValid(w, m, alpha, L) {
+  let best = null;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    if (i === j || w[i] < 0.01 - 1e-9) continue;
+    const v = w.map((x, k) => Math.round(100 * x + (k === j) - (k === i)) / 100), s = mixStats(v, m, alpha);
+    if (s.var <= L + 1e-9 && (!best || s.g > best.g)) best = { w: v, ...s };
+  }
+  return best;
+}
+const exactSplit = w => list([0, 1, 2, 3].filter(i => w[i] >= 0.00005).map(i => `${pct(w[i], 2)} ${aLow(i)}`));
 
 // The plan with no limit at all is the fastest-growing mix without borrowing, and "Bold" stops at its bad-year loss.
 function riskTop(p) {
@@ -1894,7 +1913,6 @@ function renderPlan() {
   $("planParts").innerHTML = parts.map(x => `<div class="part"><i aria-hidden="true" style="--c:${x.color}">${x.icon}</i><span>${aName(x.i)}</span><b>${pct(x.w, 0)}</b>
     <span class="amt">${money(p.S * x.w)}</span></div>`).join("");
   // The answer in one plain sentence, in money.
-  const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + tx(" and ", " ve ") + a[a.length - 1] : a[0];
   const gain = p.S * (Math.exp(plan.g) - 1), bad = plan.var > 0
     ? tx(`only about 1 year in ${every} should lose more than <b>${money(p.S * plan.var)}</b> (those years lose about ${money(p.S * plan.es)} on average)`,
          `kaybın <b>${money(p.S * plan.var)}</b> tutarını aşması yalnızca yaklaşık ${every} yılda bir beklenir (o yıllarda ortalama kayıp yaklaşık ${money(p.S * plan.es)})`)
@@ -1938,7 +1956,7 @@ function renderPlan() {
   }
   $("planWhy").innerHTML = why;
   // Where every number comes from: today's numbers (P/E, VIX, bond yield, inflation), the uploaded prices, or examples.
-  const src = cur.series, file = i => `${src[i].name}, ${fmtSpan([src[i].pts[0].t, src[i].pts[src[i].n - 1].t])}`;
+  const src = cur.series, file = i => `${esc(src[i].name)}, ${fmtSpan([src[i].pts[0].t, src[i].pts[src[i].n - 1].t])}`;
   const says = (kind, i) => ({ pe: () => tx(`P/E ${fix(p.pe, 1)} + inflation`, `F/K ${fix(p.pe, 1)} + enflasyon`), vix: () => `VIX ${fix(100 * p.vix, 0)}`,
     gold: () => tx(`inflation + ${GOLD_PREMIUM}%`, `enflasyon + %${GOLD_PREMIUM}`), yield: () => tx("your bond yield", "tahvil faizin"),
     file: () => tx(`your prices: ${file(i)}`, `fiyatların: ${file(i)}`), typed: () => tx("your number", "senin rakamın"), example: () => tx("example", "örnek") })[kind]();
@@ -1986,7 +2004,8 @@ function renderVsMath() {
   const { p, plan, guess } = cur, n = p.years, every = Math.round(1 / (1 - p.alpha)), within = x => x.var <= p.L + 1e-9;
   $("vsBlock").classList.toggle("hidden", !guess);
   if (!guess) return;
-  const loss = x => `${x.var > 0 ? "−" + pct(x.var) : signed(-x.var)} ${within(x) ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`}`;
+  const close = justOver(guess, p.L), d = close ? 3 : 1;           // over only by rounding: 15.005%, not "15.0%, more than 15%"
+  const loss = x => `${x.var > 0 ? "−" + pct(x.var, d) : signed(-x.var, d)} ${within(x) ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`}`;
   $("vsMath").innerHTML = `<tr><th></th><th>${tx("Split", "Dağılım")}</th><th>${tx("Typical growth a year", "Yıllık tipik büyüme")}</th>` +
     `<th>${tx(`Bad year (worst 1 in ${every})`, `Kötü yıl (${every} yılın en kötüsü)`)}</th><th>${tx(`After ${n} years`, `${n} yıl sonra`)}</th></tr>` +
     [[tx("Your guess", "Tahminin"), "var(--amber)", guess], [tx("The math", "Matematik"), "var(--blue)", plan]].map(([name, color, x]) =>
@@ -1994,7 +2013,13 @@ function renderVsMath() {
        <td>${loss(x)}</td><td>${money(typicalAfter(p, x.g, n))}</td></tr>`).join("");
   const gap = typicalAfter(p, plan.g, n) - typicalAfter(p, guess.g, n);
   let v;
-  if (!within(guess))
+  if (close) {
+    const nv = nearValid(guess.w, cur.m, p.alpha, p.L);
+    v = tx(`<span class="bad">Your guess is just over your limit:</span> in a bad year it loses ${pct(guess.var, 3)}, a hair more than your ${pct(p.L, 0)}. ` +
+           `Whole percents can't hit the limit exactly: the math's exact split is ${exactSplit(plan.w)}.` + (nv ? ` For example ${mixText(nv.w)} keeps your limit.` : ""),
+           `<span class="bad">Tahminin sınırının biraz üstünde:</span> kötü bir yılda ${pct(guess.var, 3)} kaybediyor, ${pct(p.L, 0)} sınırından çok az fazla. ` +
+           `Tam sayı yüzdelerle sınıra tam olarak ulaşılamaz: matematiğin tam dağılımı ${exactSplit(plan.w)}.` + (nv ? ` Örneğin ${mixText(nv.w)} sınırını korur.` : ""));
+  } else if (!within(guess))
     v = tx(`<span class="bad">Your guess breaks your limit:</span> in a bad year it loses ${pct(guess.var)}, more than your ${pct(p.L, 0)}.`,
            `<span class="bad">Tahminin sınırını aşıyor:</span> kötü bir yılda ${pct(guess.var)} kaybediyor, bu ${pct(p.L, 0)} sınırından fazla.`) +
         (guess.g > plan.g ? tx(" It grows faster only because it takes more risk than you accept.", " Daha hızlı büyümesinin tek nedeni, kabul ettiğinden fazla risk alması.")
@@ -2374,7 +2399,9 @@ function recordTry(score) {
   if (isNewBest) b.best = { score, w };
   b.last = w; b.at = Date.now();
   board[key] = b; saveBoard(board);
-  return { score, valid, isNewBest, tries: b.tries, best: b.best };
+  // kept with the try, so a language or currency redraw shows the same thing: the limit, and a near miss's numbers
+  const close = justOver(guess, p.L), nv = close ? nearValid(guess.w, cur.m, p.alpha, p.L) : null;
+  return { score, valid, isNewBest, tries: b.tries, best: b.best, L: p.L, close, var: guess.var, near: nv && nv.w };
 }
 function renderGame(game) {
   const tryBtn = label => `<div class="buttons"><button class="btn ghost" type="button" data-try>${label}</button></div>`;
@@ -2384,7 +2411,7 @@ function renderGame(game) {
       tryBtn(tx("Make my own guess", "Kendi tahminimi yap"));
     return;
   }
-  const { score, valid, isNewBest, tries, best } = game, L = pct(cur.p.L, 0);
+  const { score, valid, isNewBest, tries, best, close, near } = game, L = pct(game.L, 0);
   const badge = valid ? `<span class="ok">✓</span>` : `<span class="bad">✗</span>`;
   const bestText = best
     ? tx(`Best for these settings: <b>${pct(best.score, 0)}</b> (${mixText(best.w)})`, `Bu ayarlarda en iyin: <b>${pct(best.score, 0)}</b> (${mixText(best.w)})`)
@@ -2393,8 +2420,13 @@ function renderGame(game) {
     `<div><span class="score">${tx("Your score", "Skorun")}: ${pct(score, 0)}</span> ${badge}` +
     (isNewBest && tries > 1 ? `<span class="newbest">${tx("New best!", "Yeni rekor!")}</span>` : "") + `</div>` +
     `<p>${bestText} · ${tx(`try ${tries}`, `${tries}. deneme`)}</p>` +
-    (valid ? "" : `<p>${tx(`<span class="bad">Over your ${L} limit, so this try doesn't count.</span> A riskier split can win more futures, but its bad year loses more than you said you can take.`,
-                           `<span class="bad">${L} sınırının üstünde, bu yüzden bu deneme sayılmaz.</span> Daha riskli bir dağılım daha çok gelecek kazanabilir, ama kötü yılı kaldırabileceğini söylediğinden fazla kaybettirir.`)}</p>`) +
+    (valid ? "" : close
+      ? `<p>${tx(`<span class="bad">Just over your ${L} limit (${pct(game.var, 3)}), so this try doesn't count.</span> Whole percents can't hit it exactly` +
+                 (near ? `: try ${mixText(near)}.` : "."),
+                 `<span class="bad">${L} sınırının biraz üstünde (${pct(game.var, 3)}), bu yüzden bu deneme sayılmaz.</span> Tam sayı yüzdelerle sınıra tam olarak ulaşılamaz` +
+                 (near ? `: ${mixText(near)} dene.` : "."))}</p>`
+      : `<p>${tx(`<span class="bad">Over your ${L} limit, so this try doesn't count.</span> A riskier split can win more futures, but its bad year loses more than you said you can take.`,
+                 `<span class="bad">${L} sınırının üstünde, bu yüzden bu deneme sayılmaz.</span> Daha riskli bir dağılım daha çok gelecek kazanabilir, ama kötü yılı kaldırabileceğini söylediğinden fazla kaybettirir.`)}</p>`) +
     `<p class="muted">${tx(`Can you beat 50%? Within your ${L} limit, the plan grows fastest on average, so beating it in most futures is very hard.`,
                            `%50'yi geçebilir misin? ${L} sınırının içinde plan ortalamada en hızlı büyüyendir, bu yüzden onu çoğu gelecekte yenmek çok zordur.`)}</p>` +
     tryBtn(tx("Try another split", "Başka bir dağılım dene"));
@@ -2938,7 +2970,7 @@ function arcNextMood() {
   const others = REGIME_KEYS.filter(k => k !== arc.mood), fresh = others.filter(k => !arc.hist.some(h => h.mood === k));
   return arcPick(fresh.length ? fresh : others);
 }
-function arcSaveBest() {
+function arcSaveBest() {                                            // in whole money, so the end screen compares Math.round(arc.money)
   if (arc.phase !== "fired" && arc.money > arcBest()) try { localStorage.setItem(ARC_BEST, String(Math.round(arc.money))); } catch (e) { /* not remembered */ }
 }
 // The year's result, once: floating money, the big money's flash, a sound, a shake for a lost heart, confetti for a promotion.
@@ -3142,7 +3174,7 @@ function renderArcade() {
     scr.innerHTML = `<h2 id="arcTitle" class="${r ? "" : "lose"}">${r ? tx(`You made it to ${R[1]}!`, `${R[2]} oldun!`) : tx("Still an intern: you lose", "Hâlâ stajyer: kaybettin")}</h2>` +
       arcLadder() + hero(party ? "win" : r ? "happy" : "fired", tx(ARC_BOSS_END[r][0], ARC_BOSS_END[r][1]), party ? "happy" : r ? "stern" : "angry", "big") +
       `<div class="arc-big${r ? "" : " arc-bad"}"${r ? ` style="color:${ARC_COLORS.you}"` : ""}>${money(arc.money)}<small>${tx(`after ${ARC_YEARS} years · the Quant ${money(arc.quant)} · savings ${money(arc.bank)}`,
-        `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${r && arc.money >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>
+        `${ARC_YEARS} yıl sonra · Quant ${money(arc.quant)} · mevduat ${money(arc.bank)}`)}${r && Math.round(arc.money) >= best ? tx(" · new best!", " · yeni rekor!") : ""}</small></div>
       <p class="arc-center arc-quant">${!r ? tx("🤖 You never beat the savings account, so the client found a new fund manager.", "🤖 Mevduatı hiç geçemedin, bu yüzden müşteri yeni bir fon yöneticisi buldu.")
         : beat ? tx(`🤖 You beat the Quant by ${money(arc.money - arc.quant)}!`, `🤖 Quant'ı ${money(arc.money - arc.quant)} farkla geçtin!`)
         : tx(`🤖 The Quant made ${money(arc.quant - arc.money)} more. Study its splits.`, `🤖 Quant ${money(arc.quant - arc.money)} daha fazla kazandı. Dağılımlarını incele.`)}</p>` +
@@ -3273,6 +3305,7 @@ function renderPoster() {
 }
 $("currency").addEventListener("input", renderPoster);
 document.addEventListener("DOMContentLoaded", renderPoster);       // after the page has picked its language
+if (location.hash === "#game") document.addEventListener("DOMContentLoaded", arcOpen);   // investor.html#game opens the game
 
 // =====================================================================
 // Language: the ENG / TUR switch
@@ -3313,7 +3346,8 @@ const I18N_TR = {
   dataHead: "Gerçek fiyatları kullan (isteğe bağlı)",
   dataIntro: "Elindeki her varlık için tarih sütunu ve fiyat sütunu olan bir CSV yükle, örneğin investing.com ya da Yahoo Finance'ten indirilmiş bir endeks. " +
     "Her varlık için bir sütunu olan tek bir dosya da olur (sütun adları örneğin Hisse, Altın ve Tahvil). " +
-    "<b>Dosyalar yalnızca bu sayfanın içinde okunur ve hiçbir yere yüklenmez.</b> Verin yok mu? Aynı klasördeki <code>sample_prices.csv</code> dosyasını dene.",
+    "<b>Dosyalar yalnızca bu sayfanın içinde okunur ve hiçbir yere yüklenmez.</b> Verin yok mu? <a href=\"sample_prices.csv\" download><code>sample_prices.csv</code></a> " +
+    "dosyasını (simüle edilmiş fiyatlar) indir ve burada kullan.",
   file0Aria: "hisse fiyatları (CSV)", file1Aria: "altın fiyatları (CSV)", file2Aria: "tahvil fiyatları (CSV)",
   clear0Aria: "hisse fiyatlarını kaldır", clear1Aria: "altın fiyatlarını kaldır", clear2Aria: "tahvil fiyatlarını kaldır",
   dragHere: "Bir dosyayı bir satırın üstüne de sürükleyebilirsin.",
@@ -3346,7 +3380,8 @@ const I18N_TR = {
     "cevabını gerçekte olanlarla test etmek için <b>Daha fazla ayar</b> bölümünden hisse fiyatlarını yükle.",
   histChartHead: "Gerçek bir yıllık getiriler ve çan eğrisi", twoAnswers: "İki cevap",
   histNote: "Bir yıllık dönemler her veri noktasında başlar, bu yüzden üst üste biner ve bağımsız değildir. Geçmiş kontrolünü garanti değil, kaba bir rehber olarak gör.",
-  footer: "Öğrenmek için temsilî bir model, yatırım tavsiyesi değildir. <a href=\"index.html\">Limits in Finance</a> projesiyle aynı matematik."
+  footer: "Öğrenmek için temsilî bir model, yatırım tavsiyesi değildir. <a href=\"index.html\">Limits in Finance</a> projesiyle aynı matematik · " +
+    "<a href=\"https://github.com/ahmetozturk86/limits-in-finance\">GitHub'daki kod</a>"
 };
 function applyLang() {
   document.documentElement.lang = LANG;
