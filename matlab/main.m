@@ -183,7 +183,7 @@ plot(f_grid, g(f_grid), 'LineWidth', 2); hold on;
 xline(f_star, '--', 'Color', RED);
 xline(f_opt, '-', 'Color', GREEN);
 xlabel('fraction in stock f'); ylabel('growth rate g(f)'); title('Growth: continuous, concave, max at f^*');
-legend('g(f)', sprintf('Kelly f^* = %.2f', f_star), sprintf('chosen f_{opt} = %.2f', f_opt), 'Location', 'south');
+legend('g(f)', sprintf('Kelly f^* = %.2f', f_star), sprintf('chosen f_{opt} = %.3f', f_opt), 'Location', 'south');
 
 subplot(2, 2, 2);
 var_grid = value_at_risk(f_grid, MU, SIGMA, R, T, ALPHA);
@@ -220,7 +220,7 @@ histogram(loss, 80, 'Normalization', 'pdf'); hold on;
 xline(LOSS_LIMIT, 'k:', 'LineWidth', 1.5);
 xline(sim_var, '--', 'Color', RED, 'LineWidth', 1.5);
 xlabel('1-year loss (negative = gain)'); ylabel('density');
-title(sprintf('Loss distribution at f_{opt} = %.2f', f_opt));
+title(sprintf('Loss distribution at f_{opt} = %.3f', f_opt));
 legend('simulated losses', sprintf('analytic VaR = %.1f%%', 100 * LOSS_LIMIT), ...
     sprintf('simulated VaR = %.1f%%', 100 * sim_var), 'Location', 'northwest');
 save_fig(fig, fig_dir, 'fig4_risk_optimization.png');
@@ -283,7 +283,7 @@ b = bar(100 * [p_bell; p_crash]');
 b(1).FaceColor = [0.12 0.47 0.71]; b(2).FaceColor = RED;
 set(gca, 'XTickLabel', arrayfun(@(l) sprintf('lose more than %.0f%%', 100 * l), losses, 'UniformOutput', false));
 ylabel('chance in one year (%)');
-title(sprintf('Same average return, more big losses (f = %.2f)', f_var));
+title(sprintf('Same average return, more big losses (f = %.3f)', f_var));
 legend('bell curve only', 'with rare crashes');
 
 subplot(1, 2, 2);

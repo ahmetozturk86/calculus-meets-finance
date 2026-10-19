@@ -192,7 +192,7 @@ def module4_risk():
     ax = axes[0, 0]
     ax.plot(f_grid, g(f_grid), lw=2)
     ax.axvline(f_star, color="C3", ls="--", label=f"Kelly $f^*$ = {f_star:.2f}")
-    ax.axvline(f_opt, color="C2", ls="-", label=f"chosen $f_{{opt}}$ = {f_opt:.2f}")
+    ax.axvline(f_opt, color="C2", ls="-", label=f"chosen $f_{{opt}}$ = {f_opt:.3f}")
     ax.set(xlabel="fraction in stock $f$", ylabel="growth rate $g(f)$", title="Growth: continuous, concave, max at $f^*$")
     ax.legend()
 
@@ -222,7 +222,7 @@ def module4_risk():
     ax.axvline(LOSS_LIMIT, color="k", ls=":", label=f"analytic VaR = {LOSS_LIMIT:.1%}")
     ax.axvline(empirical_var(W[:, -1], 1.0, ALPHA), color="C3", ls="--",
                label=f"simulated VaR = {empirical_var(W[:, -1], 1.0, ALPHA):.1%}")
-    ax.set(xlabel="1-year loss (negative = gain)", ylabel="density", title=f"Loss distribution at $f_{{opt}}$ = {f_opt:.2f}")
+    ax.set(xlabel="1-year loss (negative = gain)", ylabel="density", title=f"Loss distribution at $f_{{opt}}$ = {f_opt:.3f}")
     ax.legend()
     save(fig, "fig4_risk_optimization.png")
 
@@ -281,7 +281,7 @@ def module4b_crashes():
         bars = ax.bar(pos + shift, np.array(p) * 100, width=0.4, color=color, label=name)
         ax.bar_label(bars, labels=[f"{v:.1%}" for v in p], fontsize=9)
     ax.set_xticks(pos, [f"lose more than {l:.0%}" for l in losses])
-    ax.set(ylabel="chance in one year (%)", title=f"Same average return, more big losses (f = {f_var:.2f})")
+    ax.set(ylabel="chance in one year (%)", title=f"Same average return, more big losses (f = {f_var:.3f})")
     ax.legend()
 
     ax = axes[1]
@@ -351,7 +351,7 @@ def module5_portfolio():
         for i, part in enumerate(list(wk) + [1 - wk.sum()]):
             ax.barh(k, part * 100, left=left, color=colors[i], label=(ASSET_NAMES + ["bank"])[i] if k == 1 else None)
             if part >= 0.06:
-                ax.text(left + part * 50, k, f"{part:.0%}", ha="center", va="center", color="white", fontsize=10)
+                ax.text(left + part * 50, k, f"{round(100 * part, 1):g}%", ha="center", va="center", color="white", fontsize=10)
             left += part * 100
         gk = portfolio_growth(wk, MU_ASSETS, SIGMA_ASSETS, RHO_ASSETS, R)[0]
         ax.text(101, k, f"growth {gk:.2%}", va="center", fontsize=10)
