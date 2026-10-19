@@ -1,10 +1,24 @@
 # Limits in Finance
 
+[![tests](https://github.com/ahmetozturk86/limits-in-finance/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmetozturk86/limits-in-finance/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+![MATLAB R2018b+](https://img.shields.io/badge/MATLAB-R2018b%2B-orange.svg)
+
 **How much of my savings should I put in the stock market?**
 I'm a math student, and this is my own project to see how far calculus (limits, continuity and the
 Intermediate Value Theorem) can go with a real money question. It has three parts that belong
 together: **the math**, **The Investor**, a planner that applies it to your own money, and
 **Fund Manager**, a game that lets you play against it.
+
+**Try it in your browser**, nothing to install:
+[the explainer](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) ·
+[The Investor](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) ·
+[Fund Manager](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game)
+
+| the math | The Investor | Fund Manager |
+|---|---|---|
+| [![The explainer: the bell curve of one year and the loss limit](docs/screenshots/explainer.png)](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) | [![The Investor: a plan in one sentence, a donut of the split and its numbers](docs/screenshots/investor.png)](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) | [![Fund Manager: one year against the Quant, ending in a promotion](docs/screenshots/fund-manager.png)](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game) |
 
 > This is a learning project, not investment advice. The plans come from simple models and
 > example numbers; they are not professional recommendations.
@@ -67,10 +81,10 @@ but 0.53% more growth a year.
 | you have | look at |
 |---|---|
 | 2 minutes | the section above |
-| 10 minutes | `web/index.html`: open it in a browser and move the sliders; each module turns a discrete model into its limit |
-| to try it on your own money | `web/investor.html`: **The Investor** (English / Turkish) |
-| to play | the 🕹️ **Fund Manager** button or poster in The Investor |
-| the full mathematics | `report/report.md` and `report/math_guide.html` (derivations and proofs) |
+| 10 minutes | [the explainer](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) (`web/index.html`): move the sliders; each module turns a discrete model into its limit |
+| to try it on your own money | [**The Investor**](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) (`web/investor.html`, English / Turkish) |
+| to play | [**Fund Manager**](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game), the 🕹️ game inside The Investor |
+| the mathematics | [Results](#results) below, and the docstrings in `src/`: each module states its limit and the idea behind it |
 | the code | `src/` (Python) and `matlab/`, run with the commands below |
 
 ## The modules
@@ -200,12 +214,15 @@ best growth can only go up, and it converges to the exact best mix:
 
 ## Run it
 
-### Python
+### Python (3.10 or newer)
 ```bash
 pip install -r requirements.txt
-python main.py          # prints all tables, writes figures/*.png
-python -m pytest        # 35 tests
+python main.py               # prints all tables, writes figures/*.png
+python -m pytest             # 35 tests
+python tests/web_smoke.py    # both web pages in headless Chrome or Edge: their numbers vs Python, no errors
 ```
+GitHub Actions runs all of these on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and
+`run_tests` and `main` in MATLAB too (MathWorks' MATLAB actions are free for public repositories).
 
 ### MATLAB
 ```matlab
@@ -219,14 +236,14 @@ match Python exactly. Monte Carlo numbers differ slightly because the random
 generators are different.
 
 ### Web pages (no install, work offline)
-Open these files in a browser:
+They run [online](https://ahmetozturk86.github.io/limits-in-finance/web/index.html), or open the files in a browser:
 - `web/index.html`: the interactive explainer, one section per module (1, 2, 3, 4, 4b, 5). Move the big slider and
   watch each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
   paths into GBM, the VaR limit found by IVT + bisection, rare crashes, and the best mix found by a finer and finer search.
 - `web/investor.html`: **The Investor**, Modules 4 and 5 applied to your own money, in English or Turkish. You type your
   money, yearly saving, bank interest, inflation, years and how much risk you can take, and get a plan in one plain
   sentence ("Put $7,298 in stocks, $400 in gold and $2,299 in bonds…"), tested over 500 simulated futures.
-- **Fund Manager**, the game inside `web/investor.html` (🕹️ button or the poster above the inputs): 5 years, 3 hearts,
+- **Fund Manager**, the game inside `web/investor.html` (🕹️ button, the poster above the inputs, or `investor.html#game`): 5 years, 3 hearts,
   a different market every year, sudden drops where you decide in 8 seconds, badges and a career ladder, always
   against the Quant, who plays Module 5's best mix. It uses the same market numbers and correlations as the planner.
 
@@ -234,8 +251,9 @@ Open these files in a browser:
 <summary><b>The Investor in detail</b></summary>
 
   1. **Your situation:** the money you have (with a currency symbol: $, €, £, ₺ or none), the money you add each
-     year, **today's numbers** (bank interest, inflation, the 10-year bond yield, the stock market's P/E and VIX) and
-     how much risk you can take. Today's numbers become each asset's expected return and risk: stocks earn about
+     year, the bank interest, inflation, the years and how much risk you can take. **Today's market numbers** (the
+     10-year bond yield, the stock market's P/E and VIX) are optional, in More settings. Together with the bank
+     interest and inflation they become each asset's expected return and risk: stocks earn about
      1/P/E plus inflation, bonds their yield, gold inflation + 2% (its price says nothing about its future), and VIX
      sets the stock risk. The market (calm, normal, crisis or high inflation) is read from VIX, inflation and
      uploaded prices. With ₺ the empty boxes use typical Turkish numbers and every number is in lira. A line under
@@ -245,11 +263,12 @@ Open these files in a browser:
      fastest-growing plan without borrowing (its bad year is about 22% in a normal market). In calm and normal
      markets that is all stocks, so going further would need borrowing, which the plan never does; in crisis and
      high-inflation markets a riskier mix exists but grows slower, because big losses hurt more than big gains help.
-     When even that plan stays within your limit (calm and crisis markets), Balanced gives the same plan as Bold.
+     When even that plan stays within your limit (with the example numbers: in a high-inflation market), Balanced gives
+     the same plan as Bold, and the page says so.
      All rates you type are ordinary yearly rates; the math turns them into continuous rates with ln(1 + x).
-     Everything else is in a closed **More settings** section: years, **your own guess** of how to split the money
-     (optional), the stock numbers used when the P/E or VIX box is empty, **fees and taxes** (with typical USA
-     and Turkey values to fill in; the plan uses what you keep after them), surprises, and
+     Everything else is in a closed **More settings** section: today's market numbers, **your own guess** of how to
+     split the money (optional), the stock numbers used when the P/E or VIX box is empty, **fees and taxes** (with
+     typical USA, Turkey or OECD average values to fill in; the plan uses what you keep after them), surprises, and
      optional CSVs of real prices for stocks, gold and bonds, or one file with a column for each
      (`web/sample_prices.csv` is a simulated example). From the files the page estimates each asset's average return,
      risk and how the assets move together; short data is pulled toward typical long-run values, because averages are
@@ -291,12 +310,13 @@ src/                Python modules
   gbm.py            Module 3
   risk.py           Module 4 and 4b
   portfolio.py      Module 5 (more assets)
-main.py             runs everything, saves figures
-tests/              pytest checks against known values
+main.py             runs everything, saves figures/
+tests/              pytest checks against known values (test_modules.py)
+  web_smoke.py      both web pages in a headless browser, compared with the Python numbers
 matlab/             one .m file per Python function + main.m, run_tests.m
-report/report.md    full write-up with derivations
-report/math_guide.html  the complete mathematics with proofs (Modules 1-5)
-web/                interactive explainer (index.html) and The Investor tool (investor.html)
+web/                interactive explainer (index.html) and The Investor with the Fund Manager game (investor.html)
+docs/screenshots/   the pictures at the top of this README
+.github/workflows/  the tests on every push: Python, the web pages, MATLAB
 ```
 
 ## Limitations
@@ -312,3 +332,7 @@ returns are hard to estimate, so the best mix can change a lot with small input
 changes. The real-life test in `investor.html` breaks the assumptions on purpose
 (changing markets, crash years), so the plan can break its promise there: it
 shows where the simple model stops being enough.
+
+## License
+[MIT](LICENSE): you may use, change and share the code, keeping the copyright notice. The market numbers in the code
+and on the pages are illustrative, and `web/sample_prices.csv` is simulated, not real prices.

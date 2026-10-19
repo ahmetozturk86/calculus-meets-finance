@@ -1,0 +1,3 @@
+# Text files are stored with LF line endings, whatever each computer uses
+* text=auto
+*.png binary

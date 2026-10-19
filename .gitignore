@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 *.asv
+matlab/figures/
 .claude/settings.local.json
 .~lock.*#
 

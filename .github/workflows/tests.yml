@@ -1,0 +1,57 @@
+# Every check of the project, on each push and pull request: the Python tests and modules, the two web pages
+# against the Python numbers, and the MATLAB port.
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Tests
+        run: python -m pytest
+      - name: All modules (tables and figures)
+        run: python main.py
+
+  web:
+    name: Web pages (headless Chrome)
+    runs-on: ubuntu-latest                  # GitHub's Ubuntu runners come with Google Chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tests/web_smoke.py
+
+  matlab:
+    name: MATLAB
+    # MATLAB on GitHub's runners is free for public repositories; a private one would need a license, so it waits
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v2
+      - name: Tests (run_tests.m)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: cd matlab; run_tests
+      - name: All modules (main.m)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: cd matlab; main
