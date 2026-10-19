@@ -1,4 +1,4 @@
-%% Limits in Finance - MATLAB version of main.py
+%% Calculus Meets Finance - MATLAB version of main.py
 % Runs all modules, prints the results and saves the figures to
 % matlab/figures/. Run from this folder:  >> main
 clear; clc; close all;

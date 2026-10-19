@@ -1,1 +1,1 @@
-"""Limits in Finance: discrete financial models and their continuous limits."""
+"""Calculus Meets Finance: discrete financial models and their continuous limits."""

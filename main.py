@@ -1,4 +1,4 @@
-"""Limits in Finance - runs all modules, prints the results and saves the figures.
+"""Calculus Meets Finance - runs all modules, prints the results and saves the figures.
 
     python main.py
 """

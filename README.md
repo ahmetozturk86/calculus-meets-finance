@@ -1,6 +1,6 @@
-# Limits in Finance
+# Calculus Meets Finance
 
-[![tests](https://github.com/ahmetozturk86/limits-in-finance/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmetozturk86/limits-in-finance/actions/workflows/tests.yml)
+[![tests](https://github.com/ahmetozturk86/calculus-meets-finance/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmetozturk86/calculus-meets-finance/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![MATLAB R2018b+](https://img.shields.io/badge/MATLAB-R2018b%2B-orange.svg)
@@ -12,13 +12,13 @@ together: **the math**, **The Investor**, a planner that applies it to your own 
 **Fund Manager**, a game that lets you play against it.
 
 **Try it in your browser**, nothing to install:
-[the explainer](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) ·
-[The Investor](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) ·
-[Fund Manager](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game)
+[the explainer](https://ahmetozturk86.github.io/calculus-meets-finance/web/index.html) ·
+[The Investor](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html) ·
+[Fund Manager](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html#game)
 
 | the math | The Investor | Fund Manager |
 |---|---|---|
-| [![The explainer: the bell curve of one year and the loss limit](docs/screenshots/explainer.png)](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) | [![The Investor: a plan in one sentence, a donut of the split and its numbers](docs/screenshots/investor.png)](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) | [![Fund Manager: one year against the Quant, ending in a promotion](docs/screenshots/fund-manager.png)](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game) |
+| [![The explainer: the bell curve of one year and the loss limit](docs/screenshots/explainer.png)](https://ahmetozturk86.github.io/calculus-meets-finance/web/index.html) | [![The Investor: a plan in one sentence, a donut of the split and its numbers](docs/screenshots/investor.png)](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html) | [![Fund Manager: one year against the Quant, ending in a promotion](docs/screenshots/fund-manager.png)](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html#game) |
 
 > This is a learning project, not investment advice. The plans come from simple models and
 > example numbers; they are not professional recommendations.
@@ -81,9 +81,9 @@ but 0.53% more growth a year.
 | you have | look at |
 |---|---|
 | 2 minutes | the section above |
-| 10 minutes | [the explainer](https://ahmetozturk86.github.io/limits-in-finance/web/index.html) (`web/index.html`): move the sliders; each module turns a discrete model into its limit |
-| to try it on your own money | [**The Investor**](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html) (`web/investor.html`, English / Turkish) |
-| to play | [**Fund Manager**](https://ahmetozturk86.github.io/limits-in-finance/web/investor.html#game), the 🕹️ game inside The Investor |
+| 10 minutes | [the explainer](https://ahmetozturk86.github.io/calculus-meets-finance/web/index.html) (`web/index.html`): move the sliders; each module turns a discrete model into its limit |
+| to try it on your own money | [**The Investor**](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html) (`web/investor.html`, English / Turkish) |
+| to play | [**Fund Manager**](https://ahmetozturk86.github.io/calculus-meets-finance/web/investor.html#game), the 🕹️ game inside The Investor |
 | the mathematics | [Results](#results) below, and the docstrings in `src/`: each module states its limit and the idea behind it |
 | the code | `src/` (Python) and `matlab/`, run with the commands below |
 
@@ -236,7 +236,7 @@ match Python exactly. Monte Carlo numbers differ slightly because the random
 generators are different.
 
 ### Web pages (no install, work offline)
-They run [online](https://ahmetozturk86.github.io/limits-in-finance/web/index.html), or open the files in a browser:
+They run [online](https://ahmetozturk86.github.io/calculus-meets-finance/web/index.html), or open the files in a browser:
 - `web/index.html`: the interactive explainer, one section per module (1, 2, 3, 4, 4b, 5). Move the big slider and
   watch each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
   paths into GBM, the VaR limit found by IVT + bisection, rare crashes, and the best mix found by a finer and finer search.
