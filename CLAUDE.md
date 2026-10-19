@@ -18,7 +18,7 @@ python tests/web_smoke.py                 # both web pages in headless Chrome/Ed
 
 MATLAB (from the `matlab/` folder): `run_tests` then `main` (figures go to `matlab/figures/`, gitignored). MATLAB is not installed on the dev machine, so MATLAB changes cannot be run locally — review them carefully. CI (`.github/workflows/tests.yml`) runs pytest and `main.py` on Python 3.10 and 3.13, `tests/web_smoke.py` in headless Chrome, and `run_tests` + `main` in MATLAB; the MATLAB job is skipped while the repository is private (MathWorks' GitHub actions are free only for public repositories).
 
-The project is MIT-licensed (`LICENSE`, copyright ahmetozturk86) and meant to be public on GitHub, with the pages served by GitHub Pages from the main branch: the README links to `https://ahmetozturk86.github.io/limits-in-finance/web/index.html`, `…/web/investor.html` and `…/web/investor.html#game`, and shows `docs/screenshots/*.png`. There is no `report/` folder any more: the user removed it before going public, and the README is the write-up.
+The project is MIT-licensed (`LICENSE`, copyright Ahmet ÖZTÜRK) and meant to be public on GitHub, with the pages served by GitHub Pages from the main branch: the README links to `https://ahmetozturk86.github.io/limits-in-finance/web/index.html`, `…/web/investor.html` and `…/web/investor.html#game`, and shows `docs/screenshots/*.png`. There is no `report/` folder any more: the user removed it before going public, and the README is the write-up.
 
 ## Architecture
 
