@@ -37,7 +37,7 @@ where every number came from, and a test over 500 simulated futures. Optional ex
 numbers (bond yield, stock P/E, VIX), fees and taxes (typical USA, Turkey or OECD average), the Turkish
 lira with its own numbers, and real price files, which are read only inside your browser.
 
-**Fund Manager** (the 🕹️ game inside The Investor). You manage $1,000,000 for 5 years with 3 hearts.
+**Fund Manager** (the game inside The Investor). You manage $1,000,000 for 5 years with 3 hearts.
 Every year brings a different market; you split the money, and the year plays out month by month
 against **the Quant**, who always plays the math's plan. When the market suddenly drops, you have 8
 seconds to sell, hold or buy the dip. A losing year costs a heart: climb the career ladder or get
@@ -235,7 +235,7 @@ written by hand, so no Statistics Toolbox is required. Deterministic numbers
 match Python exactly. Monte Carlo numbers differ slightly because the random
 generators are different.
 
-### Web pages (no install, work offline)
+### Web pages
 They run [online](https://ahmetozturk86.github.io/calculus-meets-finance/web/index.html), or open the files in a browser:
 - `web/index.html`: the interactive explainer, one section per module (1, 2, 3, 4, 4b, 5). Move the big slider and
   watch each discrete model turn into its continuous limit: stairs into e^(rt), tree bars into Black–Scholes, coin-flip
